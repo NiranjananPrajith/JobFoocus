@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import ApplicationCard from '@/components/ApplicationCard';
 import Badge from '@/components/design/Badge';
 import Card from '@/components/design/Card';
+import DataManagement from '@/components/DataManagement';
 import { getAllApplications, getCategoryStats, type EnrichedApplication, type CategoryStats } from '@/lib/storage-adapter';
 
 interface Stats {
@@ -203,6 +204,9 @@ export default function DashboardPage() {
           );
         })}
       </div>
+
+      {/* Data Management */}
+      <DataManagement />
     </div>
   );
 }

@@ -271,3 +271,100 @@ export function allowedFile(filename: string): boolean {
   const ext = filename.split('.').pop()?.toLowerCase() || '';
   return allowedExtensions.has(ext);
 }
+
+// ---------------------------------------------------------------------------
+// Data Portability - Backup & Restore
+// ---------------------------------------------------------------------------
+
+export interface BackupPayload {
+  version: string;
+  timestamp: number;
+  data: Record<string, any>;
+}
+
+export async function exportAllData(): Promise<BackupPayload> {
+  const storage = (typeof window !== 'undefined' && window.chrome && window.chrome.storage)
+    ? window.chrome.storage.local
+    : null;
+
+  if (storage) {
+    return new Promise((resolve) => {
+      storage.get(null, (allData: Record<string, unknown>) => {
+        resolve({
+          version: '1.0.0',
+          timestamp: Date.now(),
+          data: allData as Record<string, any>
+        });
+      });
+    });
+  } else {
+    const backupData: Record<string, any> = {};
+    if (typeof localStorage !== 'undefined') {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) {
+          try {
+            backupData[key] = JSON.parse(localStorage.getItem(key) || 'null');
+          } catch {
+            backupData[key] = localStorage.getItem(key);
+          }
+        }
+      }
+    }
+    return {
+      version: '1.0.0',
+      timestamp: Date.now(),
+      data: backupData
+    };
+  }
+}
+
+export async function importAllData(
+  payload: BackupPayload,
+  strategy: 'overwrite' | 'merge' = 'merge'
+): Promise<{ success: boolean; itemsImported: number }> {
+  if (!payload || typeof payload.data !== 'object') {
+    throw new Error('Invalid backup file structure.');
+  }
+
+  const storage = (typeof window !== 'undefined' && window.chrome && window.chrome.storage)
+    ? window.chrome.storage.local
+    : null;
+
+  const incomingData = payload.data;
+  let itemsImported = 0;
+
+  if (storage) {
+    return new Promise((resolve) => {
+      if (strategy === 'overwrite') {
+        storage.clear(() => {
+          storage.set(incomingData, () => {
+            itemsImported = Object.keys(incomingData).length;
+            resolve({ success: true, itemsImported });
+          });
+        });
+      } else {
+        storage.get(null, (currentData: Record<string, unknown>) => {
+          const finalData = { ...incomingData, ...currentData };
+          storage.set(finalData, () => {
+            itemsImported = Object.keys(incomingData).length;
+            resolve({ success: true, itemsImported });
+          });
+        });
+      }
+    });
+  } else {
+    if (typeof localStorage !== 'undefined') {
+      if (strategy === 'overwrite') {
+        localStorage.clear();
+      }
+      for (const [key, value] of Object.entries(incomingData)) {
+        if (strategy === 'overwrite' || !localStorage.getItem(key)) {
+          localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+          itemsImported++;
+        }
+      }
+    }
+    return { success: true, itemsImported };
+  }
+}
