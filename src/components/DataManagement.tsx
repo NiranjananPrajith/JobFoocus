@@ -57,6 +57,7 @@ export default function DataManagement() {
 
   // Listen for background sync completion
   useEffect(() => {
+    if (typeof chrome === 'undefined' || !chrome.runtime) return;
     const listener = (message: { action: string; success?: boolean; error?: string }) => {
       if (message.action === 'CLOUD_BACKGROUND_SYNC') {
         // Background sync tick — refresh last sync time
