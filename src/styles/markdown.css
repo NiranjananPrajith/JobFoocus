@@ -1,0 +1,139 @@
+/* Document Styles - Screen & Print */
+
+/* Document container */
+.document-container {
+  width: 100%;
+  background: #ffffff;
+  margin: 0;
+  padding: 0;
+}
+
+/* Document header (screen only - hidden on print) */
+.document-header {
+  position: relative;
+  top: 0;
+  z-index: 100;
+  background: #ffffff;
+  color: #3d3d3d;
+  padding: 16pt 20pt;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e5e5e5;
+  margin: 0;
+}
+
+.document-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin: 0;
+}
+
+.document-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12pt;
+}
+
+.document-back {
+  color: #78716c;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6pt;
+  transition: color 0.2s ease;
+}
+
+.document-back:hover {
+  color: #292524;
+}
+
+.document-type {
+  font-size: 11px;
+  font-weight: 600;
+  color: #78716c;
+  text-transform: uppercase;
+  letter-spacing: 1pt;
+}
+
+.document-print-btn {
+  background: #f5f5f4;
+  color: #44403c;
+  border: 0.5pt solid #e5e5e5;
+  padding: 8pt 16pt;
+  border-radius: 8pt;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8pt;
+}
+
+.document-print-btn:hover {
+  background: #e7e5e4;
+  border-color: #d6d3d1;
+}
+
+/* Document page content area */
+.document-page {
+  width: 8.5in;
+  margin: 0 auto;
+  padding: 0.5in;
+  display: block;
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+  @page {
+    size: letter;
+    margin: 0;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    background: #ffffff;
+  }
+
+  /* Hide the root layout's nav, footer, sunset stripe, and document header bar */
+  header,
+  footer,
+  nav,
+  .SunsetStripeBand,
+  .document-header,
+  [class*="Navbar"],
+  [class*="NavBar"],
+  [class*="Footer"],
+  [class*="Sunset"],
+  .no-print {
+    display: none !important;
+  }
+
+  /* Ensure main content area takes full width */
+  main {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .document-container {
+    display: block;
+    min-height: auto;
+    background: transparent;
+  }
+
+  .document-page {
+    max-width: none;
+    padding: 0;
+    margin: 0;
+  }
+}
