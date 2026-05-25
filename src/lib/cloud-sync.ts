@@ -60,6 +60,10 @@ function getProviderConfig(provider: CloudProvider): CloudProviderConfig {
 // ---------------------------------------------------------------------------
 
 export async function authenticateProvider(provider: CloudProvider): Promise<string> {
+  if (typeof chrome === 'undefined' || !chrome.identity) {
+    throw new Error('Cloud sync requires the Chrome extension context.');
+  }
+
   const config = getProviderConfig(provider);
 
   const redirectUrl = chrome.identity.getRedirectURL();
