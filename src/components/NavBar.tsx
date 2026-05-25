@@ -33,7 +33,7 @@ export default function NavBar() {
               alt="Job Foocus"
               className="h-8 object-contain"
             />
-          </Link>
+          </a>
 
           {/* Right - Desktop Navigation + CTA */}
           <div className="flex items-center gap-4 md:gap-6">

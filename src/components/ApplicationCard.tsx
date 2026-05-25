@@ -116,7 +116,7 @@ const ApplicationCard = ({
           )}
         </div>
       </Card>
-    </Link>
+    </a>
   );
 };
 
