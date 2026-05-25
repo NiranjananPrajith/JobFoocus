@@ -15,7 +15,17 @@
     "activeTab",
     "scripting",
     "sidePanel",
-    "contextMenus"
+    "contextMenus",
+    "identity",
+    "alarms"
+  ],
+  "host_permissions": [
+    "https://www.googleapis.com/*",
+    "https://accounts.google.com/*",
+    "https://login.microsoftonline.com/*",
+    "https://graph.microsoft.com/*",
+    "https://api.dropboxapi.com/*",
+    "https://content.dropboxapi.com/*"
   ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"

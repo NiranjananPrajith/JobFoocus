@@ -368,3 +368,31 @@ export async function importAllData(
     return { success: true, itemsImported };
   }
 }
+
+// ---------------------------------------------------------------------------
+// Cloud Sync Helpers
+// ---------------------------------------------------------------------------
+
+export async function getCloudAccessToken(): Promise<string | null> {
+  return await getLocalData('cloud_access_token');
+}
+
+export async function setCloudAccessToken(token: string | null): Promise<void> {
+  await setLocalData('cloud_access_token', token);
+}
+
+export async function getCloudSyncProvider(): Promise<string | null> {
+  return await getLocalData('cloud_sync_provider');
+}
+
+export async function setCloudSyncProvider(provider: string | null): Promise<void> {
+  await setLocalData('cloud_sync_provider', provider);
+}
+
+export async function getLastSyncTime(): Promise<number | null> {
+  return await getLocalData('cloud_last_sync_time');
+}
+
+export async function setLastSyncTime(ts: number | null): Promise<void> {
+  await setLocalData('cloud_last_sync_time', ts);
+}

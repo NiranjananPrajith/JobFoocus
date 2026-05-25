@@ -106,6 +106,8 @@ browser.runtime.onInstalled.addListener(() => {
     title: 'Answer with Job Foocus',
     contexts: ['selection']
   });
+  // Schedule hourly sync alarm (MV3 service workers die after ~30s, use alarms instead of setInterval)
+  chrome.alarms.create('sync_alarm', { periodInMinutes: 60 });
 });
 
 // Context menu handler - storage-first handoff pattern
@@ -142,6 +144,24 @@ function classifyCategory(jobDescription) {
   return '2_general_basic';
 }
 
+// Alarm listener — scheduled background sync
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'sync_alarm') {
+    chrome.storage.local.get(['cloud_sync_provider', 'cloud_access_token'], (settings) => {
+      if (settings.cloud_sync_provider && settings.cloud_access_token) {
+        // Notify the side panel/dashboard to run the sync
+        chrome.runtime.sendMessage({
+          action: 'CLOUD_BACKGROUND_SYNC',
+          provider: settings.cloud_sync_provider,
+          token: settings.cloud_access_token
+        }).catch(() => {
+          // No active listeners — silent failure is fine for background sync
+        });
+      }
+    });
+  }
+});
+
 // Main message listener
 browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.action === 'syncToCloud') {
@@ -149,6 +169,71 @@ browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     if (provider === 'gdrive') {
       return await uploadToGDrive(token, payload);
     }
+  }
+
+  if (message.action === 'CLOUD_AUTH') {
+    const { provider } = message;
+    const redirectUrl = chrome.identity.getRedirectURL();
+    let authUrl = '';
+    let scope = '';
+    let clientId = '';
+
+    switch (provider) {
+      case 'google':
+        clientId = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+        authUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
+        scope = 'https://www.googleapis.com/auth/drive.appdata';
+        break;
+      case 'onedrive':
+        clientId = 'YOUR_ONEDRIVE_CLIENT_ID';
+        authUrl = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize';
+        scope = 'https://graph.microsoft.com/files.readwrite.appfolder';
+        break;
+      case 'dropbox':
+        clientId = 'YOUR_DROPBOX_CLIENT_ID';
+        authUrl = 'https://www.dropbox.com/oauth2/authorize';
+        scope = '';
+        break;
+      default:
+        sendResponse({ success: false, error: 'Unknown provider' });
+        return true;
+    }
+
+    const scopeParam = provider !== 'dropbox' ? `&scope=${encodeURIComponent(scope)}` : '';
+    const fullAuthUrl = `${authUrl}?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUrl)}&response_type=token${scopeParam}`;
+
+    chrome.identity.launchWebAuthFlow({ url: fullAuthUrl, interactive: true }, (responseUrl) => {
+      if (chrome.runtime.lastError || !responseUrl) {
+        sendResponse({ success: false, error: chrome.runtime.lastError?.message || 'Authorization failed.' });
+        return;
+      }
+      const fragment = new URL(responseUrl).hash.substring(1);
+      const params = new URLSearchParams(fragment);
+      const token = params.get('access_token');
+      if (token) {
+        chrome.storage.local.set({
+          cloud_sync_provider: provider,
+          cloud_access_token: token
+        }, () => {
+          sendResponse({ success: true, token });
+        });
+      } else {
+        sendResponse({ success: false, error: 'Access token not found.' });
+      }
+    });
+
+    return true; // async
+  }
+
+  if (message.action === 'CLOUD_DISCONNECT') {
+    chrome.storage.local.set({
+      cloud_sync_provider: 'none',
+      cloud_access_token: null,
+      cloud_last_sync_time: null
+    }, () => {
+      sendResponse({ success: true });
+    });
+    return true;
   }
 
   if (message.action === 'GENERATE_APPLICATION') {
@@ -495,6 +580,13 @@ Be concise but informative. Answer directly.`;
     })();
 
     return true; // async response
+  }
+
+  if (message.action === 'CLOUD_BACKGROUND_SYNC') {
+    // Background sync triggered by alarm — delegate to cloud-sync.ts logic
+    // The side panel/page will pick up this message and run syncToCloud
+    sendResponse({ received: true });
+    return true;
   }
 
   return false;
