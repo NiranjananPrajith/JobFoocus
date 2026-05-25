@@ -45,6 +45,12 @@
       "run_at": "document_idle"
     }
   ],
+  "oauth2": {
+    "client_id": "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/drive.file"
+    ]
+  },
   "side_panel": {
     "default_path": "sidepanel/index.html"
   }

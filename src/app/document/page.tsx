@@ -2,7 +2,6 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import { getDocumentHTML } from '@/lib/storage-adapter';
 
 function DocumentContent() {
@@ -69,10 +68,10 @@ function DocumentContent() {
         <div className="document-header no-print bg-white border-b border-stone-200 px-6 py-5">
           <div className="document-header-inner flex items-center justify-between max-w-screen-xl mx-auto">
             <div className="document-header-left flex items-center gap-3">
-              <Link href={backUrl} className="document-back group flex items-center gap-2 text-stone-500 hover:text-stone-800 transition-colors duration-200 text-sm font-medium">
+              <a href={backUrl} className="document-back group flex items-center gap-2 text-stone-500 hover:text-stone-800 transition-colors duration-200 text-sm font-medium">
                 <svg className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>
                 <span>Back</span>
-              </Link>
+              </a>
               <span className="document-type text-stone-400 text-sm font-medium">|</span>
               <span className="document-type text-stone-500 uppercase tracking-wider text-xs font-semibold">{getDocLabel()}</span>
             </div>
@@ -91,10 +90,10 @@ function DocumentContent() {
         <div className="document-header no-print bg-white border-b border-stone-200 px-6 py-5">
           <div className="document-header-inner flex items-center justify-between max-w-screen-xl mx-auto">
             <div className="document-header-left flex items-center gap-3">
-              <Link href={backUrl} className="document-back group flex items-center gap-2 text-stone-500 hover:text-stone-800 transition-colors duration-200 text-sm font-medium">
+              <a href={backUrl} className="document-back group flex items-center gap-2 text-stone-500 hover:text-stone-800 transition-colors duration-200 text-sm font-medium">
                 <svg className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>
                 <span>Back</span>
-              </Link>
+              </a>
               <span className="document-type text-stone-400 text-sm font-medium">|</span>
               <span className="document-type text-stone-500 uppercase tracking-wider text-xs font-semibold">{getDocLabel()}</span>
             </div>

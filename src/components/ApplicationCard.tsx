@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import Card from './design/Card';
 import Badge from './design/Badge';
 import Button from './design/Button';
@@ -51,7 +50,7 @@ const ApplicationCard = ({
   };
 
   return (
-    <Link href={`/application?app=${id}`} className="block">
+    <a href={`/application?app=${id}`} className="block">
       <Card variant="default" className="hover:shadow-[rgba(0,0,0,0.04)_0px_4px_12px] transition-shadow duration-200 cursor-pointer">
         {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-4">

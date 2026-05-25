@@ -2,7 +2,6 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import Card from '@/components/design/Card';
 import Button from '@/components/design/Button';
 import Badge from '@/components/design/Badge';
@@ -181,9 +180,9 @@ function ApplicationContent() {
         <Card variant="default" className="text-center py-12">
           <h2 className="text-2xl font-bold text-red-500 mb-4">Error</h2>
           <p className="text-steel mb-6">{error}</p>
-          <Link href="/">
+          <a href="./index.html">
             <Button variant="primary">Back to Dashboard</Button>
-          </Link>
+          </a>
         </Card>
       </div>
     );
@@ -198,12 +197,12 @@ function ApplicationContent() {
   return (
     <div className="min-h-screen">
       {/* Back Link */}
-      <Link
-        href="/"
+      <a
+        href="./index.html"
         className="inline-flex items-center text-steel hover:text-primary mb-4 md:mb-6 transition-colors"
       >
         <span className="mr-2">←</span> Back to Dashboard
-      </Link>
+      </a>
 
       {/* Header Card */}
       <Card variant="cream" className="mb-4 md:mb-6">

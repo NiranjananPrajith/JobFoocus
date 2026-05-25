@@ -28,7 +28,9 @@ The tracker dashboard and document webview are served natively via the Next.js d
 
 ```
 
-* **Dashboard Access**: Open [http://localhost:3000](https://www.google.com/search?q=http://localhost:3000) in your web browser to track prospects and trigger webview printing windows.
+* **Dashboard Access (Production)**: Click the extension icon in Chrome → the dashboard opens in an extension tab at `chrome-extension://<id>/index.html`. This is the production UI and uses `chrome.storage.local` (extension isolated storage).
+
+* **Local Dev Server**: Run `npm run dev` and open [http://localhost:3000](https://www.google.com/search?q=http://localhost:3000) only for live-reload design testing. **Data is separate** — localhost uses browser `localStorage`, so any data created there will NOT appear in the production extension dashboard and vice versa.
 
 * **Document Viewer Tab Title**: When viewing a document, the browser tab displays the document name in the format `{folder}_Resume` or `{folder}_CoverLetter` (e.g., `2026-05-23_RONA_CustomerServiceAssociate_Resume`).
 

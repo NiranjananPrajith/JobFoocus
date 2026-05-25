@@ -1,15 +1,14 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
 const navLinks = [
-  { href: '/', label: 'Dashboard' },
-  { href: '/all-jobs', label: 'All Jobs' },
-  { href: '/applied', label: 'Applied' },
-  { href: '/prospects', label: 'Prospects' },
-  { href: '/followups', label: 'Follow-ups' },
+  { href: './index.html', label: 'Dashboard' },
+  { href: './all-jobs/index.html', label: 'All Jobs' },
+  { href: './applied/index.html', label: 'Applied' },
+  { href: './prospects/index.html', label: 'Prospects' },
+  { href: './followups/index.html', label: 'Follow-ups' },
 ];
 
 export default function NavBar() {
@@ -28,7 +27,7 @@ export default function NavBar() {
       >
         <div className="max-w-[1280px] mx-auto px-4 md:px-6 h-full flex items-center justify-between">
           {/* Left - Brand */}
-          <Link href="/" className="flex items-center">
+          <a href="./index.html" className="flex items-center">
             <img
               src="/icon_wide.webp"
               alt="Job Foocus"
@@ -42,7 +41,7 @@ export default function NavBar() {
               {navLinks.map((link) => {
                 const isActive = pathname === link.href;
                 return (
-                  <Link
+                  <a
                     key={link.href}
                     href={link.href}
                     className={[
@@ -54,7 +53,7 @@ export default function NavBar() {
                     style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
                   >
                     {link.label}
-                  </Link>
+                  </a>
                 );
               })}
             </nav>
@@ -115,8 +114,8 @@ export default function NavBar() {
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
-              <Link
-                key={link.href}
+              <a
+                key={link.href + '-mobile'}
                 href={link.href}
                 className={[
                   'px-4 py-3 text-[16px] font-medium transition-colors duration-150',
@@ -129,7 +128,7 @@ export default function NavBar() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {link.label}
-              </Link>
+              </a>
             );
           })}
           <button

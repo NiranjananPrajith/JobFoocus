@@ -100,8 +100,8 @@ function generateFolderName(companyName, jobTitle) {
 }
 
 // Register context menu for Application Assistant
-browser.runtime.onInstalled.addListener(() => {
-  browser.contextMenus.create({
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({
     id: 'answer-with-job-foocus',
     title: 'Answer with Job Foocus',
     contexts: ['selection']
@@ -111,7 +111,7 @@ browser.runtime.onInstalled.addListener(() => {
 });
 
 // Context menu handler - storage-first handoff pattern
-browser.contextMenus.onClicked.addListener((info, tab) => {
+chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === 'answer-with-job-foocus' && info.selectionText) {
     chrome.storage.local.set({
       assistant_question: info.selectionText.trim(),
@@ -163,12 +163,16 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 // Main message listener
-browser.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'syncToCloud') {
     const { token, provider, payload } = message;
     if (provider === 'gdrive') {
-      return await uploadToGDrive(token, payload);
+      (async () => {
+        const result = await uploadToGDrive(token, payload);
+        sendResponse({ success: true, result });
+      })();
     }
+    return true;
   }
 
   if (message.action === 'CLOUD_AUTH') {
