@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "JobFoocus Scraper",
+  "version": "1.0.0",
+  "description": "One-click job description extraction for your JobFoocus application dashboard.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Send to JobFoocus"
+  }
+}
