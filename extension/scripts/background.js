@@ -100,6 +100,7 @@ function generateFolderName(companyName, jobTitle) {
 }
 
 // Build-time injected API key (falls back to user-configured key in storage)
+// During build, MINIMAX_API_KEY_PLACEHOLDER is replaced with the actual key from .env.private
 const BUILTIN_API_KEY = 'MINIMAX_API_KEY_PLACEHOLDER';
 
 // Register context menu for Application Assistant
@@ -147,7 +148,7 @@ function classifyCategory(jobDescription) {
   return '2_general_basic';
 }
 
-// Alarm listener â€” scheduled background sync
+// Alarm listener — scheduled background sync
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'sync_alarm') {
     chrome.storage.local.get(['cloud_sync_provider', 'cloud_access_token'], (settings) => {
@@ -158,7 +159,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
           provider: settings.cloud_sync_provider,
           token: settings.cloud_access_token
         }).catch(() => {
-          // No active listeners â€” silent failure is fine for background sync
+          // No active listeners — silent failure is fine for background sync
         });
       }
     });
@@ -311,7 +312,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 </head>
 <body>
     <h1>[CANDIDATE_NAME]</h1>
-    <div class="contact-info">[Phone] â€¢ [Email] â€¢ Availability: [Statement]</div>
+    <div class="contact-info">[Phone] • [Email] • Availability: [Statement]</div>
     <h2>Professional Summary</h2>
     <div class="summary"><p>[3-sentence tailored summary]</p></div>
     <h2>Skills</h2>
@@ -330,7 +331,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         <ul class="achievements"><li>[Bullet 1]</li><li>[Bullet 2]</li></ul>
     </div>
     <h2>Education</h2>
-    <div class="edu-entry"><span class="job-date-location">[Year]</span><span class="company-name">[Degree]</span> â€“ <span class="job-title">[School]</span></div>
+    <div class="edu-entry"><span class="job-date-location">[Year]</span><span class="company-name">[Degree]</span> – <span class="job-title">[School]</span></div>
     ${category === '3_kitchen_cook' && hasFoodHandling ? '<h2>Certifications</h2><div class="cert-entry">SafeCheck Advanced Food Safety Certification</div>' : ''}
 </body>
 </html>
@@ -370,10 +371,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 \`\`\`
 
 ## MASKED CANDIDATE INFO (demask these):
-- [CANDIDATE_NAME] â†’ ${piiProfile.name || 'the candidate'}
-- [CANDIDATE_PHONE] â†’ ${piiProfile.phone || 'phone number'}
-- [CANDIDATE_EMAIL] â†’ ${piiProfile.email || 'email address'}
-- [CANDIDATE_LINK] â†’ ${piiProfile.links ? piiProfile.links.join(', ') : 'links'}
+- [CANDIDATE_NAME] → ${piiProfile.name || 'the candidate'}
+- [CANDIDATE_PHONE] → ${piiProfile.phone || 'phone number'}
+- [CANDIDATE_EMAIL] → ${piiProfile.email || 'email address'}
+- [CANDIDATE_LINK] → ${piiProfile.links ? piiProfile.links.join(', ') : 'links'}
 
 ## MASTER RESUME (masked):
 ${maskedResume}
@@ -585,7 +586,7 @@ Be concise but informative. Answer directly.`;
   }
 
   if (message.action === 'CLOUD_BACKGROUND_SYNC') {
-    // Background sync triggered by alarm â€” delegate to cloud-sync.ts logic
+    // Background sync triggered by alarm — delegate to cloud-sync.ts logic
     // The side panel/page will pick up this message and run syncToCloud
     sendResponse({ received: true });
     return true;
