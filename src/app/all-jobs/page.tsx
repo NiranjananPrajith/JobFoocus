@@ -6,12 +6,6 @@ import Card from '@/components/design/Card';
 import { getAllApplications, type EnrichedApplication } from '@/lib/storage-adapter';
 
 const STATUS_OPTIONS = ['prospect', 'applied', 'phone_screen', 'interview', 'offer', 'rejected'];
-const CATEGORY_OPTIONS = ['1_tech_support', '2_general_basic', '3_kitchen_cook'];
-const CATEGORY_LABELS: Record<string, string> = {
-  '1_tech_support': 'Tech Support',
-  '2_general_basic': 'General',
-  '3_kitchen_cook': 'Kitchen',
-};
 
 export default function AllJobsPage() {
   const [applications, setApplications] = useState<EnrichedApplication[]>([]);
@@ -33,6 +27,15 @@ export default function AllJobsPage() {
     }
     fetchData();
   }, []);
+
+  // Derive unique categories from applications
+  const categoryMap = new Map<string, { name: string; color: string }>();
+  applications.forEach((app) => {
+    if (!categoryMap.has(app.category)) {
+      categoryMap.set(app.category, { name: app.category_name, color: app.category_color });
+    }
+  });
+  const CATEGORY_OPTIONS = Array.from(categoryMap.keys());
 
   const filteredApplications = applications.filter((app) => {
     const matchesSearch =
@@ -96,7 +99,7 @@ export default function AllJobsPage() {
             >
               <option value="">All Categories</option>
               {CATEGORY_OPTIONS.map((cat) => (
-                <option key={cat} value={cat}>{CATEGORY_LABELS[cat]}</option>
+                <option key={cat} value={cat}>{categoryMap.get(cat)?.name || cat}</option>
               ))}
             </select>
           </div>

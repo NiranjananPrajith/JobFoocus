@@ -14,7 +14,6 @@
     "unlimitedStorage",
     "activeTab",
     "scripting",
-    "sidePanel",
     "contextMenus",
     "identity",
     "alarms"
@@ -35,8 +34,7 @@
     "default_title": "Job Foocus Dashboard"
   },
   "background": {
-    "service_worker": "scripts/background.js",
-    "type": "module"
+    "scripts": ["scripts/background.js"]
   },
   "content_scripts": [
     {
@@ -44,14 +42,5 @@
       "js": ["scripts/content.js"],
       "run_at": "document_idle"
     }
-  ],
-  "oauth2": {
-    "client_id": "test-google-id",
-    "scopes": [
-      "https://www.googleapis.com/auth/drive.file"
-    ]
-  },
-  "side_panel": {
-    "default_path": "sidepanel/index.html"
-  }
+  ]
 }

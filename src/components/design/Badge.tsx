@@ -9,16 +9,18 @@ interface BadgeProps {
   className?: string;
 }
 
-const Badge = ({ status, showLabel = true, className = '' }: BadgeProps) => {
+const Badge = ({
+  status,
+  showLabel = true,
+  className = '',
+}: BadgeProps) => {
   const backgroundColor = statusColors[status] || '#888888';
   const label = statusLabels[status] || status;
 
   return (
     <span
       className={[
-        'inline-flex items-center rounded-full',
-        'px-2.5 py-1',
-        'text-[13px] font-semibold leading-[1.40]',
+        'inline-flex items-center rounded-full px-2.5 py-1 text-[13px] font-semibold leading-[1.40]',
         className,
       ].join(' ')}
       style={{

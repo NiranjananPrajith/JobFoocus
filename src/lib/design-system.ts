@@ -249,27 +249,10 @@ export type StatusType = keyof typeof statusColors;
 // ============================================
 // CATEGORIES
 // ============================================
+// User-defined categories will replace these preset ones
+// TODO: Allow users to create custom categories
 
-export const categories = {
-  tech_support: {
-    name: "Tech Support",
-    folder: "1_tech_support",
-    priority: "TOP PRIORITY",
-    color: "#0d6efd",
-  },
-  general_basic: {
-    name: "General",
-    folder: "2_general_basic",
-    priority: "MEDIUM PRIORITY",
-    color: "#198754",
-  },
-  kitchen_cook: {
-    name: "Kitchen",
-    folder: "3_kitchen_cook",
-    priority: "LOW PRIORITY",
-    color: "#fd7e14",
-  },
-} as const;
+export const categories = {} as const;
 
 export type CategoryName = keyof typeof categories;
 export type CategoryValue = (typeof categories)[CategoryName];

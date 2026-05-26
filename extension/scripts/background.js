@@ -99,6 +99,9 @@ function generateFolderName(companyName, jobTitle) {
   return `${date}_${safeCompany}_${safeTitle}`;
 }
 
+// Build-time injected API key (falls back to user-configured key in storage)
+const BUILTIN_API_KEY = 'MINIMAX_API_KEY_PLACEHOLDER';
+
 // Register context menu for Application Assistant
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
@@ -144,7 +147,7 @@ function classifyCategory(jobDescription) {
   return '2_general_basic';
 }
 
-// Alarm listener — scheduled background sync
+// Alarm listener â€” scheduled background sync
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'sync_alarm') {
     chrome.storage.local.get(['cloud_sync_provider', 'cloud_access_token'], (settings) => {
@@ -155,7 +158,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
           provider: settings.cloud_sync_provider,
           token: settings.cloud_access_token
         }).catch(() => {
-          // No active listeners — silent failure is fine for background sync
+          // No active listeners â€” silent failure is fine for background sync
         });
       }
     });
@@ -245,13 +248,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     (async () => {
       try {
-        // 1. Get settings and master resume from storage
-        const settings = await getStorageData(['settings', 'masterResume']);
-
-        if (!settings.settings?.openAiKey) {
-          throw new Error('OpenAI API key not configured. Please add it in settings.');
-        }
-
+        const settings = await getStorageData(['settings']);
         if (!settings.masterResume) {
           throw new Error('Master resume not found. Please upload your master resume first.');
         }
@@ -314,7 +311,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 </head>
 <body>
     <h1>[CANDIDATE_NAME]</h1>
-    <div class="contact-info">[Phone] • [Email] • Availability: [Statement]</div>
+    <div class="contact-info">[Phone] â€¢ [Email] â€¢ Availability: [Statement]</div>
     <h2>Professional Summary</h2>
     <div class="summary"><p>[3-sentence tailored summary]</p></div>
     <h2>Skills</h2>
@@ -333,7 +330,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         <ul class="achievements"><li>[Bullet 1]</li><li>[Bullet 2]</li></ul>
     </div>
     <h2>Education</h2>
-    <div class="edu-entry"><span class="job-date-location">[Year]</span><span class="company-name">[Degree]</span> – <span class="job-title">[School]</span></div>
+    <div class="edu-entry"><span class="job-date-location">[Year]</span><span class="company-name">[Degree]</span> â€“ <span class="job-title">[School]</span></div>
     ${category === '3_kitchen_cook' && hasFoodHandling ? '<h2>Certifications</h2><div class="cert-entry">SafeCheck Advanced Food Safety Certification</div>' : ''}
 </body>
 </html>
@@ -373,10 +370,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 \`\`\`
 
 ## MASKED CANDIDATE INFO (demask these):
-- [CANDIDATE_NAME] → ${piiProfile.name || 'the candidate'}
-- [CANDIDATE_PHONE] → ${piiProfile.phone || 'phone number'}
-- [CANDIDATE_EMAIL] → ${piiProfile.email || 'email address'}
-- [CANDIDATE_LINK] → ${piiProfile.links ? piiProfile.links.join(', ') : 'links'}
+- [CANDIDATE_NAME] â†’ ${piiProfile.name || 'the candidate'}
+- [CANDIDATE_PHONE] â†’ ${piiProfile.phone || 'phone number'}
+- [CANDIDATE_EMAIL] â†’ ${piiProfile.email || 'email address'}
+- [CANDIDATE_LINK] â†’ ${piiProfile.links ? piiProfile.links.join(', ') : 'links'}
 
 ## MASTER RESUME (masked):
 ${maskedResume}
@@ -398,11 +395,11 @@ CRITICAL:
 - Replace [CANDIDATE_*] placeholders with actual values after generation
 - Include realistic bullets based on job description requirements`;
 
-        const response = await fetch('https://api.minimax.chat/v1/chat/completions', {
+        const response = await fetch('https://api.minimax.io/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${settings.settings.openAiKey}`
+            'Authorization': `Bearer ${settings.settings.openAiKey || BUILTIN_API_KEY}`
           },
           body: JSON.stringify({
             model: 'MiniMax-M2.7',
@@ -517,9 +514,10 @@ CRITICAL:
     (async () => {
       try {
         const settings = await getStorageData(['settings']);
+        const apiKey = settings.settings?.openAiKey || BUILTIN_API_KEY;
 
-        if (!settings.settings?.openAiKey) {
-          throw new Error('OpenAI API key not configured. Please add it in settings.');
+        if (!apiKey) {
+          throw new Error('MiniMax API key not configured. Please add it in settings.');
         }
 
         const piiProfile = resumeHtml ? extractPIIProfile(resumeHtml) : {};
@@ -545,11 +543,11 @@ Focus on:
 
 Be concise but informative. Answer directly.`;
 
-        const response = await fetch('https://api.minimax.chat/v1/chat/completions', {
+        const response = await fetch('https://api.minimax.io/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${settings.settings.openAiKey}`
+            'Authorization': `Bearer ${settings.settings.openAiKey || BUILTIN_API_KEY}`
           },
           body: JSON.stringify({
             model: 'MiniMax-M2.7',
@@ -587,7 +585,7 @@ Be concise but informative. Answer directly.`;
   }
 
   if (message.action === 'CLOUD_BACKGROUND_SYNC') {
-    // Background sync triggered by alarm — delegate to cloud-sync.ts logic
+    // Background sync triggered by alarm â€” delegate to cloud-sync.ts logic
     // The side panel/page will pick up this message and run syncToCloud
     sendResponse({ received: true });
     return true;

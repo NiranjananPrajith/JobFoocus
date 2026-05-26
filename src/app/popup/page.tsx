@@ -149,7 +149,7 @@ export default function PopupPage() {
     <div className="w-[350px] p-4 space-y-3">
       {/* Header */}
       <div className="text-center mb-4">
-        <h1 className="text-lg font-semibold text-ink">Job Foocus</h1>
+        <img src="./icon_wide.webp" alt="Job Foocus" className="h-8 object-contain mx-auto" />
         {activeJob && (
           <p className="text-xs text-steel mt-1 truncate">{activeJob.company}</p>
         )}

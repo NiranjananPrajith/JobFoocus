@@ -15,7 +15,7 @@ import {
 import { syncToCloud, type CloudProvider } from '@/lib/cloud-sync';
 import Button from '@/components/design/Button';
 import Card from '@/components/design/Card';
-import SunsetStripeBand from '@/components/design/sunset-stripe-band';
+
 
 type DataMgmtState = 'idle' | 'exporting' | 'importing' | 'success' | 'error';
 type CloudStatus = 'disconnected' | 'connected' | 'syncing';
@@ -357,7 +357,6 @@ export default function DataManagement() {
         </div>
       )}
 
-      <SunsetStripeBand />
     </div>
   );
 }

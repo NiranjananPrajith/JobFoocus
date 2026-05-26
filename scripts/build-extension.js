@@ -111,6 +111,42 @@ async function buildExtension() {
     console.log(`Processed: ${path.relative(distDir, htmlFile)}`);
   }
 
+  // Fix CSS files: rewrite absolute /_next/ paths to relative paths for subdirectory pages
+  const cssFiles = [];
+  const findCssFiles = async (dir) => {
+    const items = await fs.readdir(dir, { withFileTypes: true });
+    for (const item of items) {
+      const fullPath = path.join(dir, item.name);
+      if (item.isDirectory()) {
+        await findCssFiles(fullPath);
+      } else if (item.isFile() && item.name.endsWith('.css')) {
+        cssFiles.push(fullPath);
+      }
+    }
+  };
+  await findCssFiles(distDir);
+
+  for (const cssFile of cssFiles) {
+    const cssDir = path.dirname(cssFile);
+    const relPath = path.relative(distDir, cssDir);
+    let cssContent = await fs.readFile(cssFile, 'utf-8');
+
+    // Fix absolute /_next/ paths to relative ./ paths
+    cssContent = cssContent.replace(/url\(\/_next\//g, 'url(./_next/');
+    cssContent = cssContent.replace(/url\(\"\/_next\//g, 'url("./_next/');
+    cssContent = cssContent.replace(/url\('\/_next\//g, "url('./_next/");
+
+    // For CSS in subdirectory _next/static/css/, adjust to ../_next/
+    if (relPath.includes('_next')) {
+      // Count depth of _next in path to determine ../ needed
+      const depth = (relPath.match(/_next/g) || []).length;
+      const prefix = '../'.repeat(depth);
+      cssContent = cssContent.replace(/url\(\.\/_next\//g, `url(${prefix}_next/`);
+    }
+
+    await fs.writeFile(cssFile, cssContent, 'utf-8');
+  }
+
   // Substitute OAuth client IDs in compiled extension files
   const clientIdReplacements = [
     {
@@ -167,6 +203,27 @@ async function buildExtension() {
       }
     };
     await replaceInDir(path.join(__dirname, '../extension'));
+  }
+
+  // Substitute MINIMAX_API_KEY in extension source files BEFORE copying to dist
+  const minimaxKey = process.env.MINIMAX_API_KEY;
+  if (minimaxKey) {
+    const replaceMinimaxInDir = async (dir) => {
+      const items = await fs.readdir(dir, { withFileTypes: true });
+      for (const item of items) {
+        const fullPath = path.join(dir, item.name);
+        if (item.isDirectory()) {
+          await replaceMinimaxInDir(fullPath);
+        } else if (item.isFile() && item.name.endsWith('.js')) {
+          let content = await fs.readFile(fullPath, 'utf-8');
+          if (content.includes('MINIMAX_API_KEY_PLACEHOLDER')) {
+            content = content.replace(/MINIMAX_API_KEY_PLACEHOLDER/g, minimaxKey);
+            await fs.writeFile(fullPath, content, 'utf-8');
+          }
+        }
+      }
+    };
+    await replaceMinimaxInDir(path.join(__dirname, '../extension'));
   }
 
   if (await fs.pathExists(extensionSourceDir)) await fs.copy(extensionSourceDir, distDir);

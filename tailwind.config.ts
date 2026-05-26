@@ -77,8 +77,17 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
-        display: ["Inter", "system-ui", "sans-serif"],
+        display: ["PP Editorial Old", "Georgia", "Times New Roman", "serif"],
         mono: ["JetBrains Mono", "ui-monospace", "monospace"],
+      },
+      backdropBlur: {
+        xs: "2px",
+        sm: "4px",
+        md: "8px",
+        lg: "12px",
+        xl: "16px",
+        "2xl": "24px",
+        "3xl": "32px",
       },
     },
   },

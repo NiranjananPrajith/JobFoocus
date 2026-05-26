@@ -50,11 +50,7 @@ export async function setLocalData(key: string, value: any): Promise<void> {
   }
 }
 
-export const CATEGORIES = {
-  '1_tech_support': { name: 'Tech Support', color: '#0d6efd', priority: 1 },
-  '2_general_basic': { name: 'General', color: '#198754', priority: 2 },
-  '3_kitchen_cook': { name: 'Kitchen', color: '#fd7e14', priority: 3 },
-} as const;
+export const CATEGORIES = {} as const;
 
 export const STATUS_CONFIG = {
   prospect: { label: 'Prospect', color: '#888888' },
@@ -65,7 +61,7 @@ export const STATUS_CONFIG = {
   rejected: { label: 'Rejected', color: '#e74c3c' },
 } as const;
 
-export type CategoryKey = keyof typeof CATEGORIES;
+export type CategoryKey = string;
 export type StatusKey = keyof typeof STATUS_CONFIG;
 
 export interface ApplicationDocument {
@@ -145,7 +141,7 @@ export async function saveApplication(
 ): Promise<void> {
   const key = `${category}/${folderName}`;
   const existingData = (await getLocalData('applications')) || {};
-  const categoryInfo = CATEGORIES[category];
+  const existing = existingData[key] as EnrichedApplication | undefined;
   const now = new Date();
   const appliedDate = new Date(appData.date_applied);
   const daysSinceApplied = Math.floor((now.getTime() - appliedDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -154,8 +150,8 @@ export async function saveApplication(
     ...appData,
     category: category,
     category_key: category,
-    category_name: categoryInfo.name,
-    category_color: categoryInfo.color,
+    category_name: existing?.category_name || String(category),
+    category_color: existing?.category_color || '#888888',
     folder: folderName,
     path: key,
     has_job_description: true,
@@ -163,7 +159,7 @@ export async function saveApplication(
     has_cover_letter: true,
     days_since_applied: daysSinceApplied,
     needs_followup: ['prospect', 'applied'].includes(appData.status) && daysSinceApplied > 7,
-    files: [],
+    files: existing?.files || [],
   };
 
   existingData[key] = enriched;
@@ -197,7 +193,15 @@ export async function getApplicationsByStatus(applications: EnrichedApplication[
 export async function getCategoryStats(applications: EnrichedApplication[]): Promise<CategoryStats[]> {
   const stats: CategoryStats[] = [];
 
-  for (const [categoryKey, categoryInfo] of Object.entries(CATEGORIES)) {
+  // Derive categories from applications
+  const categoryMap = new Map<string, { name: string; color: string }>();
+  for (const app of applications) {
+    if (!categoryMap.has(app.category_key)) {
+      categoryMap.set(app.category_key, { name: app.category_name, color: app.category_color });
+    }
+  }
+
+  for (const [categoryKey, categoryInfo] of Array.from(categoryMap.entries())) {
     const categoryApps = applications.filter((a) => a.category_key === categoryKey);
 
     const byStatus: Record<StatusKey, number> = {

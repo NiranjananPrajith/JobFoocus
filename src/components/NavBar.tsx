@@ -27,9 +27,9 @@ export default function NavBar() {
       >
         <div className="max-w-[1280px] mx-auto px-4 md:px-6 h-full flex items-center justify-between">
           {/* Left - Brand */}
-          <a href="./index.html" className="flex items-center">
+          <a href="./index.html" className="flex items-center gap-3">
             <img
-              src="/icon_wide.webp"
+              src="./icon_wide.webp"
               alt="Job Foocus"
               className="h-8 object-contain"
             />

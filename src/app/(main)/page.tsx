@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import ApplicationCard from '@/components/ApplicationCard';
 import Badge from '@/components/design/Badge';
 import Card from '@/components/design/Card';
+import CategoryStats from '@/components/CategoryStats';
 import DataManagement from '@/components/DataManagement';
-import { getAllApplications, getCategoryStats, type EnrichedApplication, type CategoryStats } from '@/lib/storage-adapter';
+import { getAllApplications, getCategoryStats, type EnrichedApplication, type CategoryStats as CategoryStatsType } from '@/lib/storage-adapter';
 
 interface Stats {
   total_jobs: number;
@@ -20,7 +21,7 @@ interface Stats {
 export default function DashboardPage() {
   const [applications, setApplications] = useState<EnrichedApplication[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
-  const [categoryStats, setCategoryStats] = useState<CategoryStats[]>([]);
+  const [categoryStats, setCategoryStats] = useState<CategoryStatsType[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,7 +32,6 @@ export default function DashboardPage() {
         setApplications(apps);
         setCategoryStats(catStats);
 
-        // Compute stats
         const total_jobs = apps.length;
         const total_applied = apps.filter(a => a.status === 'applied').length;
         const total_prospects = apps.filter(a => a.status === 'prospect').length;
@@ -75,7 +75,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div>
       {/* Page Header */}
       <div className="mb-6 md:mb-8">
         <h1
@@ -127,14 +127,7 @@ export default function DashboardPage() {
       {categoryStats.length > 0 && (
         <div className="mb-6 md:mb-8">
           <h2 className="text-[12px] font-bold uppercase tracking-[0.05em] text-steel mb-4">By Category</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {categoryStats.map((cat) => (
-              <Card key={cat.category} variant="cream">
-                <div className="text-[32px] font-semibold text-ink">{cat.count}</div>
-                <div className="text-[12px] text-steel capitalize mt-1">{cat.category.replace(/_/g, ' ')}</div>
-              </Card>
-            ))}
-          </div>
+          <CategoryStats stats={categoryStats} />
         </div>
       )}
 

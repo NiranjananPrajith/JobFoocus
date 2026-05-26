@@ -36,9 +36,10 @@ const ApplicationCard = ({
     color: '#ffffff',
   };
 
-  // Calculate days since applied
   const daysSinceApplied = date_applied
-    ? Math.floor((Date.now() - new Date(date_applied).getTime()) / (1000 * 60 * 60 * 24))
+    ? Math.floor(
+        (Date.now() - new Date(date_applied).getTime()) / (1000 * 60 * 60 * 24)
+      )
     : null;
 
   const handleMarkApplied = (e: React.MouseEvent) => {
@@ -51,7 +52,10 @@ const ApplicationCard = ({
 
   return (
     <a href={`/application?app=${id}`} className="block">
-      <Card variant="default" className="hover:shadow-[rgba(0,0,0,0.04)_0px_4px_12px] transition-shadow duration-200 cursor-pointer">
+      <Card
+        variant="default"
+        className="hover:shadow-[rgba(0,0,0,0.04)_0px_4px_12px] transition-shadow duration-200 cursor-pointer"
+      >
         {/* Header */}
         <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex-1 min-w-0">
@@ -90,15 +94,14 @@ const ApplicationCard = ({
           <div className="text-[12px] leading-[16px] text-steel font-mono">
             {date_applied && status !== 'prospect' && (
               <p>
-                Applied: {new Date(date_applied).toLocaleDateString('en-US', {
+                Applied:{' '}
+                {new Date(date_applied).toLocaleDateString('en-US', {
                   month: 'short',
                   day: 'numeric',
                   year: 'numeric',
                 })}
                 {daysSinceApplied !== null && (
-                  <span className="ml-2 text-muted">
-                    ({daysSinceApplied}d ago)
-                  </span>
+                  <span className="ml-2 text-muted">({daysSinceApplied}d ago)</span>
                 )}
               </p>
             )}

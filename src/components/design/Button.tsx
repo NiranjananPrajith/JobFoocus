@@ -2,7 +2,17 @@
 
 import React from 'react';
 
-type ButtonVariant = 'primary' | 'cream' | 'dark' | 'secondary' | 'on-cream' | 'link';
+type ButtonVariant =
+  | 'primary'
+  | 'cream'
+  | 'dark'
+  | 'secondary'
+  | 'on-cream'
+  | 'link'
+  | 'ghost'
+  | 'outline'
+  | 'destructive'
+  | 'subtle';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -19,9 +29,19 @@ const Button = ({
     primary: 'bg-primary text-on-primary hover:bg-primary-deep',
     cream: 'bg-cream text-ink border border-beige-deep hover:bg-cream-deeper',
     dark: 'bg-ink text-on-dark hover:bg-charcoal',
-    secondary: 'bg-transparent text-ink border border-hairline-strong hover:bg-surface',
-    'on-cream': 'bg-canvas text-ink border border-beige-deep hover:bg-cream-light',
+    secondary:
+      'bg-transparent text-ink border border-hairline-strong hover:bg-surface',
+    'on-cream':
+      'bg-canvas text-ink border border-beige-deep hover:bg-cream-light',
     link: 'bg-transparent text-primary hover:underline p-0',
+    ghost:
+      'bg-transparent text-ink hover:bg-surface border border-transparent',
+    outline:
+      'bg-transparent text-primary border border-primary hover:bg-primary/5',
+    destructive:
+      'bg-red-600 text-white hover:bg-red-700 border border-red-700',
+    subtle:
+      'bg-primary/10 text-primary hover:bg-primary/20 border border-transparent',
   };
 
   const classes = [
@@ -32,7 +52,9 @@ const Button = ({
     'focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed',
     variantClasses[variant],
     className,
-  ].filter(Boolean).join(' ');
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <button className={classes} {...props}>
