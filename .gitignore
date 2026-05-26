@@ -16,6 +16,9 @@ applications/
 .DS_Store
 Thumbs.db
 
+# TypeScript build cache
+*.tsbuildinfo
+
 # Environment (private = secrets, public = safe-to-share IDs)
 .env
 .env.local
