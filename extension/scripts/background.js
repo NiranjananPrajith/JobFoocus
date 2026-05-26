@@ -184,17 +184,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     switch (provider) {
       case 'google':
-        clientId = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+        clientId = 'test-google-id';
         authUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
         scope = 'https://www.googleapis.com/auth/drive.appdata';
         break;
       case 'onedrive':
-        clientId = 'YOUR_ONEDRIVE_CLIENT_ID';
+        clientId = 'test-onedrive-id';
         authUrl = 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize';
         scope = 'https://graph.microsoft.com/files.readwrite.appfolder';
         break;
       case 'dropbox':
-        clientId = 'YOUR_DROPBOX_CLIENT_ID';
+        clientId = 'test-dropbox-id';
         authUrl = 'https://www.dropbox.com/oauth2/authorize';
         scope = '';
         break;
@@ -398,14 +398,14 @@ CRITICAL:
 - Replace [CANDIDATE_*] placeholders with actual values after generation
 - Include realistic bullets based on job description requirements`;
 
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        const response = await fetch('https://api.minimax.chat/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${settings.settings.openAiKey}`
           },
           body: JSON.stringify({
-            model: 'gpt-4o',
+            model: 'MiniMax-M2.7',
             messages: [
               {
                 role: 'system',
@@ -423,7 +423,7 @@ CRITICAL:
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(`OpenAI API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+          throw new Error(`MiniMax API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
         }
 
         const data = await response.json();
@@ -446,9 +446,9 @@ CRITICAL:
         parsed.coverLetterHtml = demaskPII(parsed.coverLetterHtml, piiProfile);
 
         // 5. Save application to storage
-        const category = classifyCategory(jobDescription);
+        const categoryFinal = classifyCategory(jobDescription);
         const folderName = generateFolderName(parsed.companyName, parsed.jobTitle);
-        const categoryKey = `${category}/${folderName}`;
+        const categoryKey = `${categoryFinal}/${folderName}`;
 
         const existingApps = (await getStorageData('applications')) || {};
 
@@ -545,14 +545,14 @@ Focus on:
 
 Be concise but informative. Answer directly.`;
 
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        const response = await fetch('https://api.minimax.chat/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${settings.settings.openAiKey}`
           },
           body: JSON.stringify({
-            model: 'gpt-4o',
+            model: 'MiniMax-M2.7',
             messages: [
               {
                 role: 'system',
@@ -570,7 +570,7 @@ Be concise but informative. Answer directly.`;
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(`OpenAI API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+          throw new Error(`MiniMax API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
         }
 
         const data = await response.json();

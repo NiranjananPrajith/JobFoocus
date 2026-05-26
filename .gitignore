@@ -16,6 +16,8 @@ applications/
 .DS_Store
 Thumbs.db
 
-# Environment
+# Environment (private = secrets, public = safe-to-share IDs)
 .env
 .env.local
+.env.private
+.env.public
