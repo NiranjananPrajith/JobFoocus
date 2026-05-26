@@ -2,18 +2,19 @@
 
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import AddJobModal from '@/components/AddJobModal';
 
 const navLinks = [
   { href: '/', label: 'Dashboard' },
-  { href: '/all-jobs', label: 'All Jobs' },
-  { href: '/applied', label: 'Applied' },
-  { href: '/prospects', label: 'Prospects' },
+  { href: '/jobs', label: 'Jobs' },
   { href: '/followups', label: 'Follow-ups' },
+  { href: '/master-resume', label: 'Resume' },
 ];
 
 export default function NavBar() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [addJobOpen, setAddJobOpen] = useState(false);
 
   return (
     <>
@@ -67,6 +68,7 @@ export default function NavBar() {
                 backgroundColor: '#fa520f',
                 fontFamily: 'Inter, system-ui, sans-serif',
               }}
+              onClick={() => setAddJobOpen(true)}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#cc3a05')}
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fa520f')}
             >
@@ -141,12 +143,14 @@ export default function NavBar() {
               backgroundColor: '#fa520f',
               fontFamily: 'Inter, system-ui, sans-serif',
             }}
-            onClick={() => setMobileMenuOpen(false)}
+            onClick={() => { setMobileMenuOpen(false); setAddJobOpen(true); }}
           >
             Add Job
           </button>
         </nav>
       </div>
+
+      <AddJobModal isOpen={addJobOpen} onClose={() => setAddJobOpen(false)} />
     </>
   );
 }

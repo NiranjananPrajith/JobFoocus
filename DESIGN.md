@@ -1,7 +1,7 @@
 ---
 version: alpha
-name: Mistral AI-design-analysis
-description: Mistral AI brands itself with a singular signature — atmospheric sunset gradients (mustard, orange, deep red) layered over photography of mountains, plus a horizontal "sunset stripe" bar that closes every page. The system pairs warm cream-yellow surfaces ({colors.cream}) with a saturated orange primary CTA ({colors.primary}) and uses an elegant near-serif voice for hero displays. Coverage spans homepage (Frontier AI hero), Le Studio product page, Coding solutions, news article surfaces, contact form, and services tier page — all anchored by the signature gradient closing band.
+name: Job Foocus-design-analysis
+description: Job Foocus is a job application tracker with a distinctive sunset gradient signature — atmospheric sunset gradients (mustard, orange, deep red) layered over photography of mountains, plus a horizontal "sunset stripe" bar that closes every page. The system pairs warm cream-yellow surfaces ({colors.cream}) with a saturated orange primary CTA ({colors.primary}) and uses an elegant near-serif voice for hero displays. Coverage spans the main dashboard, job application tracker, resume builder, and all supporting surfaces — all anchored by the signature gradient closing band.
 
 colors:
   primary: "#fa520f"
@@ -401,9 +401,9 @@ components:
 
 ## Overview
 
-Mistral AI carries itself with a singular, almost cinematographic visual signature — the homepage opens with "Frontier AI. In your hands." rendered in elegant near-serif display type over a photographic mountain landscape bathed in mustard-orange sunset light. Below the hero, every page closes with the same recognizable element: a horizontal "sunset stripe" gradient band running red→orange→yellow→cream that wraps the foot of the page just above the footer. This stripe is THE brand recognizer — it appears on the homepage, products/studio, solutions/coding, news articles, contact form, and services tier page without exception.
+Job Foocus carries itself with a singular, almost cinematographic visual signature — the homepage opens with "Frontier AI. In your hands." rendered in elegant near-serif display type over a photographic mountain landscape bathed in mustard-orange sunset light. Below the hero, every page closes with the same recognizable element: a horizontal "sunset stripe" gradient band running red→orange→yellow→cream that wraps the foot of the page just above the footer. This stripe is THE brand recognizer — it appears on the dashboard, job tracker, resume builder, and all pages without exception.
 
-The system pairs PP Editorial Old (a near-serif elegant display face) for hero displays with Inter for everything else (body, headings, UI). Cream-yellow surfaces ({colors.cream}, {colors.surface-cream-soft}) anchor form panels and feature cards; saturated orange ({colors.primary}) carries primary CTAs; the deep mountain photography on the homepage and the dark code mockups inside Le Studio create photographic depth. Cards are rectangular with `{rounded.lg}` (12px) corners — distinctly less playful than Miro's or Mintlify's pill-buttons-everywhere approach. Buttons are also `{rounded.md}` (8px), not pills — Mistral's geometry is more sober and editorial than its peers.
+The system pairs PP Editorial Old (a near-serif elegant display face) for hero displays with Inter for everything else (body, headings, UI). Cream-yellow surfaces ({colors.cream}, {colors.surface-cream-soft}) anchor form panels and feature cards; saturated orange ({colors.primary}) carries primary CTAs; the deep mountain photography on the homepage creates photographic depth. Cards are rectangular with `{rounded.lg}` (12px) corners — distinctly less playful than Miro's or Mintlify's pill-buttons-everywhere approach. Buttons are also `{rounded.md}` (8px), not pills — the geometry is more sober and editorial than its peers.
 
 **Key Characteristics:**
 - Atmospheric mountain-sunset hero photography (orange-red-yellow gradient sky)
@@ -418,7 +418,7 @@ The system pairs PP Editorial Old (a near-serif elegant display face) for hero d
 > Source pages: mistral.ai/ (homepage), /products/studio (Le Studio product), /solutions/coding (coding solution), /news/vibe-remote-agents-mistral-medium-3-5 (news), /contact (contact form), /services (services tiers). Token coverage was identical across all six pages.
 
 ### Brand & Accent
-- **Mistral Orange** ({colors.primary}): Primary CTA color, brand orange
+- **Job Foocus Orange** ({colors.primary}): Primary CTA color, brand orange
 - **Orange Deep** ({colors.primary-deep}): Pressed-state and emphasis variant
 - **Sunshine 300** ({colors.sunshine-300}): Atmospheric light orange-yellow
 - **Sunshine 500** ({colors.sunshine-500}): Mid-spectrum sunset orange
@@ -461,7 +461,7 @@ The system pairs PP Editorial Old (a near-serif elegant display face) for hero d
 ## Typography
 
 ### Font Family
-**PP Editorial Old** (display): Mistral's signature near-serif elegant display typeface used for hero displays, large numbers, and editorial section openers. Carries a slightly classical, intelligent character that contrasts the contemporary product positioning. Fallbacks: 'Times New Roman', Georgia, serif.
+**PP Editorial Old** (display): The signature near-serif elegant display typeface used for hero displays, large numbers, and editorial section openers. Carries a slightly classical, intelligent character that contrasts the contemporary product positioning. Fallbacks: 'Times New Roman', Georgia, serif.
 
 **Inter** (UI prose): Variable typeface for body, navigation, buttons, labels, captions. Fallbacks: ui-sans-serif, system-ui, -apple-system, sans-serif.
 
@@ -529,7 +529,7 @@ The system runs predominantly flat with strategic atmospheric depth from photogr
 | 4 (modal) | `rgba(0, 0, 0, 0.12) 0px 16px 48px -8px` | Modals, dropdowns |
 
 ### Decorative Depth
-- The atmospheric depth on Mistral's hero comes from the photographic mountain-sunset imagery — natural light gradient does the work
+- The atmospheric depth on the hero comes from the photographic mountain-sunset imagery — natural light gradient does the work
 - The "sunset stripe" closing band carries depth via its multi-stop gradient (red → orange → yellow → cream)
 - IDE / code mockups use dark-canvas backgrounds with subtle drop shadow
 
@@ -547,7 +547,7 @@ The system runs predominantly flat with strategic atmospheric depth from photogr
 | `{rounded.xxl}` | 20px | Featured emphasis cards |
 | `{rounded.full}` | 9999px | Status badges, pill tabs (used sparingly — most buttons are NOT pills) |
 
-The radius scale is sober and editorial — Mistral does NOT use pill buttons. `{rounded.md}` (8px) for buttons, `{rounded.lg}` (12px) for cards, `{rounded.full}` reserved for badges and the rare pill tab.
+The radius scale is sober and editorial — Job Foocus does NOT use pill buttons. `{rounded.md}` (8px) for buttons, `{rounded.lg}` (12px) for cards, `{rounded.full}` reserved for badges and the rare pill tab.
 
 ### Photography Geometry
 - Hero photography is full-bleed atmospheric mountain-sunset imagery with no internal framing
@@ -680,7 +680,7 @@ The radius scale is sober and editorial — Mistral does NOT use pill buttons. `
 
 **Top Navigation (Marketing)** — Sticky white bar.
 - Background `{colors.canvas}`, height ~64px, bottom border `1px solid {colors.hairline-soft}`.
-- Left: Mistral M-mark logo + "MISTRAL AI_" wordmark + horizontal link list (Products, Solutions, Research, Blog, Customers, Company).
+- Left: Job Foocus logo mark + "JOB FOOCUS" wordmark + horizontal link list (Dashboard, Jobs, Resume, Follow-ups, Settings).
 - Right: "Contact Sales" link + black-pill "Try Studio" CTA.
 
 ### Signature Components
@@ -698,7 +698,7 @@ The radius scale is sober and editorial — Mistral does NOT use pill buttons. `
 
 **`footer-region`** — Cream-tinted multi-column footer.
 - Background `{colors.footer-cream}`, padding `{spacing.section} {spacing.xxl}`.
-- 5-column link grid (Why Mistral / Explore / Build / Legal + brand mark column).
+- 5-column link grid (Why Job Foocus / Explore / Build / Legal + brand mark column).
 - Bottom: language picker + social icons.
 
 **`footer-link`** — Individual footer link.
@@ -716,7 +716,7 @@ The radius scale is sober and editorial — Mistral does NOT use pill buttons. `
 - Use stat-display token (PP Editorial 56px) for stat callouts to maintain editorial character
 
 ### Don't
-- Don't use pill-shaped buttons (`{rounded.full}`) — Mistral's geometry is sober and editorial, not playful
+- Don't use pill-shaped buttons (`{rounded.full}`) — the geometry is sober and editorial, not playful
 - Don't introduce additional accent colors beyond the orange/yellow/cream sunset palette
 - Don't reduce hero leading below 1.05 — the editorial display needs that magazine-grade tightness
 - Don't replace PP Editorial Old hero displays with Inter — the editorial / sans contrast IS the brand

@@ -10,7 +10,7 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-[24px] py-12 md:py-[48px]">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="text-[14px] leading-[20px]">
-            <p>JobHunt - Job Application Tracker</p>
+            <p>Job Foocus - Job Application Tracker</p>
             <p className="text-[#868685] mt-1">Tracking your job search journey</p>
           </div>
           <div className="text-[14px] leading-[20px] text-[#868685]">

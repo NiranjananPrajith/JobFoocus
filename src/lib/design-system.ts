@@ -1,4 +1,4 @@
-// Design System Tokens for JobHunt
+// Design System Tokens for Job Foocus
 // Mistral AI Design System
 
 // ============================================
