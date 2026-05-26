@@ -17,8 +17,6 @@ Thumbs.db
 # TypeScript build cache
 *.tsbuildinfo
 
-# Environment (private = secrets, public = safe-to-share IDs)
+# Environment — all .env files contain secrets, never commit
 .env
 .env.local
-.env.private
-# .env.public is tracked (contains only public OAuth client IDs)

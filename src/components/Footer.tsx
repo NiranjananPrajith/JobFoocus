@@ -26,7 +26,7 @@ export default function Footer() {
             <div className="md:col-span-1">
               <a href="./index.html" className="flex items-center gap-2 mb-4">
                 <img
-                  src="./icon_wide.webp"
+                  src="/icon_wide.webp"
                   alt="Job Foocus"
                   className="h-8 object-contain"
                 />

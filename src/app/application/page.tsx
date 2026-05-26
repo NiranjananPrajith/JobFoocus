@@ -35,9 +35,15 @@ function ApplicationContent() {
   const searchParams = useSearchParams();
   const appId = searchParams.get('app');
 
+  // Extension query parameters
+  const extTitle = searchParams.get('title');
+  const extCompany = searchParams.get('company');
+  const extJd = searchParams.get('jd');
+
   const [application, setApplication] = useState<Application | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isNewFromExtension, setIsNewFromExtension] = useState(false);
 
   // Form state
   const [company, setCompany] = useState('');
@@ -52,14 +58,15 @@ function ApplicationContent() {
   const [jobDescContent, setJobDescContent] = useState('');
   const [jobDescExpanded, setJobDescExpanded] = useState(true);
 
+  // Effect 1: Handle Job Description loading
   useEffect(() => {
     async function fetchJobDescription() {
-      if (!application?.has_job_description) return;
+      // If it is a brand new scraped job, the description is already set via state, skip fetching
+      if (isNewFromExtension || !application?.has_job_description) return;
 
       try {
         const html = await getDocumentHTML(application.category, application.folder, 'job_description');
         if (html) {
-          // Strip html, head, body wrapper tags but keep inner content
           let cleanedHtml = html.replace(/<html[^>]*>/gi, '').replace(/<\/html>/gi, '');
           cleanedHtml = cleanedHtml.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
           cleanedHtml = cleanedHtml.replace(/<body[^>]*>/gi, '').replace(/<\/body>/gi, '');
@@ -71,10 +78,48 @@ function ApplicationContent() {
     }
 
     fetchJobDescription();
-  }, [application]);
+  }, [application, isNewFromExtension]);
 
+  // Effect 2: Fetch application profile or seed from Extension URL params
   useEffect(() => {
     async function fetchData() {
+      // 1. Check if this is an incoming payload from the standalone browser extension
+      if (!appId && (extTitle || extCompany || extJd)) {
+        setIsNewFromExtension(true);
+        setCompany(extCompany || '');
+        setJobTitle(extTitle || '');
+        setJobDescContent(extJd || '');
+        setStatus('prospect');
+        setSource('Extension Scraper');
+
+        // Generate a provisional storage path context for the browser cache storage adapter
+        const generatedFolder = `job-${Date.now()}`;
+        setApplication({
+          company: extCompany || 'Unknown Company',
+          job_title: extTitle || 'Scraped Position',
+          date_applied: '',
+          status: 'prospect',
+          source: 'Extension Scraper',
+          contact_name: '',
+          contact_email: '',
+          notes: '',
+          response_date: '',
+          needs_followup: false,
+          category: 'prospect',
+          category_name: 'Prospect',
+          category_color: '#3B82F6',
+          folder: generatedFolder,
+          has_resume: false,
+          has_cover_letter: false,
+          has_job_description: !!extJd,
+          files: []
+        });
+
+        setLoading(false);
+        return;
+      }
+
+      // 2. Default behavior: Look up application data via existing saved index matching appId
       if (!appId) {
         setError('No application selected');
         setLoading(false);
@@ -82,7 +127,7 @@ function ApplicationContent() {
       }
 
       try {
-        const { getAllApplications, saveApplication } = await import('@/lib/storage-adapter');
+        const { getAllApplications } = await import('@/lib/storage-adapter');
         const apps = await getAllApplications();
         const found = apps.find((a) => `${a.category}/${a.folder}` === appId);
 
@@ -102,6 +147,7 @@ function ApplicationContent() {
         setContactName(found.contact_name || '');
         setContactEmail(found.contact_email || '');
         setSource(found.source || '');
+        setIsNewFromExtension(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load');
       } finally {
@@ -110,13 +156,15 @@ function ApplicationContent() {
     }
 
     fetchData();
-  }, [appId]);
+  }, [appId, extTitle, extCompany, extJd]);
 
   const handleSave = async () => {
     if (!application) return;
 
     try {
       const { saveApplication } = await import('@/lib/storage-adapter');
+
+      // Save metadata properties
       await saveApplication(application.category as any, application.folder, {
         company,
         job_title: jobTitle,
@@ -130,6 +178,20 @@ function ApplicationContent() {
         documents: [],
         job_url: null,
       });
+
+      // If it is a new application from the extension, save the text as the job description asset
+      if (isNewFromExtension && jobDescContent) {
+        // Checking if saveDocumentHTML or similar exists inside your storage adapter
+        try {
+          const { saveDocumentHTML } = await import('@/lib/storage-adapter');
+          if (typeof saveDocumentHTML === 'function') {
+            await saveDocumentHTML(application.category, application.folder, 'job_description', `<div>${jobDescContent}</div>`);
+          }
+        } catch (e) {
+          console.warn('Could not explicitly write job description asset file:', e);
+        }
+        setIsNewFromExtension(false); // Transition out of extension layout initialization state
+      }
 
       alert('Application saved successfully!');
     } catch (err) {
@@ -207,8 +269,17 @@ function ApplicationContent() {
       {/* Header Card */}
       <Card variant="cream" className="mb-4 md:mb-6">
         <div>
-          <h1 className="text-[28px] md:text-[36px] font-medium text-ink mb-1">{company}</h1>
-          <p className="text-[14px] md:text-[18px] text-steel mb-3">{jobTitle}</p>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <h1 className="text-[28px] md:text-[36px] font-medium text-ink mb-1">{company}</h1>
+              <p className="text-[14px] md:text-[18px] text-steel mb-3">{jobTitle}</p>
+            </div>
+            {isNewFromExtension && (
+              <span className="bg-amber-100 text-amber-800 text-xs font-semibold px-2.5 py-1 rounded border border-amber-200 animate-pulse">
+                Imported from Extension (Unsaved)
+              </span>
+            )}
+          </div>
           <div className="flex flex-wrap items-center gap-3 text-[13px] text-steel">
             {status && <Badge status={status as StatusType} />}
             {application.needs_followup && (
@@ -253,7 +324,7 @@ function ApplicationContent() {
               </span>
             )}
           </div>
-          {application.has_job_description && (
+          {(application.has_job_description || isNewFromExtension) && (
             <div className="mt-4 pt-4 border-t border-stone-200">
               <button
                 onClick={() => setJobDescExpanded(!jobDescExpanded)}
@@ -309,19 +380,6 @@ function ApplicationContent() {
                       font-weight: 600;
                     }
                   `}</style>
-                  <div className="mt-3 flex justify-end">
-                    <a
-                      href={`/document?app=${application.category}/${application.folder}&doc=job_description`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[12px] text-primary hover:text-primary/80 font-medium flex items-center gap-1"
-                    >
-                      Full view & print
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                      </svg>
-                    </a>
-                  </div>
                 </div>
               )}
             </div>
@@ -438,9 +496,9 @@ function ApplicationContent() {
                   variant="primary"
                   onClick={handleSave}
                 >
-                  Save Changes
+                  {isNewFromExtension ? 'Save Application Workspace' : 'Save Changes'}
                 </Button>
-                {status === 'prospect' && (
+                {status === 'prospect' && !isNewFromExtension && (
                   <Button
                     variant="dark"
                     onClick={handleMarkApplied}
@@ -455,43 +513,51 @@ function ApplicationContent() {
 
         {/* Right Column - Files */}
         <div className="lg:col-span-1 space-y-4">
-          {application.has_resume && (
-            <Card variant="default">
-              <h3 className="text-[18px] font-medium text-ink mb-4">Resume</h3>
-              <a
-                href={`/document?app=${application.category}/${application.folder}&doc=resume`}
-                className="flex items-center justify-between p-4 rounded-lg border border-primary bg-primary/5 hover:bg-primary/10 transition-colors"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-ink">View & Print to PDF</p>
-                  <p className="text-[12px] text-steel">Opens in new tab</p>
-                </div>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary shrink-0">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-              </a>
+          {isNewFromExtension ? (
+            <Card variant="default" className="bg-stone-50 border-dashed border-2 border-stone-200 text-center py-8">
+              <p className="text-sm text-steel mb-2">Save this application to begin generating documents</p>
+              <p className="text-xs text-stone-400">ATS Resume & Cover Letter options will appear once saved.</p>
             </Card>
-          )}
+          ) : (
+            <>
+              {application.has_resume && (
+                <Card variant="default">
+                  <h3 className="text-[18px] font-medium text-ink mb-4">Resume</h3>
+                  <a
+                    href={`/document?app=${application.category}/${application.folder}&doc=resume`}
+                    className="flex items-center justify-between p-4 rounded-lg border border-primary bg-primary/5 hover:bg-primary/10 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-ink">View & Print to PDF</p>
+                      <p className="text-[12px] text-steel">Opens in new tab</p>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary shrink-0">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                  </a>
+                </Card>
+              )}
 
-          {application.has_cover_letter && (
-            <Card variant="default">
-              <h3 className="text-[18px] font-medium text-ink mb-4">Cover Letter</h3>
-              <a
-                href={`/document?app=${application.category}/${application.folder}&doc=cover_letter`}
-                className="flex items-center justify-between p-4 rounded-lg border border-primary bg-primary/5 hover:bg-primary/10 transition-colors"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-ink">View & Print to PDF</p>
-                  <p className="text-[12px] text-steel">Opens in new tab</p>
-                </div>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary shrink-0">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-              </a>
-            </Card>
+              {application.has_cover_letter && (
+                <Card variant="default">
+                  <h3 className="text-[18px] font-medium text-ink mb-4">Cover Letter</h3>
+                  <a
+                    href={`/document?app=${application.category}/${application.folder}&doc=cover_letter`}
+                    className="flex items-center justify-between p-4 rounded-lg border border-primary bg-primary/5 hover:bg-primary/10 transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-ink">View & Print to PDF</p>
+                      <p className="text-[12px] text-steel">Opens in new tab</p>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary shrink-0">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                  </a>
+                </Card>
+              )}
+            </>
           )}
-
-                  </div>
+        </div>
       </div>
     </div>
   );

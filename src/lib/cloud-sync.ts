@@ -28,7 +28,7 @@ function getProviderConfig(provider: CloudProvider): CloudProviderConfig {
     case 'google':
       return {
         name: 'google',
-        clientId: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com', // Replace with real client ID
+        clientId: process.env.GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
         authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
         scope: 'https://www.googleapis.com/auth/drive.appdata',
         apiBase: 'https://www.googleapis.com/drive/v3',
@@ -37,7 +37,7 @@ function getProviderConfig(provider: CloudProvider): CloudProviderConfig {
     case 'onedrive':
       return {
         name: 'onedrive',
-        clientId: 'YOUR_ONEDRIVE_CLIENT_ID', // Replace with real client ID
+        clientId: process.env.ONEDRIVE_CLIENT_ID || 'YOUR_ONEDRIVE_CLIENT_ID',
         authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
         scope: 'https://graph.microsoft.com/files.readwrite.appfolder',
         apiBase: 'https://graph.microsoft.com/v1.0/me/drive/special/approot',
@@ -46,7 +46,7 @@ function getProviderConfig(provider: CloudProvider): CloudProviderConfig {
     case 'dropbox':
       return {
         name: 'dropbox',
-        clientId: 'YOUR_DROPBOX_CLIENT_ID', // Replace with real client ID
+        clientId: process.env.DROPBOX_CLIENT_ID || 'YOUR_DROPBOX_CLIENT_ID',
         authUrl: 'https://www.dropbox.com/oauth2/authorize',
         scope: '',
         apiBase: 'https://api.dropboxapi.com/2',
