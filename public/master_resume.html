@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Master Resume - Jane Doe</title>
+    <style>
+        @page { size: letter; margin: 0.6in; }
+        @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #222222;
+            line-height: 1.5;
+            font-size: 11pt;
+            margin: 0; padding: 0;
+        }
+        h1 { font-size: 22pt; text-align: center; margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
+        .contact-info { text-align: center; font-size: 10pt; color: #555555; margin-bottom: 24px; line-height: 1.6; }
+        h2 { font-size: 11pt; border-bottom: 1.5px solid #222222; margin: 24px 0 12px 0; padding-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+        .summary { margin-bottom: 20px; }
+        .summary p { margin: 0; text-align: justify; font-size: 10.5pt; line-height: 1.6; color: #333333; }
+        .skills-list { margin: 0 0 20px 0; padding: 0; list-style: none; }
+        .skills-list li { margin-bottom: 6px; font-size: 10.5pt; }
+        .skills-list li strong { color: #111111; font-weight: 600; }
+        .job-entry { margin-bottom: 18px; page-break-inside: avoid; }
+        .job-header { margin-bottom: 8px; display: block; position: relative; }
+        .job-title-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+        .company-name { font-weight: 700; font-size: 11pt; color: #111111; }
+        .job-date-location { display: block; font-weight: normal; font-style: normal; color: #666666; font-size: 9.5pt; margin-top: 2px; }
+        .job-title { font-style: italic; font-weight: 500; color: #333333; text-align: right; flex-shrink: 0; }
+        ul.achievements { margin: 0; padding-left: 18px; }
+        ul.achievements li { margin-bottom: 5px; text-align: justify; font-size: 10.5pt; line-height: 1.5; }
+        .edu-entry { margin-bottom: 10px; page-break-inside: avoid; font-size: 10.5pt; }
+        .edu-entry .job-date-location { float: none; display: block; margin-bottom: 2px; }
+        .edu-entry .company-name { font-weight: 600; }
+        .edu-entry .job-title { font-style: normal; color: #444444; }
+    </style>
+</head>
+<body>
+
+    <h1>Jane Doe</h1>
+    <div class="contact-info">
+        (555) 123-4567 &bull; janedoe@email.com &bull; Anytown, ON<br>
+        Availability: Monday – Friday, 9am – 5pm
+    </div>
+
+    <h2>Professional Summary</h2>
+    <div class="summary">
+        <p>Customer-focused professional with 3+ years of experience in fast-paced retail and service environments. Demonstrated ability to manage multiple priorities, resolve customer issues efficiently, and maintain accurate records. Known for reliable attendance, strong communication skills, and a collaborative team approach. Comfortable standing for extended periods and lifting up to 30 lbs.</p>
+    </div>
+
+    <h2>Skills</h2>
+    <ul class="skills-list">
+        <li><strong>Customer Service & Communication</strong>: Conflict resolution, active listening, clear verbal and written communication, professional demeanor</li>
+        <li><strong>Point of Sale & Cash Handling</strong>: POS terminal operation, cash reconciliation, credit/debit processing, accurate transaction logging</li>
+        <li><strong>Inventory & Stock Management</strong>: Receiving shipments, product stocking, shelf rotation, inventory counts, stockroom organization</li>
+        <li><strong>Teamwork & Reliability</strong>: Cross-functional collaboration, punctuality, adaptability, willingness to learn new systems and processes</li>
+        <li><strong>Technology</strong>: Microsoft Office Suite, Google Workspace, Square POS, Shopify POS, basic troubleshooting</li>
+    </ul>
+
+    <h2>Professional Experience</h2>
+
+    <div class="job-entry">
+        <div class="job-header">
+            <div class="job-title-row">
+                <span class="company-name">Best Buy</span>
+                <span class="job-title">Sales Associate</span>
+            </div>
+            <span class="job-date-location">June 2023 &ndash; Present | Toronto, ON</span>
+        </div>
+        <ul class="achievements">
+            <li>Assisted an average of 40+ customers daily with product selection, troubleshooting, and purchase decisions in a high-volume electronics retail environment.</li>
+            <li>Maintained a 4.5-star customer satisfaction rating through consistent follow-through and genuine problem-solving approach.</li>
+            <li>Processed 50+ daily transactions with zero cash handling errors over a 12-month period.</li>
+            <li>Supported inventory management by completing daily restocking, receiving shipments, and conducting monthly shelf audits.</li>
+        </ul>
+    </div>
+
+    <div class="job-entry">
+        <div class="job-header">
+            <div class="job-title-row">
+                <span class="company-name">Tim Hortons</span>
+                <span class="job-title">Crew Member</span>
+            </div>
+            <span class="job-date-location">September 2021 &ndash; May 2023 | Mississauga, ON</span>
+        </div>
+        <ul class="achievements">
+            <li>Prepared and served food and beverages to 200+ customers per shift in a fast-paced quick-service restaurant setting.</li>
+            <li>Maintained compliance with food safety standards and cleanliness protocols, receiving a 95% hygiene audit score.</li>
+            <li>Trained 5 new crew members on cash handling procedures, food preparation standards, and customer service expectations.</li>
+            <li>Demonstrated flexibility by covering opening, closing, and weekend shifts to ensure adequate staffing coverage.</li>
+        </ul>
+    </div>
+
+    <div class="job-entry">
+        <div class="job-header">
+            <div class="job-title-row">
+                <span class="company-name">Walmart Canada</span>
+                <span class="job-title">Cashier</span>
+            </div>
+            <span class="job-date-location">March 2020 &ndash; August 2021 | Brampton, ON</span>
+        </div>
+        <ul class="achievements">
+            <li>Processed customer transactions averaging 60 per shift with a 99.8% accuracy rate in cash reconciliation.</li>
+            <li>Handled customer returns and exchanges in accordance with store policy, resolving issues on first contact in most cases.</li>
+            <li>Assisted with inventory scanning and price ticketing during non-peak hours to support store operations.</li>
+        </ul>
+    </div>
+
+    <h2>Education</h2>
+    <div class="edu-entry">
+        <span class="job-date-location">2018 &ndash; 2020</span>
+        <span class="company-name">Business Administration Certificate</span> &ndash; <span class="job-title">Humber College, Toronto, ON</span>
+    </div>
+
+</body>
+</html>
