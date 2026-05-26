@@ -20,4 +20,4 @@ Thumbs.db
 .env
 .env.local
 .env.private
-.env.public
+# .env.public is tracked (contains only public OAuth client IDs)
