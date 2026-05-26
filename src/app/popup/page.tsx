@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getAllApplications, type EnrichedApplication } from '@/lib/storage-adapter';
+import { getAllApplications, setMasterResume, getMasterResume, type EnrichedApplication } from '@/lib/storage-adapter';
 import Button from '@/components/design/Button';
 import Card from '@/components/design/Card';
 
@@ -53,6 +53,22 @@ export default function PopupPage() {
     }
   };
 
+  // Load master resume from public/master_resume.html into storage if not already present
+  const ensureMasterResume = async () => {
+    const existing = await getMasterResume();
+    if (!existing) {
+      try {
+        const res = await fetch('./master_resume.html');
+        if (res.ok) {
+          const html = await res.text();
+          await setMasterResume(html);
+        }
+      } catch (e) {
+        console.warn('Could not load master resume from public/master_resume.html', e);
+      }
+    }
+  };
+
   const handleViewResume = () => {
     if (activeJob && typeof window !== 'undefined' && window.chrome?.runtime) {
       const url = chrome.runtime.getURL(`document/index.html?app=${activeJob.category}/${activeJob.folder}&doc=resume`);
@@ -79,6 +95,9 @@ export default function PopupPage() {
     setErrorMessage(null);
 
     try {
+      // Ensure master resume is loaded before generating
+      await ensureMasterResume();
+
       // 1. Get current active tab
       const [tab] = await new Promise<chrome.tabs.Tab[]>((resolve) => {
         chrome.tabs.query({ active: true, currentWindow: true }, resolve);
