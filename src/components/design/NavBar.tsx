@@ -4,11 +4,11 @@ import React from 'react';
 import { usePathname } from 'next/navigation';
 
 const navLinks = [
-  { href: './index.html', label: 'Dashboard' },
-  { href: './all-jobs/index.html', label: 'All Jobs' },
-  { href: './applied/index.html', label: 'Applied' },
-  { href: './prospects/index.html', label: 'Prospects' },
-  { href: './followups/index.html', label: 'Follow-ups' },
+  { href: '/', label: 'Dashboard' },
+  { href: '/all-jobs', label: 'All Jobs' },
+  { href: '/applied', label: 'Applied' },
+  { href: '/prospects', label: 'Prospects' },
+  { href: '/followups', label: 'Follow-ups' },
 ];
 
 const NavBar = () => {
@@ -19,7 +19,7 @@ const NavBar = () => {
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-[24px]">
         <div className="flex items-center justify-between h-14 md:h-16">
           {/* Logo / Brand */}
-          <a href="./index.html" className="flex items-center">
+          <a href="/" className="flex items-center">
             <span className="text-[14px] font-semibold leading-[20px] text-[#0e0f0c]">
               Job Foocus
             </span>

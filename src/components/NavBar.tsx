@@ -4,11 +4,11 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 
 const navLinks = [
-  { href: './index.html', label: 'Dashboard' },
-  { href: './all-jobs/index.html', label: 'All Jobs' },
-  { href: './applied/index.html', label: 'Applied' },
-  { href: './prospects/index.html', label: 'Prospects' },
-  { href: './followups/index.html', label: 'Follow-ups' },
+  { href: '/', label: 'Dashboard' },
+  { href: '/all-jobs', label: 'All Jobs' },
+  { href: '/applied', label: 'Applied' },
+  { href: '/prospects', label: 'Prospects' },
+  { href: '/followups', label: 'Follow-ups' },
 ];
 
 export default function NavBar() {
@@ -27,9 +27,9 @@ export default function NavBar() {
       >
         <div className="max-w-[1280px] mx-auto px-4 md:px-6 h-full flex items-center justify-between">
           {/* Left - Brand */}
-          <a href="./index.html" className="flex items-center gap-3">
+          <a href="/" className="flex items-center gap-3">
             <img
-              src="./icon_wide.webp"
+              src="/icon_wide.webp"
               alt="Job Foocus"
               className="h-8 object-contain"
             />
@@ -39,7 +39,9 @@ export default function NavBar() {
           <div className="flex items-center gap-4 md:gap-6">
             <nav className="hidden md:flex items-center gap-1">
               {navLinks.map((link) => {
-                const isActive = pathname === link.href;
+                const isActive = link.href === '/'
+                  ? pathname === '/'
+                  : pathname.startsWith(link.href);
                 return (
                   <a
                     key={link.href}
@@ -112,7 +114,9 @@ export default function NavBar() {
       >
         <nav className="flex flex-col p-4">
           {navLinks.map((link) => {
-            const isActive = pathname === link.href;
+            const isActive = link.href === '/'
+              ? pathname === '/'
+              : pathname.startsWith(link.href);
             return (
               <a
                 key={link.href + '-mobile'}
