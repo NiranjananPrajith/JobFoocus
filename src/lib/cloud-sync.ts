@@ -28,7 +28,7 @@ function getProviderConfig(provider: CloudProvider): CloudProviderConfig {
     case 'google':
       return {
         name: 'google',
-        clientId: process.env.GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
+        clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
         authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
         scope: 'https://www.googleapis.com/auth/drive.appdata',
         apiBase: 'https://www.googleapis.com/drive/v3',
@@ -56,44 +56,52 @@ function getProviderConfig(provider: CloudProvider): CloudProviderConfig {
 }
 
 // ---------------------------------------------------------------------------
-// OAuth Authentication via chrome.identity.launchWebAuthFlow
+// OAuth Authentication — extension (chrome.identity) or web (redirect)
 // ---------------------------------------------------------------------------
 
 export async function authenticateProvider(provider: CloudProvider): Promise<string> {
-  if (typeof chrome === 'undefined' || !chrome.identity) {
-    throw new Error('Cloud sync requires the Chrome extension context.');
-  }
-
   const config = getProviderConfig(provider);
 
-  const redirectUrl = chrome.identity.getRedirectURL();
+  if (typeof chrome !== 'undefined' && chrome.identity) {
+    // Running inside Chrome extension — use chrome.identity.launchWebAuthFlow
+    const redirectUrl = chrome.identity.getRedirectURL();
+    const scopeParam = provider === 'dropbox'
+      ? ''
+      : `&scope=${encodeURIComponent(config.scope)}`;
+    const fullAuthUrl =
+      `${config.authUrl}?client_id=${config.clientId}&redirect_uri=${encodeURIComponent(redirectUrl)}&response_type=token${scopeParam}`;
 
+    return new Promise((resolve, reject) => {
+      chrome.identity.launchWebAuthFlow(
+        { url: fullAuthUrl, interactive: true },
+        (responseUrl) => {
+          const err = (chrome as any).runtime?.lastError;
+          if (err || !responseUrl) {
+            return reject(err?.message || 'Authorization failed.');
+          }
+          const urlParts = new URL(responseUrl);
+          const fragment = urlParts.hash.substring(1);
+          const params = new URLSearchParams(fragment);
+          const token = params.get('access_token');
+          if (token) resolve(token);
+          else reject('Access token not found in redirect URL.');
+        }
+      );
+    });
+  }
+
+  // Web app context — use redirect-based OAuth (no chrome.identity)
+  const redirectUrl = `${window.location.origin}/auth/callback`;
   const scopeParam = provider === 'dropbox'
     ? ''
     : `&scope=${encodeURIComponent(config.scope)}`;
-
+  const state = `${provider}_${Date.now()}`;
+  sessionStorage.setItem('oauth_state', state);
   const fullAuthUrl =
-    `${config.authUrl}?client_id=${config.clientId}&redirect_uri=${encodeURIComponent(redirectUrl)}&response_type=token${scopeParam}`;
-
-  return new Promise((resolve, reject) => {
-    chrome.identity.launchWebAuthFlow(
-      { url: fullAuthUrl, interactive: true },
-      (responseUrl) => {
-        if (chrome.runtime.lastError || !responseUrl) {
-          return reject(chrome.runtime.lastError?.message || 'Authorization failed.');
-        }
-        const urlParts = new URL(responseUrl);
-        const fragment = urlParts.hash.substring(1);
-        const params = new URLSearchParams(fragment);
-        const token = params.get('access_token');
-        if (token) {
-          resolve(token);
-        } else {
-          reject('Access token not found in redirect URL.');
-        }
-      }
-    );
-  });
+    `${config.authUrl}?client_id=${config.clientId}&redirect_uri=${encodeURIComponent(redirectUrl)}&response_type=token&state=${state}${scopeParam}`;
+  window.location.href = fullAuthUrl;
+  // Never resolves — browser navigates away
+  return Promise.reject('redirecting');
 }
 
 // ---------------------------------------------------------------------------

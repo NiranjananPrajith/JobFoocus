@@ -39,7 +39,7 @@ const plans = [
     ctaVariant: 'primary' as const,
   },
   {
-    name: 'Assistant',
+    name: 'Max',
     price: '$10',
     period: 'per month',
     description: 'Maximum jobs, AI-written follow-up responses ready to send.',
@@ -51,7 +51,7 @@ const plans = [
       'Pre-written, ready-to-send follow-up messages',
       'Dedicated priority support',
     ],
-    cta: 'Get Assistant',
+    cta: 'Get Max',
     ctaVariant: 'dark' as const,
   },
 ];
