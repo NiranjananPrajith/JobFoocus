@@ -5,8 +5,9 @@ import { useSearchParams } from 'next/navigation';
 import Card from '@/components/design/Card';
 import Button from '@/components/design/Button';
 import Badge from '@/components/design/Badge';
-import { getDocumentHTML } from '@/lib/storage-adapter';
+import { getDocumentHTML, getAllApplications } from '@/lib/storage-adapter';
 import { StatusType } from '@/lib/design-system';
+import { generateJobEntryAndDocuments } from '@/lib/ai-generation';
 
 interface Application {
   company: string;
@@ -57,6 +58,8 @@ function ApplicationContent() {
   const [source, setSource] = useState('');
   const [jobDescContent, setJobDescContent] = useState('');
   const [jobDescExpanded, setJobDescExpanded] = useState(true);
+  const [isGeneratingResume, setIsGeneratingResume] = useState(false);
+  const [isGeneratingCoverLetter, setIsGeneratingCoverLetter] = useState(false);
 
   // Effect 1: Handle Job Description loading
   useEffect(() => {
@@ -511,51 +514,143 @@ function ApplicationContent() {
           </Card>
         </div>
 
-        {/* Right Column - Files */}
+        {/* Right Column - Files / Generation */}
         <div className="lg:col-span-1 space-y-4">
-          {isNewFromExtension ? (
-            <Card variant="default" className="bg-stone-50 border-dashed border-2 border-stone-200 text-center py-8">
-              <p className="text-sm text-steel mb-2">Save this application to begin generating documents</p>
-              <p className="text-xs text-stone-400">ATS Resume & Cover Letter options will appear once saved.</p>
+          {/* Resume Card */}
+          {application.has_resume ? (
+            <Card variant="default">
+              <h3 className="text-[18px] font-medium text-ink mb-4">Resume</h3>
+              <a
+                href={`/document?app=${application.category}/${application.folder}&doc=resume`}
+                className="flex items-center justify-between p-4 rounded-lg border border-primary bg-primary/5 hover:bg-primary/10 transition-colors"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-ink">View & Print to PDF</p>
+                  <p className="text-[12px] text-steel">Opens in new tab</p>
+                </div>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary shrink-0">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </a>
+            </Card>
+          ) : isGeneratingResume ? (
+            <Card variant="default">
+              <h3 className="text-[18px] font-medium text-ink mb-4">Resume</h3>
+              <div className="flex items-center gap-3 p-4 text-steel">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
+                  <line x1="12" y1="2" x2="12" y2="6" />
+                  <line x1="12" y1="18" x2="12" y2="22" />
+                  <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
+                  <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
+                  <line x1="2" y1="12" x2="6" y2="12" />
+                  <line x1="18" y1="12" x2="22" y2="12" />
+                  <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
+                  <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
+                </svg>
+                <span className="text-[14px]">Generating Resume...</span>
+              </div>
             </Card>
           ) : (
-            <>
-              {application.has_resume && (
-                <Card variant="default">
-                  <h3 className="text-[18px] font-medium text-ink mb-4">Resume</h3>
-                  <a
-                    href={`/document?app=${application.category}/${application.folder}&doc=resume`}
-                    className="flex items-center justify-between p-4 rounded-lg border border-primary bg-primary/5 hover:bg-primary/10 transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-ink">View & Print to PDF</p>
-                      <p className="text-[12px] text-steel">Opens in new tab</p>
-                    </div>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary shrink-0">
-                      <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                  </a>
-                </Card>
-              )}
+            <Card variant="default">
+              <h3 className="text-[18px] font-medium text-ink mb-4">Resume</h3>
+              <button
+                onClick={async () => {
+                  if (!application) return;
+                  setIsGeneratingResume(true);
+                  try {
+                    const { processJobDescription } = await import('@/lib/ai-generation');
+                    const jdHtml = await getDocumentHTML(application.category, application.folder, 'job_description');
+                    const jdText = jdHtml ? jdHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+                    if (!jdText) throw new Error('No job description found');
+                    const { generateDocumentsForExistingJob } = await import('@/lib/ai-generation');
+                    await generateDocumentsForExistingJob(application.category, application.folder, jdText);
+                    const { getAllApplications } = await import('@/lib/storage-adapter');
+                    const apps = await getAllApplications();
+                    const updated = apps.find((a) => `${a.category}/${a.folder}` === `${application.category}/${application.folder}`);
+                    if (updated) setApplication((prev) => prev ? { ...prev, has_resume: true } : prev);
+                  } catch (err) {
+                    console.error('Failed to generate resume:', err);
+                    alert('Failed to generate resume. Please try again.');
+                  } finally {
+                    setIsGeneratingResume(false);
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-primary text-primary text-[14px] font-medium hover:bg-primary/5 transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                </svg>
+                Generate Resume with AI
+              </button>
+            </Card>
+          )}
 
-              {application.has_cover_letter && (
-                <Card variant="default">
-                  <h3 className="text-[18px] font-medium text-ink mb-4">Cover Letter</h3>
-                  <a
-                    href={`/document?app=${application.category}/${application.folder}&doc=cover_letter`}
-                    className="flex items-center justify-between p-4 rounded-lg border border-primary bg-primary/5 hover:bg-primary/10 transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-ink">View & Print to PDF</p>
-                      <p className="text-[12px] text-steel">Opens in new tab</p>
-                    </div>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary shrink-0">
-                      <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                  </a>
-                </Card>
-              )}
-            </>
+          {/* Cover Letter Card */}
+          {application.has_cover_letter ? (
+            <Card variant="default">
+              <h3 className="text-[18px] font-medium text-ink mb-4">Cover Letter</h3>
+              <a
+                href={`/document?app=${application.category}/${application.folder}&doc=cover_letter`}
+                className="flex items-center justify-between p-4 rounded-lg border border-primary bg-primary/5 hover:bg-primary/10 transition-colors"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-ink">View & Print to PDF</p>
+                  <p className="text-[12px] text-steel">Opens in new tab</p>
+                </div>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary shrink-0">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </a>
+            </Card>
+          ) : isGeneratingCoverLetter ? (
+            <Card variant="default">
+              <h3 className="text-[18px] font-medium text-ink mb-4">Cover Letter</h3>
+              <div className="flex items-center gap-3 p-4 text-steel">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
+                  <line x1="12" y1="2" x2="12" y2="6" />
+                  <line x1="12" y1="18" x2="12" y2="22" />
+                  <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
+                  <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
+                  <line x1="2" y1="12" x2="6" y2="12" />
+                  <line x1="18" y1="12" x2="22" y2="12" />
+                  <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
+                  <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
+                </svg>
+                <span className="text-[14px]">Generating Cover Letter...</span>
+              </div>
+            </Card>
+          ) : (
+            <Card variant="default">
+              <h3 className="text-[18px] font-medium text-ink mb-4">Cover Letter</h3>
+              <button
+                onClick={async () => {
+                  if (!application) return;
+                  setIsGeneratingCoverLetter(true);
+                  try {
+                    const jdHtml = await getDocumentHTML(application.category, application.folder, 'job_description');
+                    const jdText = jdHtml ? jdHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+                    if (!jdText) throw new Error('No job description found');
+                    const { generateDocumentsForExistingJob } = await import('@/lib/ai-generation');
+                    await generateDocumentsForExistingJob(application.category, application.folder, jdText);
+                    const { getAllApplications } = await import('@/lib/storage-adapter');
+                    const apps = await getAllApplications();
+                    const updated = apps.find((a) => `${a.category}/${a.folder}` === `${application.category}/${application.folder}`);
+                    if (updated) setApplication((prev) => prev ? { ...prev, has_cover_letter: true } : prev);
+                  } catch (err) {
+                    console.error('Failed to generate cover letter:', err);
+                    alert('Failed to generate cover letter. Please try again.');
+                  } finally {
+                    setIsGeneratingCoverLetter(false);
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 border-dashed border-primary text-primary text-[14px] font-medium hover:bg-primary/5 transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                </svg>
+                Generate Cover Letter with AI
+              </button>
+            </Card>
           )}
         </div>
       </div>

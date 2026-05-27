@@ -50,7 +50,13 @@ export async function setLocalData(key: string, value: any): Promise<void> {
   }
 }
 
-export const CATEGORIES = {} as const;
+export const CATEGORIES = {
+  '1_tech_support': { name: 'Tech Support', color: '#4a90e2' },
+  '2_general_basic': { name: 'General Basic', color: '#4caf50' },
+  '3_kitchen_cook': { name: 'Kitchen / Cook', color: '#f5a623' },
+} as const;
+
+export type CategoryKey = string;
 
 export const STATUS_CONFIG = {
   prospect: { label: 'Prospect', color: '#888888' },
@@ -61,7 +67,6 @@ export const STATUS_CONFIG = {
   rejected: { label: 'Rejected', color: '#e74c3c' },
 } as const;
 
-export type CategoryKey = string;
 export type StatusKey = keyof typeof STATUS_CONFIG;
 
 export interface ApplicationDocument {
@@ -124,6 +129,13 @@ export async function getAllApplications(): Promise<EnrichedApplication[]> {
   const data = await getLocalData('applications');
   if (!data) return [];
   const apps = Object.values(data) as EnrichedApplication[];
+  for (const app of apps) {
+    const catInfo = (CATEGORIES as Record<string, { name: string; color: string }>)[app.category_key];
+    if (catInfo) {
+      app.category_name = catInfo.name;
+      app.category_color = catInfo.color;
+    }
+  }
   apps.sort((a, b) => new Date(b.date_applied).getTime() - new Date(a.date_applied).getTime());
   return apps;
 }
@@ -131,7 +143,15 @@ export async function getAllApplications(): Promise<EnrichedApplication[]> {
 export async function getApplicationById(category: CategoryKey, folderName: string): Promise<EnrichedApplication | null> {
   const key = `${category}/${folderName}`;
   const data = await getLocalData('applications');
-  return data?.[key] || null;
+  const app = data?.[key] || null;
+  if (app) {
+    const catInfo = (CATEGORIES as Record<string, { name: string; color: string }>)[app.category_key];
+    if (catInfo) {
+      app.category_name = catInfo.name;
+      app.category_color = catInfo.color;
+    }
+  }
+  return app;
 }
 
 export async function saveApplication(
@@ -150,8 +170,8 @@ export async function saveApplication(
     ...appData,
     category: category,
     category_key: category,
-    category_name: existing?.category_name || String(category),
-    category_color: existing?.category_color || '#888888',
+    category_name: existing?.category_name || (CATEGORIES as Record<string, { name: string; color: string }>)[category]?.name || String(category),
+    category_color: existing?.category_color || (CATEGORIES as Record<string, { name: string; color: string }>)[category]?.color || '#888888',
     folder: folderName,
     path: key,
     has_job_description: true,
@@ -163,6 +183,22 @@ export async function saveApplication(
   };
 
   existingData[key] = enriched;
+  await setLocalData('applications', existingData);
+}
+
+export async function updateApplicationDocFlags(
+  category: CategoryKey,
+  folderName: string,
+  flags: { has_resume?: boolean; has_cover_letter?: boolean }
+): Promise<void> {
+  const key = `${category}/${folderName}`;
+  const existingData = (await getLocalData('applications')) || {};
+  const existing = existingData[key] as EnrichedApplication | undefined;
+  if (!existing) return;
+  existingData[key] = {
+    ...existing,
+    ...flags,
+  };
   await setLocalData('applications', existingData);
 }
 
@@ -193,12 +229,15 @@ export async function getApplicationsByStatus(applications: EnrichedApplication[
 export async function getCategoryStats(applications: EnrichedApplication[]): Promise<CategoryStats[]> {
   const stats: CategoryStats[] = [];
 
-  // Derive categories from applications
+  // Derive categories from applications, fallback to stored name/color
   const categoryMap = new Map<string, { name: string; color: string }>();
   for (const app of applications) {
-    if (!categoryMap.has(app.category_key)) {
-      categoryMap.set(app.category_key, { name: app.category_name, color: app.category_color });
-    }
+    const key = app.category_key as CategoryKey;
+    const catInfo = (CATEGORIES as Record<string, { name: string; color: string }>)[key];
+    categoryMap.set(key, {
+      name: catInfo?.name || app.category_name || key,
+      color: catInfo?.color || app.category_color || '#888888',
+    });
   }
 
   for (const [categoryKey, categoryInfo] of Array.from(categoryMap.entries())) {

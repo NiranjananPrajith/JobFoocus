@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ApplicationCard from '@/components/ApplicationCard';
 import Card from '@/components/design/Card';
-import { getAllApplications, type EnrichedApplication } from '@/lib/storage-adapter';
+import { deleteApplication, getAllApplications, saveApplication, type EnrichedApplication } from '@/lib/storage-adapter';
 import { StatusType } from '@/lib/design-system';
 
 type Tab = 'all' | 'applied' | 'prospects';
@@ -28,6 +28,48 @@ function JobsContent() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+
+  const handleDelete = async (id: string) => {
+    const parts = id.split('/');
+    const category = parts[0];
+    const folder = parts.slice(1).join('/');
+    try {
+      await deleteApplication(category, folder);
+      setApplications((prev) => prev.filter((app) => `${app.category}/${app.folder}` !== id));
+    } catch (error) {
+      console.error('Error deleting application:', error);
+    }
+  };
+
+  const handleStatusChange = async (id: string, status: StatusType) => {
+    const parts = id.split('/');
+    const category = parts[0];
+    const folder = parts.slice(1).join('/');
+    try {
+      const app = applications.find((a) => `${a.category}/${a.folder}` === id);
+      if (!app) return;
+      await saveApplication(category, folder, {
+        company: app.company,
+        job_title: app.job_title,
+        date_applied: app.date_applied,
+        status: status as any,
+        response_date: null,
+        notes: app.notes || '',
+        contact_name: app.contact_name || null,
+        contact_email: app.contact_email || null,
+        source: app.source || '',
+        documents: app.documents || [],
+        job_url: app.job_url || null,
+      });
+      setApplications((prev) =>
+        prev.map((a) =>
+          `${a.category}/${a.folder}` === id ? { ...a, status: status as any } : a
+        )
+      );
+    } catch (error) {
+      console.error('Error updating application status:', error);
+    }
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -188,6 +230,8 @@ function JobsContent() {
               status={app.status as StatusType}
               date_applied={app.date_applied}
               needs_followup={app.needs_followup}
+              onDelete={handleDelete}
+              onStatusChange={handleStatusChange}
             />
           ))}
         </div>

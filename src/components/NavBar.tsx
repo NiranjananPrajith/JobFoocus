@@ -5,7 +5,7 @@ import { useState } from 'react';
 import AddJobModal from '@/components/AddJobModal';
 
 const navLinks = [
-  { href: '/', label: 'Dashboard' },
+  { href: '/dashboard', label: 'Dashboard' },
   { href: '/jobs', label: 'Jobs' },
   { href: '/followups', label: 'Follow-ups' },
   { href: '/master-resume', label: 'Resume' },

@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Card from '@/components/design/Card';
 import Button from '@/components/design/Button';
-import { isMasterResumeBlank, processJobDescription } from '@/lib/ai-generation';
+import { isMasterResumeBlank, generateJobEntryAndDocuments } from '@/lib/ai-generation';
 
 type ModalState = 'two_column' | 'paste_jd' | 'blank_resume' | 'processing' | 'done';
+type ProcessingStep = 'analyzing' | 'resume' | 'cover_letter' | 'saving' | 'done';
 
 const CHROME_STORE_URL = 'https://chrome.google.com/webstore';
 const FIREFOX_ADDONS_URL = 'https://addons.mozilla.org';
@@ -51,6 +52,7 @@ export default function AddJobModal({ isOpen, onClose }: AddJobModalProps) {
   const [state, setState] = useState<ModalState>('two_column');
   const [jdText, setJdText] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [processingStep, setProcessingStep] = useState<ProcessingStep>('analyzing');
 
   useEffect(() => {
     setMounted(true);
@@ -99,10 +101,16 @@ export default function AddJobModal({ isOpen, onClose }: AddJobModalProps) {
   const handleSubmitJD = async () => {
     if (!jdText.trim()) return;
     setState('processing');
+    setProcessingStep('analyzing');
     try {
-      await processJobDescription(jdText);
+      await generateJobEntryAndDocuments(jdText, (step) => {
+        setProcessingStep(step);
+      });
+      setProcessingStep('saving');
+      console.log('[AddJobModal] Job created successfully');
     } catch (err) {
-      console.error('Failed to process job:', err);
+      console.error('[AddJobModal] Failed to process job:', err);
+      setProcessingStep('done');
     }
     setState('done');
   };
@@ -263,10 +271,34 @@ export default function AddJobModal({ isOpen, onClose }: AddJobModalProps) {
             <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-6 text-primary">
               <SpinnerIcon />
             </div>
-            <h2 className="text-[22px] font-semibold text-ink mb-3">Creating Your Job Entry</h2>
-            <p className="text-[14px] text-steel">
-              Analyzing the job description and generating your tailored resume and cover letter...
+            <h2 className="text-[22px] font-semibold text-ink mb-2">
+              {processingStep === 'analyzing' && 'Analyzing Job Description'}
+              {processingStep === 'resume' && 'Generating Resume'}
+              {processingStep === 'cover_letter' && 'Writing Cover Letter'}
+              {processingStep === 'saving' && 'Saving Your Job Entry'}
+            </h2>
+            <p className="text-[14px] text-steel mb-4">
+              {processingStep === 'analyzing' && 'Parsing the job posting to extract company, title, and requirements...'}
+              {processingStep === 'resume' && 'Tailoring your resume to match the job requirements...'}
+              {processingStep === 'cover_letter' && 'Writing a personalized cover letter...'}
+              {processingStep === 'saving' && 'Almost done...'}
             </p>
+            <div className="flex items-center justify-center gap-2 text-[12px] text-muted">
+              <span className="flex items-center gap-1">
+                <span className={processingStep === 'analyzing' ? 'text-primary' : 'text-chart-gray-300'}>●</span>
+                Analyzing
+              </span>
+              <span className="text-muted">→</span>
+              <span className="flex items-center gap-1">
+                <span className={processingStep === 'resume' ? 'text-primary' : 'text-chart-gray-300'}>●</span>
+                Resume
+              </span>
+              <span className="text-muted">→</span>
+              <span className="flex items-center gap-1">
+                <span className={processingStep === 'cover_letter' ? 'text-primary' : 'text-chart-gray-300'}>●</span>
+                Cover Letter
+              </span>
+            </div>
           </div>
         )}
 
