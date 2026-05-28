@@ -137,11 +137,7 @@ export default function AIProcessGraphic() {
           isAi={false}
           icon={
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6a6a6a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <path d="M9 15l2 2 4-4" />
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-              <polyline points="22,6 12,13 2,6" />
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
             </svg>
           }
         />
@@ -156,7 +152,7 @@ export default function AIProcessGraphic() {
           <polyline points="20 6 9 17 4 12" />
         </svg>
         <span className="text-[13px] font-semibold text-ink">
-          Application package ready to print or export as PDF
+          Print-ready documents — clean layouts, proper margins
         </span>
       </div>
     </div>
