@@ -2,6 +2,11 @@
 -- Run this in Supabase SQL Editor: https://supabase.com/dashboard → Your Project → SQL Editor
 
 -- ============================================================
+-- ENABLE pg_cron extension (required for scheduled cleanup)
+-- ============================================================
+create extension if not exists pg_cron with schema extensions;
+
+-- ============================================================
 -- ADD deleted_at TO applications
 -- ============================================================
 alter table applications add column if not exists deleted_at timestamptz;
@@ -35,8 +40,13 @@ begin
 end;
 $$ language plpgsql;
 
--- Drop existing cron job if re-running
-select cron.unschedule('purge-trash-daily') where true;
+-- Drop existing cron job if re-running (ignore errors if cron schema missing)
+do $$
+begin
+  perform cron.unschedule('purge-trash-daily');
+exception when others then null;
+end
+$$;
 
 -- Schedule daily at 3am UTC
 select cron.schedule('purge-trash-daily', '0 3 * * *', 'select purge_expired_trash()');
