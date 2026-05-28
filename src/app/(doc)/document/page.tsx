@@ -260,17 +260,20 @@ function DocumentContent() {
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-20">
           <div
             className="rounded-2xl px-5 py-4 shadow-xl border"
-            style={{ backgroundColor: '#ffffff', borderColor: '#e5e5e5' }}
+            style={{ backgroundColor: '#fff8e0', borderColor: '#e6d5a8' }}
           >
-            <p className="text-[13px] font-semibold text-ink mb-3">Want to make a change?</p>
+            <p className="text-[13px] font-semibold mb-3" style={{ color: '#fa520f' }}>Want to make a change?</p>
             <div className="flex items-stretch gap-3">
               <textarea
                 value={editingMessage}
                 onChange={(e) => setEditingMessage(e.target.value)}
                 placeholder="Describe your change..."
                 rows={2}
-                className="flex-1 resize-none rounded-xl px-4 py-3 text-[13px] text-ink placeholder-steel border border-stone-200 focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none transition-all duration-200 disabled:bg-stone-100 disabled:cursor-not-allowed"
-                style={{ backgroundColor: isEditing ? '#f5f5f4' : '#ffffff' }}
+                className="flex-1 resize-none rounded-xl px-4 py-3 text-[13px] text-ink placeholder-steel border focus:outline-none transition-all duration-200 disabled:cursor-not-allowed"
+                style={{
+                  backgroundColor: isEditing ? '#f5f0e0' : '#fffaeb',
+                  borderColor: '#e6d5a8',
+                }}
                 disabled={isEditing}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey && editingMessage.trim()) {
@@ -282,9 +285,9 @@ function DocumentContent() {
               <button
                 onClick={handleEditSubmit}
                 disabled={!editingMessage.trim() || isEditing}
-                className="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40"
+                className="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200 disabled:cursor-not-allowed"
                 style={{
-                  backgroundColor: editingMessage.trim() && !isEditing ? '#fa520f' : '#e5e5e5',
+                  backgroundColor: editingMessage.trim() && !isEditing ? '#fa520f' : '#e6d5a8',
                   color: editingMessage.trim() && !isEditing ? '#ffffff' : '#999999',
                 }}
                 title="Send"
