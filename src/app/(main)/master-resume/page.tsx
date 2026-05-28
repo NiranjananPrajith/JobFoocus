@@ -339,7 +339,7 @@ function MasterResumeContent() {
     <div className="min-h-screen pb-32">
       {/* Back Link */}
       <a
-        href="./index.html"
+        href="/dashboard"
         className="inline-flex items-center text-steel hover:text-primary mb-4 md:mb-6 transition-colors"
       >
         <span className="mr-2">←</span> Back to Dashboard

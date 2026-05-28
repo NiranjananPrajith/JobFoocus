@@ -246,7 +246,7 @@ function ApplicationContent() {
         <Card variant="default" className="text-center py-12">
           <h2 className="text-2xl font-bold text-red-500 mb-4">Error</h2>
           <p className="text-steel mb-6">{error}</p>
-          <a href="./index.html">
+          <a href="/dashboard">
             <Button variant="primary">Back to Dashboard</Button>
           </a>
         </Card>
@@ -264,7 +264,7 @@ function ApplicationContent() {
     <div className="min-h-screen">
       {/* Back Link */}
       <a
-        href="./index.html"
+        href="/dashboard"
         className="inline-flex items-center text-steel hover:text-primary mb-4 md:mb-6 transition-colors"
       >
         <span className="mr-2">←</span> Back to Dashboard
