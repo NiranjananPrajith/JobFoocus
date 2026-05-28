@@ -178,10 +178,10 @@ export default function DashboardPage() {
 
       {/* Recent Activity */}
       {recentApplications.length > 0 && (
-        <div className="mb-6 md:mb-8 overflow-x-auto">
+        <div className="mb-6 md:mb-8">
           <h2 className="text-[12px] font-bold uppercase tracking-[0.05em] text-steel mb-4">Recent Activity</h2>
-          <Card variant="default">
-            <div className="min-w-[500px]">
+          <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+            <Card variant="default" className="min-w-[500px]">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-hairline-soft">
@@ -194,20 +194,20 @@ export default function DashboardPage() {
                 <tbody>
                   {recentApplications.map((app, idx) => (
                     <tr key={idx} className="border-b border-hairline-soft last:border-b-0">
-                      <td className="p-3 text-[14px] text-ink">{app.company}</td>
-                      <td className="p-3 text-[14px] text-steel hidden sm:table-cell">{app.job_title}</td>
-                      <td className="p-3">
+                      <td className="p-3 text-[14px] text-ink whitespace-nowrap">{app.company}</td>
+                      <td className="p-3 text-[14px] text-steel whitespace-nowrap hidden sm:table-cell">{app.job_title}</td>
+                      <td className="p-3 whitespace-nowrap">
                         <Badge status={app.status as any} />
                       </td>
-                      <td className="p-3 text-[12px] text-steel font-mono hidden md:table-cell">
+                      <td className="p-3 text-[12px] text-steel font-mono whitespace-nowrap hidden md:table-cell">
                         {app.response_date || app.date_applied}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </div>
-          </Card>
+            </Card>
+          </div>
         </div>
       )}
 
