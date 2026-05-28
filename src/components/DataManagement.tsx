@@ -195,12 +195,7 @@ export default function DataManagement() {
   const currentProviderLabel = 'Google Drive';
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-[12px] font-bold uppercase tracking-[0.05em] text-steel mb-1">Data Management</h2>
-        <p className="text-xs text-steel">Backup, restore, and sync your job application data.</p>
-      </div>
-
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {/* Cloud Sync Section */}
       <Card variant="cream">
         <div className="space-y-4">
@@ -319,7 +314,7 @@ export default function DataManagement() {
       {/* Result Messages */}
       {resultMessage && (
         <div
-          className={`text-sm px-4 py-3 rounded-md ${
+          className={`text-sm px-4 py-3 rounded-md md:col-span-3 ${
             state === 'error'
               ? 'bg-red-50 text-red-700 border border-red-200'
               : 'bg-green-50 text-green-700 border border-green-200'
@@ -328,7 +323,6 @@ export default function DataManagement() {
           {resultMessage}
         </div>
       )}
-
     </div>
   );
 }
