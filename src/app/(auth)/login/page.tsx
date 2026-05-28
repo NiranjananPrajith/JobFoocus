@@ -115,6 +115,10 @@ export default function LoginPage() {
               </>
             )}
           </form>
+
+          <p className="text-center text-[11px] text-steel mt-4 leading-relaxed">
+            We use your account email exclusively to manage your quota and subscription. Your resume, contact details, and career materials are never processed or saved on our servers.
+          </p>
         </div>
 
         <p className="text-center text-[13px] text-steel mt-4">

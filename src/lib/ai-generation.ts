@@ -1,4 +1,5 @@
 import { saveApplication, saveDocumentHTML, getMasterResume, updateApplicationDocFlags } from '@/lib/storage-adapter';
+import { maskPII, demaskPII } from '@/lib/pii-utils';
 import type { CategoryKey, StatusKey } from '@/lib/storage-adapter';
 import formattingGuides from './formatting-guides.json';
 
@@ -16,8 +17,8 @@ type ProgressCallback = (step: AIFunction) => void;
 
 async function minimaxChat(prompt: string, system: string): Promise<string> {
   if (!API_KEY) {
-    console.error('[AI] MINIMAX_API_KEY is not configured. Add NEXT_PUBLIC_MINIMAX_API_KEY to your .env file.');
-    throw new Error('MINIMAX_API_KEY is not configured. Add it to your .env file.');
+    console.error('[AI] MINIMAX_API_KEY is not configured.');
+    throw new Error('MINIMAX_API_KEY is not configured.');
   }
 
   console.log('[AI] Sending request to Minimax...', { model: MODEL, promptLength: prompt.length });
@@ -56,9 +57,6 @@ async function minimaxChat(prompt: string, system: string): Promise<string> {
 
   const data = await res.json();
 
-  // If called via our API route, response is { content: string }
-  // If called directly (server-side), response is Anthropic format
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const content = data.content != null
     ? data.content
     : (() => {
@@ -71,7 +69,7 @@ async function minimaxChat(prompt: string, system: string): Promise<string> {
 
   if (!content) {
     console.error('[AI] Empty response from Minimax.');
-    throw new Error('Minimax returned empty response. Check your API key and try again.');
+    throw new Error('Minimax returned empty response.');
   }
 
   console.log('[AI] Extracted content length:', content.length);
@@ -170,40 +168,41 @@ async function formatJobDescription(rawJD: string): Promise<FormattedJD> {
 }
 
 // ---------------------------------------------------------------------------
-// AI Step 2: Generate resume HTML
+// AI Step 2: Generate resume HTML (server-safe — receives masked text only)
 // ---------------------------------------------------------------------------
 
-async function generateResumeHTML(masterResume: any, jd: FormattedJD): Promise<string> {
+async function generateResumeHTML(maskedMasterResume: string, jd: FormattedJD): Promise<string> {
   console.log('[AI] Step 2: Generating resume HTML');
   const guide = formattingGuides.resume;
   const system = 'You are an expert resume writer. Output ONLY valid HTML for the resume body — NO <html>, <head>, or <body> tags.\n\n' + guide.ai_instructions + '\n\n---\nRESUME FORMATTING GUIDE (reference only — do not output this):\n' + JSON.stringify(guide, null, 2);
 
-  const prompt = 'Using this MASTER RESUME DATA:\n' + JSON.stringify(masterResume, null, 2) + '\n\nCreate a tailored resume for:\nCompany: ' + jd.company + '\nTitle: ' + jd.job_title + '\nResponsibilities: ' + (jd.responsibilities || []).join(', ') + '\nRequirements: ' + (jd.requirements || []).join(', ') + '\n\nGenerate HTML with:\n1. An h2 "Professional Summary" section with a .summary div containing a <p> with 3-4 sentences tailored to the job\n2. An h2 "Skills" section with a ul.skills-list of 3-4 skills categories using <li><strong>Category</strong>: skills... format\n3. An h2 "Professional Experience" section with 1-2 most relevant job entries using .job-entry, .job-header, .job-title-row, .company-name, .job-title, .job-date-location, ul.achievements structure\n4. An h2 "Education" section with 1-2 most relevant entries using .edu-entry\n\nDo NOT include a header with name/contact info — that is added by the wrapper. Output ONLY the HTML body content.';
+  const prompt = 'Using this MASTER RESUME DATA (PII already masked as placeholders):\n' + maskedMasterResume + '\n\nCreate a tailored resume for:\nCompany: ' + jd.company + '\nTitle: ' + jd.job_title + '\nResponsibilities: ' + (jd.responsibilities || []).join(', ') + '\nRequirements: ' + (jd.requirements || []).join(', ') + '\n\nGenerate HTML with:\n1. An h2 "Professional Summary" section with a .summary div containing a <p> with 3-4 sentences tailored to the job\n2. An h2 "Skills" section with a ul.skills-list of 3-4 skills categories using <li><strong>Category</strong>: skills... format\n3. An h2 "Professional Experience" section with 1-2 most relevant job entries using .job-entry, .job-header, .job-title-row, .company-name, .job-title, .job-date-location, ul.achievements structure\n4. An h2 "Education" section with 1-2 most relevant entries using .edu-entry\n\nDo NOT include a header with name/contact info — that is added by the wrapper. Output ONLY the HTML body content.';
 
   return minimaxChat(prompt, system);
 }
 
 // ---------------------------------------------------------------------------
-// AI Step 3: Generate cover letter HTML
+// AI Step 3: Generate cover letter HTML (server-safe — receives masked text only)
 // ---------------------------------------------------------------------------
 
-async function generateCoverLetterHTML(masterResume: any, jd: FormattedJD): Promise<string> {
+async function generateCoverLetterHTML(maskedMasterResume: string, jd: FormattedJD): Promise<string> {
   console.log('[AI] Step 3: Generating cover letter HTML');
   const guide = formattingGuides.cover_letter;
   const system = 'You are an expert cover letter writer. Return ONLY the HTML body content — NO <html>, <head>, or <body> tags.\n\n' + guide.ai_instructions + '\n\n---\nCOVER LETTER FORMATTING GUIDE (reference only — do not output this):\n' + JSON.stringify(guide, null, 2);
 
   const reqSlice = (jd.requirements || []).slice(0, 5).map(function(r: string) { return '- ' + r; }).join('\n');
 
-  const prompt = 'Write a professional cover letter as HTML for:\nCANDIDATE:\nName: ' + (masterResume.name || 'N/A') + '\nEmail: ' + (masterResume.email || 'N/A') + '\nPhone: ' + (masterResume.phone || 'N/A') + '\n\nJOB TARGET:\nCompany: ' + jd.company + '\nPosition: ' + jd.job_title + '\nSummary: ' + (jd.summary || '') + '\n\nKEY REQUIREMENTS: ' + reqSlice + '\nSTRUCTURE REQUIRED — use EXACT class names:\n<div class="sender-block">name + meta</div>\n<div class="date-block">Month DD, YYYY</div>\n<div class="recipient-block">Hiring Team<br><strong>Company</strong></div>\n<div class="subject-block">RE: Job Title</div>\n<p>Para 1: interest + hook</p>\n<p>Para 2: achievements matching requirements</p>\n<p>Para 3: closing + availability + call to action</p>\n<div class="signature-space">Sincerely, Name</div>\n\nFormat: dates as "Month DD, YYYY". Use text-align: justify on all p tags. Output ONLY the HTML body.';
+  // NOTE: name, phone, email are NOT in the prompt — they remain as placeholders [CANDIDATE_NAME] etc.
+  const prompt = 'Write a professional cover letter as HTML for:\nCANDIDATE (already masked in prompt):\n' + maskedMasterResume + '\n\nJOB TARGET:\nCompany: ' + jd.company + '\nPosition: ' + jd.job_title + '\nSummary: ' + (jd.summary || '') + '\n\nKEY REQUIREMENTS: ' + reqSlice + '\nSTRUCTURE REQUIRED — use EXACT class names:\n<div class="sender-block">name + meta</div>\n<div class="date-block">Month DD, YYYY</div>\n<div class="recipient-block">Hiring Team<br><strong>Company</strong></div>\n<div class="subject-block">RE: Job Title</div>\n<p>Para 1: interest + hook</p>\n<p>Para 2: achievements matching requirements</p>\n<p>Para 3: closing + availability + call to action</p>\n<div class="signature-space">Sincerely, Name</div>\n\nIMPORTANT: Do NOT include raw name, phone or email in the prompt. Use placeholder text [CANDIDATE_NAME], [CANDIDATE_PHONE], [CANDIDATE_EMAIL] in the sender-block and signature-space. Output ONLY the HTML body.';
 
   return minimaxChat(prompt, system);
 }
 
 // ---------------------------------------------------------------------------
-// Resume HTML wrapper
+// Resume HTML wrapper (client-side only — injects real PII)
 // ---------------------------------------------------------------------------
 
-function wrapResumeHTML(name: string, phone: string, email: string, socials: any[], portfolio: any[], bodyHTML: string): string {
+export function wrapResumeHTML(name: string, phone: string, email: string, socials: any[], portfolio: any[], bodyHTML: string): string {
   const socialsHTML = socials.length > 0
     ? '<span>' + socials.map(function(s: any) { return s.name + ': ' + s.url; }).join(' · ') + '</span>'
     : '';
@@ -212,10 +211,10 @@ function wrapResumeHTML(name: string, phone: string, email: string, socials: any
 }
 
 // ---------------------------------------------------------------------------
-// Cover Letter HTML wrapper
+// Cover Letter HTML wrapper (client-side only — injects real PII)
 // ---------------------------------------------------------------------------
 
-function wrapCoverLetterHTML(name: string, phone: string, email: string, jd: FormattedJD, bodyHTML: string): string {
+export function wrapCoverLetterHTML(name: string, phone: string, email: string, jd: FormattedJD, bodyHTML: string): string {
   const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
   return '<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <title>Cover Letter - ' + name + '</title>\n    <style>\n        @page { size: letter; margin: 1.0in; }\n        @media print {\n            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n        }\n        body { font-family: \'Helvetica Neue\', Helvetica, Arial, sans-serif; color: #222222; line-height: 1.5; font-size: 11pt; margin: 0; padding: 0; }\n        .sender-block { margin-bottom: 28px; }\n        .sender-name { font-size: 16pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; color: #111111; }\n        .sender-meta { color: #555555; font-size: 10pt; line-height: 1.5; }\n        .date-block { margin-bottom: 22px; font-size: 10.5pt; }\n        .recipient-block { margin-bottom: 28px; }\n        .recipient-block strong { font-size: 11pt; color: #111111; }\n        .subject-block { font-weight: 700; margin-bottom: 24px; text-transform: uppercase; font-size: 10.5pt; letter-spacing: 0.5px; color: #111111; }\n        p { margin: 0 0 16px 0; text-align: justify; font-size: 11pt; line-height: 1.6; }\n        .signature-space { margin-top: 40px; page-break-inside: avoid; }\n        .signature-space strong { font-weight: 600; }\n    </style>\n</head>\n<body>\n    <div class="sender-block">\n        <div class="sender-name">' + name + '</div>\n        <div class="sender-meta">' + phone + ' | ' + email + '</div>\n    </div>\n    <div class="date-block">' + today + '</div>\n    <div class="recipient-block">\n        Hiring Selection Team<br>\n        <strong>' + jd.company + '</strong><br>\n    </div>\n    <div class="subject-block">RE: Application for the position of ' + jd.job_title + '</div>\n    ' + bodyHTML + '\n    <div class="signature-space">\n        Sincerely,<br><br><br>\n        <strong>' + name + '</strong>\n    </div>\n</body>\n</html>';
@@ -255,6 +254,7 @@ export interface ProcessedJobData {
 
 // ---------------------------------------------------------------------------
 // Full pipeline: process JD + generate documents (with progress callbacks)
+// NOTE: caller must mask resume before calling if PII is involved
 // ---------------------------------------------------------------------------
 
 export async function processJobDescription(
@@ -269,11 +269,12 @@ export async function processJobDescription(
   }
 
   onStep?.('resume');
-  const resumeBodyHTML = await generateResumeHTML(masterResume, formattedJD);
+  // masterResume is already masked when passed in — caller handles masking
+  const resumeBodyHTML = await generateResumeHTML(masterResume as unknown as string, formattedJD);
   const resumeFullHTML = buildResumeFullHTML(masterResume, resumeBodyHTML, formattedJD);
 
   onStep?.('cover_letter');
-  const coverLetterBodyHTML = await generateCoverLetterHTML(masterResume, formattedJD);
+  const coverLetterBodyHTML = await generateCoverLetterHTML(masterResume as unknown as string, formattedJD);
   const coverLetterFullHTML = wrapCoverLetterHTML(
     masterResume.name || 'Unknown',
     masterResume.phone || '',
@@ -293,17 +294,15 @@ export async function processJobDescription(
 function buildJobDescriptionHTML(jd: FormattedJD, rawJD: string): string {
   const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
-  // Format responsibilities as HTML list
   const responsibilitiesHTML = Array.isArray(jd.responsibilities) && jd.responsibilities.length > 0
     ? '<h2>Key Responsibilities</h2>\n<ul>' + jd.responsibilities.map(r => '<li>' + r + '</li>').join('\n') + '</ul>'
     : '';
 
-  // Format requirements as HTML list
   const requirementsHTML = Array.isArray(jd.requirements) && jd.requirements.length > 0
     ? '<h2>Requirements</h2>\n<ul>' + jd.requirements.map(r => '<li>' + r + '</li>').join('\n') + '</ul>'
     : '';
 
-  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>Job Description - ' + jd.job_title + '</title>\n    <style>\n        @page { size: letter; margin: 0.6in; }\n        @media print {\n            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n        }\n        body { font-family: \'Helvetica Neue\', Helvetica, Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }\n        h1 { font-size: 24px; margin-bottom: 5px; }\n        .meta { color: #666; margin-bottom: 20px; }\n	h2 { font-size: 18px; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }\n        ul { padding-left: 20px; }\n        li { margin-bottom: 8px; }\n        .section { margin-bottom: 20px; }\n    </style>\n</head>\n<body>\n    <h1>' + jd.job_title + '</h1>\n    <div class="meta">\n        <p>' + jd.company + ' &bull; ' + (jd.location || 'Location not specified') + ' &bull; ' + (jd.employment_type || 'Full-time') + '</p>\n    </div>\n\n    <h2>About the Role</h2>\n    <div class="section">\n        <p>' + (jd.summary || 'No summary available.') + '</p>\n    </div>\n\n    ' + responsibilitiesHTML + '\n\n    ' + requirementsHTML + '\n\n    <h2>Application Details</h2>\n    <p><em>Job Description saved on ' + today + '</em></p>\n</body>\n</html>';
+  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>Job Description - ' + jd.job_title + '</title>\n    <style>\n        @page { size: letter; margin: 0.6in; }\n        @media print {\n            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n        }\n        body { font-family: \'Helvetica Neue\', Helvetica, Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }\n        h1 { font-size: 24px; margin-bottom: 5px; }\n        .meta { color: #666; margin-bottom: 20px; }\n\th2 { font-size: 18px; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }\n        ul { padding-left: 20px; }\n        li { margin-bottom: 8px; }\n        .section { margin-bottom: 20px; }\n    </style>\n</head>\n<body>\n    <h1>' + jd.job_title + '</h1>\n    <div class="meta">\n        <p>' + jd.company + ' &bull; ' + (jd.location || 'Location not specified') + ' &bull; ' + (jd.employment_type || 'Full-time') + '</p>\n    </div>\n\n    <h2>About the Role</h2>\n    <div class="section">\n        <p>' + (jd.summary || 'No summary available.') + '</p>\n    </div>\n\n    ' + responsibilitiesHTML + '\n    ' + requirementsHTML + '\n\n    <h2>Application Details</h2>\n    <p><em>Job Description saved on ' + today + '</em></p>\n</body>\n</html>';
 }
 
 function buildResumeFullHTML(masterResume: any, tailoredBodyHTML: string, jd?: FormattedJD): string {
@@ -313,10 +312,8 @@ function buildResumeFullHTML(masterResume: any, tailoredBodyHTML: string, jd?: F
   const socials = Array.isArray(masterResume.socials) ? masterResume.socials : [];
   const portfolio = Array.isArray(masterResume.portfolio) ? masterResume.portfolio : [];
 
-  // Build work experience from master resume
   let workEntries = '';
   if (Array.isArray(masterResume.workExperience) && masterResume.workExperience.length > 0) {
-    // Take most recent 2-3 jobs (match old resume format)
     const jobs = masterResume.workExperience.slice(0, 3);
     for (const w of jobs) {
       const dutiesList = (w.duties || '').split('\n').filter((d: string) => d.trim()).map((d: string) => '<li>' + d.trim() + '</li>').join('\n');
@@ -331,11 +328,9 @@ function buildResumeFullHTML(masterResume: any, tailoredBodyHTML: string, jd?: F
         '<ul class="achievements">\n' + dutiesList + '\n</ul>\n' +
       '</div>\n';
     }
-    // Append work entries after summary
     tailoredBodyHTML = tailoredBodyHTML + '\n<h2>Professional Experience</h2>\n' + workEntries;
   }
 
-  // Build education from master resume
   let eduEntries = '';
   if (Array.isArray(masterResume.education) && masterResume.education.length > 0) {
     for (const e of masterResume.education.slice(0, 2)) {
@@ -351,7 +346,8 @@ function buildResumeFullHTML(masterResume: any, tailoredBodyHTML: string, jd?: F
 }
 
 // ---------------------------------------------------------------------------
-// Generate documents for an existing job (called from application page)
+// Generate documents for an existing job
+// NOTE: caller must mask resume before calling if PII is involved
 // ---------------------------------------------------------------------------
 
 export async function generateDocumentsForExistingJob(
@@ -370,11 +366,12 @@ export async function generateDocumentsForExistingJob(
   const formattedJD = await formatJobDescription(jobDescription);
 
   onStep?.('resume');
-  const resumeBodyHTML = await generateResumeHTML(masterResume, formattedJD);
+  // masterResume is already masked when passed in — caller handles masking
+  const resumeBodyHTML = await generateResumeHTML(masterResume as unknown as string, formattedJD);
   const resumeFullHTML = buildResumeFullHTML(masterResume, resumeBodyHTML, formattedJD);
 
   onStep?.('cover_letter');
-  const coverLetterBodyHTML = await generateCoverLetterHTML(masterResume, formattedJD);
+  const coverLetterBodyHTML = await generateCoverLetterHTML(masterResume as unknown as string, formattedJD);
   const coverLetterFullHTML = wrapCoverLetterHTML(
     masterResume.name || 'Unknown',
     masterResume.phone || '',
@@ -392,25 +389,67 @@ export async function generateDocumentsForExistingJob(
 }
 
 // ---------------------------------------------------------------------------
-// Main entry point (called from AddJobModal)
+// Zero-PII pipeline: client-side mask → server → demask → save
 // ---------------------------------------------------------------------------
 
-export async function generateJobEntryAndDocuments(
+export async function generateMaskedDocumentsForExistingJob(
+  category: CategoryKey,
+  folder: string,
+  jobDescription: string,
+  onStep?: ProgressCallback
+): Promise<void> {
+  const masterResume = await getMasterResume();
+  if (!masterResume) throw new Error('Master resume not found.');
+
+  onStep?.('analyzing');
+  const formattedJD = await formatJobDescription(jobDescription);
+
+  // Convert resume to JSON string and mask PII before sending to server
+  const resumeJson = JSON.stringify(masterResume);
+  const maskedResume = maskPII(resumeJson, masterResume);
+
+  onStep?.('resume');
+  const resumeBodyHTML = await generateResumeHTML(maskedResume, formattedJD);
+  const demaskedResumeBody = demaskPII(resumeBodyHTML, masterResume);
+  const resumeFullHTML = buildResumeFullHTML(masterResume, demaskedResumeBody, formattedJD);
+
+  onStep?.('cover_letter');
+  const coverLetterBodyHTML = await generateCoverLetterHTML(maskedResume, formattedJD);
+  const demaskedCoverBody = demaskPII(coverLetterBodyHTML, masterResume);
+  const coverLetterFullHTML = wrapCoverLetterHTML(
+    masterResume.name || 'Unknown',
+    masterResume.phone || '',
+    masterResume.email || '',
+    formattedJD,
+    demaskedCoverBody
+  );
+
+  await saveDocumentHTML(category, folder, 'resume', resumeFullHTML);
+  await saveDocumentHTML(category, folder, 'cover_letter', coverLetterFullHTML);
+  await updateApplicationDocFlags(category, folder, { has_resume: true, has_cover_letter: true });
+  onStep?.('done');
+}
+
+// ---------------------------------------------------------------------------
+// Masked entry point for AddJobModal
+// ---------------------------------------------------------------------------
+
+export async function generateMaskedJobEntryAndDocuments(
   jobDescription: string,
   onStep?: ProgressCallback
 ): Promise<GeneratedJob> {
-  console.log('[AI] generateJobEntryAndDocuments called');
+  console.log('[AI] generateMaskedJobEntryAndDocuments called');
+  const masterResume = await getMasterResume();
+  if (!masterResume) throw new Error('Master resume not found.');
 
-  // First: format the JD before any saves
   onStep?.('analyzing');
   const formattedJD = await formatJobDescription(jobDescription);
-  console.log('[AI] JD formatted, company:', formattedJD.company, 'title:', formattedJD.job_title);
+  console.log('[AI] JD formatted:', formattedJD.company, formattedJD.job_title);
 
   const category = classifyCategory(jobDescription);
   const def = CATEGORY_DEFS[category];
   const folder = 'job-' + Date.now();
 
-  // Save application with real data from the start
   await saveApplication(category, folder, {
     company: formattedJD.company,
     job_title: formattedJD.job_title,
@@ -425,7 +464,84 @@ export async function generateJobEntryAndDocuments(
     job_url: null,
   });
 
-  // Save formatted job description as proper HTML
+  const jdHTML = buildJobDescriptionHTML(formattedJD, jobDescription);
+  await saveDocumentHTML(category, folder, 'job_description', jdHTML);
+
+  // Mask resume before sending to LLM
+  const resumeJson = JSON.stringify(masterResume);
+  const maskedResume = maskPII(resumeJson, masterResume);
+
+  try {
+    onStep?.('resume');
+    const resumeBodyHTML = await generateResumeHTML(maskedResume, formattedJD);
+    const demaskedResumeBody = demaskPII(resumeBodyHTML, masterResume);
+    const resumeFullHTML = buildResumeFullHTML(masterResume, demaskedResumeBody, formattedJD);
+
+    onStep?.('cover_letter');
+    const coverLetterBodyHTML = await generateCoverLetterHTML(maskedResume, formattedJD);
+    const demaskedCoverBody = demaskPII(coverLetterBodyHTML, masterResume);
+    const coverLetterFullHTML = wrapCoverLetterHTML(
+      masterResume.name || 'Unknown',
+      masterResume.phone || '',
+      masterResume.email || '',
+      formattedJD,
+      demaskedCoverBody
+    );
+
+    await saveDocumentHTML(category, folder, 'resume', resumeFullHTML);
+    await saveDocumentHTML(category, folder, 'cover_letter', coverLetterFullHTML);
+    await updateApplicationDocFlags(category, folder, { has_resume: true, has_cover_letter: true });
+    console.log('[AI] generateMaskedJobEntryAndDocuments: SUCCESS');
+    onStep?.('done');
+
+    return {
+      company: formattedJD.company,
+      job_title: formattedJD.job_title,
+      category,
+      category_name: def.name,
+      category_color: def.color,
+      folder,
+    };
+  } catch (err) {
+    console.error('[AI] generateMaskedJobEntryAndDocuments: ERROR:', err);
+    await updateApplicationDocFlags(category, folder, { has_resume: false, has_cover_letter: false });
+    throw err;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Main entry point (called from AddJobModal)
+// NOTE: caller must mask resume before calling if PII is involved
+// ---------------------------------------------------------------------------
+
+export async function generateJobEntryAndDocuments(
+  jobDescription: string,
+  onStep?: ProgressCallback
+): Promise<GeneratedJob> {
+  console.log('[AI] generateJobEntryAndDocuments called');
+
+  onStep?.('analyzing');
+  const formattedJD = await formatJobDescription(jobDescription);
+  console.log('[AI] JD formatted, company:', formattedJD.company, 'title:', formattedJD.job_title);
+
+  const category = classifyCategory(jobDescription);
+  const def = CATEGORY_DEFS[category];
+  const folder = 'job-' + Date.now();
+
+  await saveApplication(category, folder, {
+    company: formattedJD.company,
+    job_title: formattedJD.job_title,
+    date_applied: new Date().toISOString().split('T')[0],
+    status: 'prospect' as StatusKey,
+    response_date: null,
+    notes: '',
+    contact_name: null,
+    contact_email: null,
+    source: 'Added Manually',
+    documents: [],
+    job_url: null,
+  });
+
   const jdHTML = buildJobDescriptionHTML(formattedJD, jobDescription);
   await saveDocumentHTML(category, folder, 'job_description', jdHTML);
 
@@ -434,7 +550,6 @@ export async function generateJobEntryAndDocuments(
     const { resumeFullHTML, coverLetterFullHTML } = await processJobDescription(formattedJD, jobDescription, onStep);
     console.log('[AI] Pipeline complete, saving documents...');
 
-    // Save generated documents
     await saveDocumentHTML(category, folder, 'resume', resumeFullHTML);
     await saveDocumentHTML(category, folder, 'cover_letter', coverLetterFullHTML);
 

@@ -15,6 +15,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
   }
 
+  // ── PII Guard: reject raw PII before forwarding to LLM ──
+  const rawEmailRegex = /[\w.+-]+@[\w.-]+\.\w+/;
+  const rawPhoneRegex = /\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/;
+  const rawNameRegex = /\b[A-Z][a-z]+ [A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/;
+
+  const hasRawEmail = rawEmailRegex.test(prompt);
+  const hasRawPhone = rawPhoneRegex.test(prompt);
+  const hasRawName = rawNameRegex.test(prompt);
+
+  if (hasRawEmail || hasRawPhone || hasRawName) {
+    console.warn('[AI] PII Guard: blocked request with raw PII', { hasRawEmail, hasRawPhone, hasRawName });
+    return NextResponse.json(
+      {
+        error: 'Security Exception: Raw unmasked PII intercepted at server boundary. Ensure client runs maskPII() before sending prompts.',
+      },
+      { status: 400 }
+    );
+  }
+
   const response = await fetch(BASE_URL, {
     method: 'POST',
     headers: {

@@ -1,113 +1,128 @@
-// PII Masking Utilities for Zero-PII Architecture
-// These functions mask personal information before sending to LLM
-// and demask it after receiving the response
+// PII Masking Utilities
+// All PII processing happens client-side. The server NEVER sees raw identity data.
 
 export interface PIIProfile {
+  name: string;
+  phone: string;
+  email: string;
+  emailUser?: string;
+  linkedIn?: string;
+  github?: string;
+  portfolio?: string;
+  otherLinks: string[];
+}
+
+export interface PIIMaskMap {
+  name: string;
+  phone: string;
+  email: string;
+  emailUser: string;
+  linkedIn: string;
+  github: string;
+  portfolio: string;
+  otherLinks: string;
+}
+
+// Mask tokens used in server communication
+export const MASK = {
+  NAME: '[CANDIDATE_NAME]',
+  PHONE: '[CANDIDATE_PHONE]',
+  EMAIL: '[CANDIDATE_EMAIL]',
+  EMAIL_USER: '[CANDIDATE_EMAIL_USER]',
+  LINKEDIN: '[CANDIDATE_LINKEDIN]',
+  GITHUB: '[CANDIDATE_GITHUB]',
+  PORTFOLIO: '[CANDIDATE_PORTFOLIO]',
+  OTHER_LINK: '[CANDIDATE_LINK]',
+} as const;
+
+const EMAIL_REGEX = /[\w.+-]+@[\w.-]+\.\w+/g;
+const PHONE_REGEX = /\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/g;
+const LINKEDIN_REGEX = /(?:linkedin\.com\/in\/[\w-]+|linkedin(?:\s+profile)?)/gi;
+const GITHUB_REGEX = /(?:github\.com\/[\w-]+|github(?:\s+profile)?)/gi;
+
+export function extractPIIProfile(data: {
   name?: string;
   phone?: string;
   email?: string;
-  links?: string[];
-}
-
-/**
- * Mask PII in text by replacing personal information with placeholders
- * Only masks: name, phone, email, and social/professional links
- * Does NOT mask company names, job titles, universities - the LLM needs these
- */
-export function maskPII(text: string, profile: PIIProfile): string {
-  let masked = text;
-
-  // Mask name
-  if (profile.name) {
-    const nameParts = profile.name.split(/\s+/);
-    nameParts.forEach(part => {
-      masked = masked.replace(new RegExp(part, 'gi'), '[CANDIDATE_NAME]');
-    });
-    // Also replace the full name
-    masked = masked.replace(new RegExp(profile.name, 'gi'), '[CANDIDATE_NAME]');
-  }
-
-  // Mask phone (normalize to digits only for matching)
-  if (profile.phone) {
-    const digitsOnly = profile.phone.replace(/[^\d]/g, '');
-    if (digitsOnly.length >= 10) {
-      masked = masked.replace(new RegExp(digitsOnly, 'g'), '[CANDIDATE_PHONE]');
-      // Also try original format
-      masked = masked.replace(new RegExp(profile.phone.replace(/[^\d]/g, ''), 'g'), '[CANDIDATE_PHONE]');
-    }
-  }
-
-  // Mask email
-  if (profile.email) {
-    masked = masked.replace(new RegExp(profile.email, 'gi'), '[CANDIDATE_EMAIL]');
-    // Also mask partial email (username part)
-    const emailParts = profile.email.split('@');
-    if (emailParts.length === 2) {
-      masked = masked.replace(new RegExp(emailParts[0], 'gi'), '[CANDIDATE_EMAIL_USER]');
-    }
-  }
-
-  // Mask social/professional links
-  if (profile.links && profile.links.length > 0) {
-    profile.links.forEach(link => {
-      // Escape special regex characters in URL
-      const escapedLink = link.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      masked = masked.replace(new RegExp(escapedLink, 'gi'), '[CANDIDATE_LINK]');
-    });
-  }
-
-  return masked;
-}
-
-/**
- * Demask PII by replacing placeholders with original personal information
- */
-export function demaskPII(text: string, profile: PIIProfile): string {
-  let demasked = text;
-
-  // Demask email (do this first to avoid partial replacements)
-  if (profile.email) {
-    demasked = demasked.replace(/\[CANDIDATE_EMAIL_USER\]/g, profile.email.split('@')[0]);
-    demasked = demasked.replace(/\[CANDIDATE_EMAIL\]/g, profile.email);
-  }
-
-  // Demask links
-  if (profile.links && profile.links.length > 0) {
-    profile.links.forEach(link => {
-      demasked = demasked.replace(/\[CANDIDATE_LINK\]/g, link);
-    });
-  }
-
-  // Demask phone
-  if (profile.phone) {
-    demasked = demasked.replace(/\[CANDIDATE_PHONE\]/g, profile.phone);
-  }
-
-  // Demask name (do this last, after other replacements)
-  if (profile.name) {
-    demasked = demasked.replace(/\[CANDIDATE_NAME\]/g, profile.name);
-  }
-
-  return demasked;
-}
-
-/**
- * Create a PII profile from the master resume HTML content
- * Extracts name, contact info, and links
- */
-export function extractPIIProfile(masterResumeHtml: string): PIIProfile {
-  // Simple extraction - in production this would parse the HTML more carefully
-  const emailMatch = masterResumeHtml.match(/[\w.-]+@[\w.-]+\.\w+/);
-  const phoneMatch = masterResumeHtml.match(/[\+]?[(]?[0-9]{1,3}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,4}[-\s\.]?[0-9]{1,9}/);
-  const linkMatches = masterResumeHtml.match(/https?:\/\/[^\s<>"']+/g) || [];
-
-  // Name is typically in an <h1> at the top
-  const nameMatch = masterResumeHtml.match(/<h1[^>]*>([^<]+)<\/h1>/i);
+  socials?: Array<{ name: string; url: string }>;
+  portfolio?: string;
+}): PIIProfile {
+  const socials = data.socials || [];
+  const linkedIn = socials.find(s => /linkedin/i.test(s.name))?.url || '';
+  const github = socials.find(s => /github/i.test(s.name))?.url || '';
+  const emailUser = data.email ? data.email.split('@')[0] : '';
 
   return {
-    name: nameMatch ? nameMatch[1].trim() : undefined,
-    email: emailMatch ? emailMatch[0] : undefined,
-    phone: phoneMatch ? phoneMatch[0] : undefined,
-    links: linkMatches.length > 0 ? linkMatches : undefined,
+    name: data.name || '',
+    phone: data.phone || '',
+    email: data.email || '',
+    emailUser,
+    linkedIn,
+    github,
+    portfolio: data.portfolio || '',
+    otherLinks: [],
   };
+}
+
+function buildMaskMap(_profile: PIIProfile): PIIMaskMap {
+  return {
+    name: MASK.NAME,
+    phone: MASK.PHONE,
+    email: MASK.EMAIL,
+    emailUser: MASK.EMAIL_USER,
+    linkedIn: MASK.LINKEDIN,
+    github: MASK.GITHUB,
+    portfolio: MASK.PORTFOLIO,
+    otherLinks: MASK.OTHER_LINK,
+  };
+}
+
+export function maskPII(text: string, profile: PIIProfile): string {
+  const map = buildMaskMap(profile);
+  let result = text;
+
+  if (profile.email) result = result.replaceAll(profile.email, map.email);
+  if (profile.emailUser) result = result.replaceAll(profile.emailUser, map.emailUser);
+  if (profile.phone) {
+    const escaped = profile.phone.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    result = result.replace(new RegExp(escaped, 'g'), map.phone);
+  }
+  if (profile.name) {
+    const escaped = profile.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    result = result.replace(new RegExp(escaped, 'g'), map.name);
+  }
+  if (profile.linkedIn) result = result.replaceAll(profile.linkedIn, map.linkedIn);
+  if (profile.github) result = result.replaceAll(profile.github, map.github);
+  if (profile.portfolio) result = result.replaceAll(profile.portfolio, map.portfolio);
+
+  result = result.replace(EMAIL_REGEX, map.email);
+  result = result.replace(PHONE_REGEX, map.phone);
+  result = result.replace(LINKEDIN_REGEX, map.linkedIn);
+  result = result.replace(GITHUB_REGEX, map.github);
+
+  return result;
+}
+
+export function demaskPII(text: string, profile: PIIProfile): string {
+  const map = buildMaskMap(profile);
+  let result = text;
+
+  result = result.replaceAll(map.emailUser, profile.emailUser || profile.email);
+  result = result.replaceAll(map.email, profile.email);
+  result = result.replaceAll(map.phone, profile.phone);
+  result = result.replaceAll(map.name, profile.name);
+  result = result.replaceAll(map.linkedIn, profile.linkedIn || '');
+  result = result.replaceAll(map.github, profile.github || '');
+  result = result.replaceAll(map.portfolio, profile.portfolio || '');
+
+  return result;
+}
+
+export function getServerPayloadSample(profile: PIIProfile): string {
+  const sample = `CANDIDATE_NAME
+CANDIDATE_PHONE
+CANDIDATE_EMAIL
+CANDIDATE_LINKEDIN
+CANDIDATE_GITHUB`;
+  return maskPII(sample, profile);
 }

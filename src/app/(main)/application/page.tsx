@@ -5,9 +5,10 @@ import { useSearchParams } from 'next/navigation';
 import Card from '@/components/design/Card';
 import Button from '@/components/design/Button';
 import Badge from '@/components/design/Badge';
-import { getDocumentHTML, getAllApplications } from '@/lib/storage-adapter';
+import { getDocumentHTML, getAllApplications, getMasterResume } from '@/lib/storage-adapter';
 import { StatusType } from '@/lib/design-system';
-import { generateJobEntryAndDocuments } from '@/lib/ai-generation';
+import { generateMaskedDocumentsForExistingJob } from '@/lib/ai-generation';
+import { maskPII, demaskPII, extractPIIProfile, getServerPayloadSample } from '@/lib/pii-utils';
 
 interface Application {
   company: string;
@@ -558,14 +559,12 @@ function ApplicationContent() {
                   if (!application) return;
                   setIsGeneratingResume(true);
                   try {
-                    const { processJobDescription } = await import('@/lib/ai-generation');
                     const jdHtml = await getDocumentHTML(application.category, application.folder, 'job_description');
                     const jdText = jdHtml ? jdHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
                     if (!jdText) throw new Error('No job description found');
-                    const { generateDocumentsForExistingJob } = await import('@/lib/ai-generation');
-                    await generateDocumentsForExistingJob(application.category, application.folder, jdText);
-                    const { getAllApplications } = await import('@/lib/storage-adapter');
-                    const apps = await getAllApplications();
+                    await generateMaskedDocumentsForExistingJob(application.category, application.folder, jdText);
+                    const { getAllApplications: ga } = await import('@/lib/storage-adapter');
+                    const apps = await ga();
                     const updated = apps.find((a) => `${a.category}/${a.folder}` === `${application.category}/${application.folder}`);
                     if (updated) setApplication((prev) => prev ? { ...prev, has_resume: true } : prev);
                   } catch (err) {
@@ -630,10 +629,9 @@ function ApplicationContent() {
                     const jdHtml = await getDocumentHTML(application.category, application.folder, 'job_description');
                     const jdText = jdHtml ? jdHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
                     if (!jdText) throw new Error('No job description found');
-                    const { generateDocumentsForExistingJob } = await import('@/lib/ai-generation');
-                    await generateDocumentsForExistingJob(application.category, application.folder, jdText);
-                    const { getAllApplications } = await import('@/lib/storage-adapter');
-                    const apps = await getAllApplications();
+                    await generateMaskedDocumentsForExistingJob(application.category, application.folder, jdText);
+                    const { getAllApplications: ga } = await import('@/lib/storage-adapter');
+                    const apps = await ga();
                     const updated = apps.find((a) => `${a.category}/${a.folder}` === `${application.category}/${application.folder}`);
                     if (updated) setApplication((prev) => prev ? { ...prev, has_cover_letter: true } : prev);
                   } catch (err) {

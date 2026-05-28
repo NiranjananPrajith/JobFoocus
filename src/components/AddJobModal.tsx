@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Card from '@/components/design/Card';
 import Button from '@/components/design/Button';
-import { isMasterResumeBlank, generateJobEntryAndDocuments } from '@/lib/ai-generation';
+import { isMasterResumeBlank, generateMaskedJobEntryAndDocuments } from '@/lib/ai-generation';
 
 type ModalState = 'two_column' | 'paste_jd' | 'blank_resume' | 'processing' | 'done';
 type ProcessingStep = 'analyzing' | 'resume' | 'cover_letter' | 'saving' | 'done';
@@ -103,7 +103,7 @@ export default function AddJobModal({ isOpen, onClose }: AddJobModalProps) {
     setState('processing');
     setProcessingStep('analyzing');
     try {
-      await generateJobEntryAndDocuments(jdText, (step) => {
+      await generateMaskedJobEntryAndDocuments(jdText, (step) => {
         setProcessingStep(step);
       });
       setProcessingStep('saving');
