@@ -7,6 +7,8 @@ import Card from '@/components/design/Card';
 import CategoryStats from '@/components/CategoryStats';
 import DataManagement from '@/components/DataManagement';
 import { deleteApplication, getAllApplications, getCategoryStats, saveApplication, type EnrichedApplication, type CategoryStats as CategoryStatsType } from '@/lib/storage-adapter';
+import { bootstrapFromLocalStorage } from '@/lib/db/bootstrap';
+import { createClient } from '@/lib/supabase/client';
 import { StatusType } from '@/lib/design-system';
 
 interface Stats {
@@ -62,7 +64,17 @@ export default function DashboardPage() {
         setLoading(false);
       }
     }
+    async function migrateIfNeeded() {
+      if (typeof localStorage === 'undefined') return;
+      if (localStorage.getItem('_jf_migrated')) return;
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { migrated } = await bootstrapFromLocalStorage(user.id);
+      if (migrated > 0) window.location.reload();
+    }
     fetchData();
+    migrateIfNeeded();
   }, [computeStats]);
 
   const recentApplications = [...applications]
