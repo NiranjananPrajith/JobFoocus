@@ -1,67 +1,27 @@
-// Unified native storage helper with Supabase as primary backend
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type StorageArea = any;
-
-// ---------------------------------------------------------------------------
-// Local/fallback storage (chrome.storage.local or localStorage)
-// ---------------------------------------------------------------------------
-
-const getExtensionStorage = (): StorageArea | null => {
-  if (typeof window === 'undefined') return null;
-  if (window.chrome && window.chrome.storage) return window.chrome.storage.local;
-  const w = window as any;
-  if (w.browser && w.browser.storage) return w.browser.storage.local;
-  return null;
-};
-
-export async function getLocalData(key: string): Promise<any> {
-  const storage = getExtensionStorage();
-  if (storage) {
-    return new Promise((resolve) => {
-      storage.get([key], (result: Record<string, unknown>) => resolve(result[key] || null));
-    });
-  }
-  if (typeof localStorage !== 'undefined') {
-    const local = localStorage.getItem(key);
-    return local ? JSON.parse(local) : null;
-  }
-  return null;
-}
-
-export async function setLocalData(key: string, value: any): Promise<void> {
-  const storage = getExtensionStorage();
-  if (storage) {
-    return new Promise((resolve) => {
-      storage.set({ [key]: value }, () => resolve());
-    });
-  }
-  localStorage?.setItem(key, JSON.stringify(value));
-}
-
-// ---------------------------------------------------------------------------
-// Supabase database layer
-// ---------------------------------------------------------------------------
-import {
-  dbGetApplications,
-  dbGetApplication,
-  dbUpsertApplication,
-  dbDeleteApplication,
-  dbGetDocument,
-  dbSaveDocument,
-  dbGetMasterResume,
-  dbSetMasterResume,
-  dbGetSettings,
-  dbSetSettings,
-  dbExportAllData,
-  dbImportAllData,
-} from '@/lib/db/index';
-import { createClient as createBrowserClient } from '@/lib/supabase/client';
+import { createClient as createBrowserClient } from '@/lib/supabase/client'
 
 async function getUserId(): Promise<string | null> {
-  if (typeof window === 'undefined') return null;
-  const supabase = createBrowserClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  return user?.id ?? null;
+  if (typeof window === 'undefined') return null
+  const supabase = createBrowserClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  return user?.id ?? null
+}
+
+// ---------------------------------------------------------------------------
+// API fetch helpers (all server-side via Next.js API routes)
+// ---------------------------------------------------------------------------
+
+async function apiFetch(path: string, options?: RequestInit): Promise<any> {
+  const res = await fetch(path, {
+    ...options,
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }))
+    throw new Error(err.error || `API error ${res.status}`)
+  }
+  return res.json()
 }
 
 // ---------------------------------------------------------------------------
@@ -138,6 +98,42 @@ export interface CategoryStats {
 }
 
 // ---------------------------------------------------------------------------
+// Local/fallback storage (chrome.storage.local or localStorage)
+// ---------------------------------------------------------------------------
+
+const getExtensionStorage = (): any => {
+  if (typeof window === 'undefined') return null;
+  if (window.chrome && window.chrome.storage) return window.chrome.storage.local;
+  const w = window as any;
+  if (w.browser && w.browser.storage) return w.browser.storage.local;
+  return null;
+};
+
+async function getLocalData(key: string): Promise<any> {
+  const storage = getExtensionStorage();
+  if (storage) {
+    return new Promise((resolve) => {
+      storage.get([key], (result: Record<string, unknown>) => resolve(result[key] || null));
+    });
+  }
+  if (typeof localStorage !== 'undefined') {
+    const local = localStorage.getItem(key);
+    return local ? JSON.parse(local) : null;
+  }
+  return null;
+}
+
+async function setLocalData(key: string, value: any): Promise<void> {
+  const storage = getExtensionStorage();
+  if (storage) {
+    return new Promise((resolve) => {
+      storage.set({ [key]: value }, () => resolve());
+    });
+  }
+  localStorage?.setItem(key, JSON.stringify(value));
+}
+
+// ---------------------------------------------------------------------------
 // Applications CRUD
 // ---------------------------------------------------------------------------
 
@@ -155,7 +151,7 @@ export async function getAllApplications(): Promise<EnrichedApplication[]> {
     return apps;
   }
   try {
-    const rows = await dbGetApplications(userId);
+    const rows = await apiFetch('/api/db/applications');
     const apps: EnrichedApplication[] = [];
     for (const row of rows) {
       const app = row.data as EnrichedApplication;
@@ -171,7 +167,7 @@ export async function getAllApplications(): Promise<EnrichedApplication[]> {
     apps.sort((a, b) => new Date(b.date_applied).getTime() - new Date(a.date_applied).getTime());
     return apps;
   } catch (err) {
-    console.error('[storage-adapter] dbGetApplications failed, falling back to localStorage:', err);
+    console.error('[storage-adapter] getAllApplications failed, falling back to localStorage:', err);
     const data = await getLocalData('applications');
     if (!data) return [];
     const apps = Object.values(data) as EnrichedApplication[];
@@ -189,11 +185,10 @@ export async function getApplicationById(category: CategoryKey, folderName: stri
   if (!userId) {
     const key = `${category}/${folderName}`;
     const data = await getLocalData('applications');
-    const app = data?.[key] || null;
-    return app;
+    return data?.[key] || null;
   }
   try {
-    const row = await dbGetApplication(userId, category, folderName);
+    const row = await apiFetch(`/api/db/applications/${encodeURIComponent(category)}/${encodeURIComponent(folderName)}`);
     if (!row) return null;
     const app = row.data as EnrichedApplication;
     app.category = row.category;
@@ -202,7 +197,7 @@ export async function getApplicationById(category: CategoryKey, folderName: stri
     app.path = `${row.category}/${row.folder}`;
     return app;
   } catch (err) {
-    console.error('[storage-adapter] dbGetApplication failed, falling back to localStorage:', err);
+    console.error('[storage-adapter] getApplicationById failed, falling back to localStorage:', err);
     const key = `${category}/${folderName}`;
     const data = await getLocalData('applications');
     return data?.[key] || null;
@@ -220,18 +215,20 @@ export async function saveApplication(
   const appliedDate = new Date(appData.date_applied);
   const daysSinceApplied = Math.floor((now.getTime() - appliedDate.getTime()) / (1000 * 60 * 60 * 24));
 
-  const existing = userId
-    ? (() => { try { return dbGetApplication(userId, category, folderName); } catch { return null; } })()
-    : (async () => { const d = await getLocalData('applications'); return d?.[key]; })();
-
-  const existingData = await existing;
+  let existingData: EnrichedApplication | null = null;
+  if (userId) {
+    try { existingData = await getApplicationById(category, folderName); } catch { /* ignore */ }
+  } else {
+    const local = await getLocalData('applications');
+    existingData = (local?.[key] as EnrichedApplication) || null;
+  }
 
   const enriched: EnrichedApplication = {
     ...appData,
     category: category,
     category_key: category,
-    category_name: (existingData as EnrichedApplication | null)?.category_name || (CATEGORIES as Record<string, { name: string; color: string }>)[category]?.name || String(category),
-    category_color: (existingData as EnrichedApplication | null)?.category_color || (CATEGORIES as Record<string, { name: string; color: string }>)[category]?.color || '#888888',
+    category_name: existingData?.category_name || (CATEGORIES as Record<string, { name: string; color: string }>)[category]?.name || String(category),
+    category_color: existingData?.category_color || (CATEGORIES as Record<string, { name: string; color: string }>)[category]?.color || '#888888',
     folder: folderName,
     path: key,
     has_job_description: true,
@@ -239,7 +236,7 @@ export async function saveApplication(
     has_cover_letter: true,
     days_since_applied: daysSinceApplied,
     needs_followup: ['prospect', 'applied'].includes(appData.status) && daysSinceApplied > 7,
-    files: (existingData as EnrichedApplication | null)?.files || [],
+    files: existingData?.files || [],
   };
 
   if (!userId) {
@@ -249,9 +246,12 @@ export async function saveApplication(
     return;
   }
   try {
-    await dbUpsertApplication(userId, category, folderName, enriched);
+    await apiFetch('/api/db/applications', {
+      method: 'POST',
+      body: JSON.stringify({ category, folder: folderName, appData: enriched }),
+    });
   } catch (err) {
-    console.error('[storage-adapter] dbUpsertApplication failed, falling back to localStorage:', err);
+    console.error('[storage-adapter] saveApplication failed, falling back to localStorage:', err);
     const data = (await getLocalData('applications')) || {};
     data[key] = enriched;
     await setLocalData('applications', data);
@@ -274,10 +274,13 @@ export async function updateApplicationDocFlags(
     return;
   }
   try {
-    const row = await dbGetApplication(userId, category, folderName);
+    const row = await apiFetch(`/api/db/applications/${encodeURIComponent(category)}/${encodeURIComponent(folderName)}`);
     if (!row) return;
     const updated = { ...row.data, ...flags };
-    await dbUpsertApplication(userId, category, folderName, updated);
+    await apiFetch('/api/db/applications', {
+      method: 'POST',
+      body: JSON.stringify({ category, folder: folderName, appData: updated }),
+    });
   } catch {
     const existingData = (await getLocalData('applications')) || {};
     const existing = existingData[key] as EnrichedApplication | undefined;
@@ -297,9 +300,9 @@ export async function deleteApplication(category: CategoryKey, folderName: strin
     return;
   }
   try {
-    await dbDeleteApplication(userId, category, folderName);
+    await apiFetch(`/api/db/applications?category=${encodeURIComponent(category)}&folder=${encodeURIComponent(folderName)}`, { method: 'DELETE' });
   } catch (err) {
-    console.error('[storage-adapter] dbDeleteApplication failed, falling back to localStorage:', err);
+    console.error('[storage-adapter] deleteApplication failed, falling back to localStorage:', err);
     const data = (await getLocalData('applications')) || {};
     delete data[key];
     await setLocalData('applications', data);
@@ -346,9 +349,9 @@ export async function getMasterResume(): Promise<any> {
   const userId = await getUserId();
   if (!userId) return getLocalData('masterResume');
   try {
-    return await dbGetMasterResume(userId);
+    return await apiFetch('/api/db/master-resume');
   } catch (err) {
-    console.error('[storage-adapter] dbGetMasterResume failed, falling back to localStorage:', err);
+    console.error('[storage-adapter] getMasterResume failed, falling back to localStorage:', err);
     return getLocalData('masterResume');
   }
 }
@@ -357,9 +360,9 @@ export async function setMasterResume(data: any): Promise<void> {
   const userId = await getUserId();
   if (!userId) { await setLocalData('masterResume', data); return; }
   try {
-    await dbSetMasterResume(userId, data);
+    await apiFetch('/api/db/master-resume', { method: 'POST', body: JSON.stringify(data) });
   } catch (err) {
-    console.error('[storage-adapter] dbSetMasterResume failed, falling back to localStorage:', err);
+    console.error('[storage-adapter] setMasterResume failed, falling back to localStorage:', err);
     await setLocalData('masterResume', data);
   }
 }
@@ -368,18 +371,15 @@ export async function setMasterResume(data: any): Promise<void> {
 // Settings
 // ---------------------------------------------------------------------------
 
-let settingsCache: { cloudProvider: 'none' | 'gdrive' | 'onedrive' | 'dropbox'; syncEnabled: boolean; openAiKey: string } = {
-  cloudProvider: 'none', syncEnabled: false, openAiKey: ''
-};
+const settingsCache = { cloudProvider: 'none' as const, syncEnabled: false, openAiKey: '' };
 
 export async function getSettings(): Promise<{ cloudProvider: 'none' | 'gdrive' | 'onedrive' | 'dropbox'; syncEnabled: boolean; openAiKey: string }> {
   const userId = await getUserId();
   if (!userId) return (await getLocalData('settings')) as typeof settingsCache || settingsCache;
   try {
-    const result = await dbGetSettings(userId) as typeof settingsCache;
-    return result ?? settingsCache;
+    return await apiFetch('/api/db/settings') as typeof settingsCache;
   } catch (err) {
-    console.error('[storage-adapter] dbGetSettings failed, falling back to localStorage:', err);
+    console.error('[storage-adapter] getSettings failed, falling back to localStorage:', err);
     return (await getLocalData('settings')) as typeof settingsCache || settingsCache;
   }
 }
@@ -388,9 +388,9 @@ export async function setSettings(data: { cloudProvider: 'none' | 'gdrive' | 'on
   const userId = await getUserId();
   if (!userId) { await setLocalData('settings', data); return; }
   try {
-    await dbSetSettings(userId, data);
+    await apiFetch('/api/db/settings', { method: 'POST', body: JSON.stringify(data) });
   } catch (err) {
-    console.error('[storage-adapter] dbSetSettings failed, falling back to localStorage:', err);
+    console.error('[storage-adapter] setSettings failed, falling back to localStorage:', err);
     await setLocalData('settings', data);
   }
 }
@@ -403,9 +403,12 @@ export async function saveDocumentHTML(category: string, folder: string, docType
   const userId = await getUserId();
   if (!userId) { await setLocalData(`doc_${category}/${folder}/${docType}`, html); return; }
   try {
-    await dbSaveDocument(userId, category, folder, docType, html);
+    await apiFetch('/api/db/documents', {
+      method: 'POST',
+      body: JSON.stringify({ category, folder, docType, html }),
+    });
   } catch (err) {
-    console.error('[storage-adapter] dbSaveDocument failed, falling back to localStorage:', err);
+    console.error('[storage-adapter] saveDocumentHTML failed, falling back to localStorage:', err);
     await setLocalData(`doc_${category}/${folder}/${docType}`, html);
   }
 }
@@ -414,9 +417,9 @@ export async function getDocumentHTML(category: string, folder: string, docType:
   const userId = await getUserId();
   if (!userId) return getLocalData(`doc_${category}/${folder}/${docType}`);
   try {
-    return await dbGetDocument(userId, category, folder, docType);
+    return await apiFetch(`/api/db/documents?category=${encodeURIComponent(category)}&folder=${encodeURIComponent(folder)}&docType=${encodeURIComponent(docType)}`);
   } catch (err) {
-    console.error('[storage-adapter] dbGetDocument failed, falling back to localStorage:', err);
+    console.error('[storage-adapter] getDocumentHTML failed, falling back to localStorage:', err);
     return getLocalData(`doc_${category}/${folder}/${docType}`);
   }
 }
@@ -455,10 +458,10 @@ export async function exportAllData(): Promise<BackupPayload> {
   const userId = await getUserId();
   if (!userId) return fallbackExport();
   try {
-    const data = await dbExportAllData(userId);
+    const data = await apiFetch('/api/db/export');
     return { version: '1.0.0', timestamp: Date.now(), data };
   } catch (err) {
-    console.error('[storage-adapter] dbExportAllData failed, falling back to localStorage:', err);
+    console.error('[storage-adapter] exportAllData failed, falling back to localStorage:', err);
     return fallbackExport();
   }
 }
@@ -470,9 +473,13 @@ export async function importAllData(
   const userId = await getUserId();
   if (!userId) return fallbackImport(payload, strategy);
   try {
-    return await dbImportAllData(userId, payload.data, strategy);
+    await apiFetch('/api/db/import', {
+      method: 'POST',
+      body: JSON.stringify({ data: payload.data, strategy }),
+    });
+    return { success: true, itemsImported: Object.keys(payload.data).length };
   } catch (err) {
-    console.error('[storage-adapter] dbImportAllData failed, falling back to localStorage:', err);
+    console.error('[storage-adapter] importAllData failed, falling back to localStorage:', err);
     return fallbackImport(payload, strategy);
   }
 }
@@ -517,7 +524,7 @@ async function fallbackImport(payload: BackupPayload, strategy: 'overwrite' | 'm
     if (strategy === 'overwrite') localStorage.clear();
     for (const [key, value] of Object.entries(incomingData)) {
       if (strategy === 'overwrite' || !localStorage.getItem(key)) {
-        localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+        localStorage.setItem(key, typeof value === 'string' ? value : value !== null ? JSON.stringify(value) : 'null');
         itemsImported++;
       }
     }
@@ -546,7 +553,8 @@ export async function setCloudSyncProvider(provider: string | null): Promise<voi
 }
 
 export async function getLastSyncTime(): Promise<number | null> {
-  return await getLocalData('cloud_last_sync_time');
+  const v = await getLocalData('cloud_last_sync_time');
+  return typeof v === 'number' ? v : null;
 }
 
 export async function setLastSyncTime(ts: number | null): Promise<void> {
