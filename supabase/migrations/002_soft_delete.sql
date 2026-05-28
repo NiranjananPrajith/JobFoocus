@@ -20,20 +20,24 @@ create index if not exists applications_deleted_at_idx on applications(deleted_a
 -- UPDATE/DELETE: operate on non-deleted rows
 -- ============================================================
 drop policy if exists "Users manage own applications" on applications;
-drop policy if exists "Users manage own active applications" on applications;
+drop policy if exists "Users manage own active applications select" on applications;
+drop policy if exists "Users manage own active applications update" on applications;
+drop policy if exists "Users manage own active applications delete" on applications;
 drop policy if exists "Users insert applications" on applications;
 
--- SELECT, UPDATE, DELETE: only non-deleted rows
-create policy "Users manage own active applications"
+-- SELECT: only non-deleted rows
+create policy "Users manage own active applications select"
   on applications for select
   using (auth.uid() = user_id and deleted_at is null);
 
-create policy "Users manage own active applications"
+-- UPDATE: only non-deleted rows
+create policy "Users manage own active applications update"
   on applications for update
   using (auth.uid() = user_id and deleted_at is null)
   with check (auth.uid() = user_id);
 
-create policy "Users manage own active applications"
+-- DELETE: only non-deleted rows
+create policy "Users manage own active applications delete"
   on applications for delete
   using (auth.uid() = user_id and deleted_at is null);
 
