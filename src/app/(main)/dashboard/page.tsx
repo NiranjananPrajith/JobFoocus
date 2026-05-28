@@ -182,9 +182,10 @@ export default function DashboardPage() {
           <h2 className="text-[12px] font-bold uppercase tracking-[0.05em] text-steel mb-4">Recent Activity</h2>
           <div className="space-y-2">
             {recentApplications.map((app, idx) => (
-              <div
+              <a
                 key={idx}
-                className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-white border border-hairline-soft"
+                href={`/application?app=${encodeURIComponent(app.category + '/' + app.folder)}`}
+                className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-white border border-hairline-soft hover:border-primary hover:shadow-sm transition-colors"
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-medium text-ink truncate">{app.company}</p>
@@ -196,8 +197,13 @@ export default function DashboardPage() {
                     {app.response_date || app.date_applied}
                   </span>
                 </div>
-              </div>
+              </a>
             ))}
+          </div>
+          <div className="mt-3 text-center">
+            <a href="/jobs" className="text-[13px] text-primary font-medium hover:underline">
+              View all jobs →
+            </a>
           </div>
         </div>
       )}
