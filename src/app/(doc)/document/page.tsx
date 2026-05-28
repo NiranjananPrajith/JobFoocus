@@ -47,7 +47,13 @@ function DocumentContent() {
           const titleMatch = jdHtml.match(/<h1[^>]*>([^<]+)<\/h1>/);
           const metaMatch = jdHtml.match(/<p>([^<]+)/);
           if (metaMatch) {
-            const metaParts = metaMatch[1].split(' · ');
+            // Decode HTML entities and split on bullet separator
+            const decoded = metaMatch[1]
+              .replace(/&bull;/g, '·')
+              .replace(/&amp;/g, '&')
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>');
+            const metaParts = decoded.split(' · ');
             company = metaParts[0] || '';
           }
           if (titleMatch) {
