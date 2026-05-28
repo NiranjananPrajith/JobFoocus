@@ -1,5 +1,7 @@
-// PII Masking Utilities
+// PII Tagging Utilities
 // All PII processing happens client-side. The server NEVER sees raw identity data.
+// Instead of opaque placeholders, PII fields are wrapped in descriptive XML-style tags
+// so the AI receives structured, clearly-labeled data it can understand and reference.
 
 export interface PIIProfile {
   name: string;
@@ -12,33 +14,27 @@ export interface PIIProfile {
   otherLinks: string[];
 }
 
-export interface PIIMaskMap {
-  name: string;
-  phone: string;
-  email: string;
-  emailUser: string;
-  linkedIn: string;
-  github: string;
-  portfolio: string;
-  otherLinks: string;
-}
-
-// Mask tokens used in server communication
-export const MASK = {
-  NAME: '[CANDIDATE_NAME]',
-  PHONE: '[CANDIDATE_PHONE]',
-  EMAIL: '[CANDIDATE_EMAIL]',
-  EMAIL_USER: '[CANDIDATE_EMAIL_USER]',
-  LINKEDIN: '[CANDIDATE_LINKEDIN]',
-  GITHUB: '[CANDIDATE_GITHUB]',
-  PORTFOLIO: '[CANDIDATE_PORTFOLIO]',
-  OTHER_LINK: '[CANDIDATE_LINK]',
+// XML-style tags used to mark PII fields in structured data sent to the AI
+export const PII_TAGS = {
+  NAME: 'PII_NAME',
+  PHONE: 'PII_PHONE',
+  EMAIL: 'PII_EMAIL',
+  EMAIL_USER: 'PII_EMAIL_USER',
+  LINKEDIN: 'PII_LINKEDIN',
+  GITHUB: 'PII_GITHUB',
+  PORTFOLIO: 'PII_PORTFOLIO',
+  OTHER_LINK: 'PII_LINK',
 } as const;
 
-const EMAIL_REGEX = /[\w.+-]+@[\w.-]+\.\w+/g;
-const PHONE_REGEX = /\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/g;
-const LINKEDIN_REGEX = /(?:linkedin\.com\/in\/[\w-]+|linkedin(?:\s+profile)?)/gi;
-const GITHUB_REGEX = /(?:github\.com\/[\w-]+|github(?:\s+profile)?)/gi;
+function wrapTag(tag: string, value: string): string {
+  return `<${tag}>${value}</${tag}>`;
+}
+
+function stripTag(tag: string, value: string, replacement: string): string {
+  const open = `<${tag}>`;
+  const close = `</${tag}>`;
+  return value.replace(new RegExp(`${open}(.*?)${close}`, 'g'), replacement);
+}
 
 export function extractPIIProfile(data: {
   name?: string;
@@ -64,65 +60,79 @@ export function extractPIIProfile(data: {
   };
 }
 
-function buildMaskMap(_profile: PIIProfile): PIIMaskMap {
-  return {
-    name: MASK.NAME,
-    phone: MASK.PHONE,
-    email: MASK.EMAIL,
-    emailUser: MASK.EMAIL_USER,
-    linkedIn: MASK.LINKEDIN,
-    github: MASK.GITHUB,
-    portfolio: MASK.PORTFOLIO,
-    otherLinks: MASK.OTHER_LINK,
-  };
+// Wrap a value in its PII tag
+function tagValue(tag: string, value: string): string {
+  return `<${tag}>${value}</${tag}>`;
 }
 
+// Mask PII in a JSON string by wrapping each field's value in its PII tag.
+// Uses JSON.parse with a reviver so nested structures are handled correctly.
 export function maskPII(text: string, profile: PIIProfile): string {
-  const map = buildMaskMap(profile);
-  let result = text;
+  try {
+    const parsed = JSON.parse(text);
+    const result = JSON.parse(text, (key, value) => {
+      if (typeof value === 'string') {
+        switch (key) {
+          case 'name':
+            return value ? tagValue(PII_TAGS.NAME, value) : value;
+          case 'phone':
+            return value ? tagValue(PII_TAGS.PHONE, value) : value;
+          case 'email':
+            return value ? tagValue(PII_TAGS.EMAIL, value) : value;
+          case 'emailUser':
+            return value ? tagValue(PII_TAGS.EMAIL_USER, value) : value;
+          default:
+            return value;
+        }
+      }
+      return value;
+    });
 
-  if (profile.email) result = result.replaceAll(profile.email, map.email);
-  if (profile.emailUser) result = result.replaceAll(profile.emailUser, map.emailUser);
-  if (profile.phone) {
-    const escaped = profile.phone.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    result = result.replace(new RegExp(escaped, 'g'), map.phone);
+    // Tag top-level socials/portfolio if present
+    if (parsed.socials && Array.isArray(parsed.socials)) {
+      result.socials = parsed.socials.map((s: { name: string; url: string }) => {
+        if (/linkedin/i.test(s.name)) {
+          return { name: s.name, url: s.url ? tagValue(PII_TAGS.LINKEDIN, s.url) : s.url };
+        }
+        if (/github/i.test(s.name)) {
+          return { name: s.name, url: s.url ? tagValue(PII_TAGS.GITHUB, s.url) : s.url };
+        }
+        return s;
+      });
+    }
+    if (parsed.portfolio && typeof parsed.portfolio === 'string') {
+      result.portfolio = tagValue(PII_TAGS.PORTFOLIO, parsed.portfolio);
+    }
+
+    return JSON.stringify(result);
+  } catch {
+    // If JSON parsing fails, return text as-is (not valid JSON, no PII to mask)
+    return text;
   }
-  if (profile.name) {
-    const escaped = profile.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    result = result.replace(new RegExp(escaped, 'g'), map.name);
-  }
-  if (profile.linkedIn) result = result.replaceAll(profile.linkedIn, map.linkedIn);
-  if (profile.github) result = result.replaceAll(profile.github, map.github);
-  if (profile.portfolio) result = result.replaceAll(profile.portfolio, map.portfolio);
-
-  result = result.replace(EMAIL_REGEX, map.email);
-  result = result.replace(PHONE_REGEX, map.phone);
-  result = result.replace(LINKEDIN_REGEX, map.linkedIn);
-  result = result.replace(GITHUB_REGEX, map.github);
-
-  return result;
 }
 
+// Strip PII tags from AI-generated content and replace with actual values.
+// Also handles the placeholder tokens [CANDIDATE_NAME] etc. for backward compatibility.
 export function demaskPII(text: string, profile: PIIProfile): string {
-  const map = buildMaskMap(profile);
   let result = text;
 
-  result = result.replaceAll(map.emailUser, profile.emailUser || profile.email);
-  result = result.replaceAll(map.email, profile.email);
-  result = result.replaceAll(map.phone, profile.phone);
-  result = result.replaceAll(map.name, profile.name);
-  result = result.replaceAll(map.linkedIn, profile.linkedIn || '');
-  result = result.replaceAll(map.github, profile.github || '');
-  result = result.replaceAll(map.portfolio, profile.portfolio || '');
+  // Strip XML-style PII tags and replace with the actual values
+  result = stripTag(PII_TAGS.NAME, result, profile.name || '');
+  result = stripTag(PII_TAGS.PHONE, result, profile.phone || '');
+  result = stripTag(PII_TAGS.EMAIL, result, profile.email || '');
+  result = stripTag(PII_TAGS.EMAIL_USER, result, profile.emailUser || profile.email || '');
+  result = stripTag(PII_TAGS.LINKEDIN, result, profile.linkedIn || '');
+  result = stripTag(PII_TAGS.GITHUB, result, profile.github || '');
+  result = stripTag(PII_TAGS.PORTFOLIO, result, profile.portfolio || '');
+
+  // Backward compatibility: also handle the old placeholder tokens
+  result = result.replaceAll('[CANDIDATE_NAME]', profile.name || '');
+  result = result.replaceAll('[CANDIDATE_PHONE]', profile.phone || '');
+  result = result.replaceAll('[CANDIDATE_EMAIL]', profile.email || '');
+  result = result.replaceAll('[CANDIDATE_EMAIL_USER]', profile.emailUser || profile.email || '');
+  result = result.replaceAll('[CANDIDATE_LINKEDIN]', profile.linkedIn || '');
+  result = result.replaceAll('[CANDIDATE_GITHUB]', profile.github || '');
+  result = result.replaceAll('[CANDIDATE_PORTFOLIO]', profile.portfolio || '');
 
   return result;
-}
-
-export function getServerPayloadSample(profile: PIIProfile): string {
-  const sample = `CANDIDATE_NAME
-CANDIDATE_PHONE
-CANDIDATE_EMAIL
-CANDIDATE_LINKEDIN
-CANDIDATE_GITHUB`;
-  return maskPII(sample, profile);
 }

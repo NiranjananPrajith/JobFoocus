@@ -8,7 +8,7 @@ import Badge from '@/components/design/Badge';
 import { getDocumentHTML, getAllApplications, getMasterResume } from '@/lib/storage-adapter';
 import { StatusType } from '@/lib/design-system';
 import { generateMaskedDocumentsForExistingJob } from '@/lib/ai-generation';
-import { maskPII, demaskPII, extractPIIProfile, getServerPayloadSample } from '@/lib/pii-utils';
+import { maskPII, demaskPII, extractPIIProfile } from '@/lib/pii-utils';
 
 interface Application {
   company: string;

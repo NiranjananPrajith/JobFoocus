@@ -3,16 +3,6 @@ import { maskPII, demaskPII } from '@/lib/pii-utils';
 import type { CategoryKey, StatusKey } from '@/lib/storage-adapter';
 import formattingGuides from './formatting-guides.json';
 
-// PII warning from server — surface to caller so the modal can show the detailed dialog
-export class PIIWarningError extends Error {
-  detected: { email: boolean; phone: boolean };
-  constructor(detected: { email: boolean; phone: boolean }) {
-    super('PII was detected in your master resume. Please review and edit before continuing.');
-    this.name = 'PIIWarningError';
-    this.detected = detected;
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Minimax API (Anthropic API compatibility via direct fetch)
 // ---------------------------------------------------------------------------
@@ -66,11 +56,6 @@ async function minimaxChat(prompt: string, system: string): Promise<string> {
   }
 
   const data = await res.json();
-
-  // Check if the server flagged PII — throw so callers can handle gracefully
-  if (data.warning && data.detected) {
-    throw new PIIWarningError(data.detected);
-  }
 
   const content = data.content != null
     ? data.content
@@ -510,12 +495,6 @@ export async function generateMaskedJobEntryAndDocuments(
     onStep?.('done');
   } catch (err) {
     console.error('[AI] generateMaskedJobEntryAndDocuments: document generation error:', err);
-    if (err instanceof PIIWarningError) {
-      // Job entry was saved successfully — only document generation failed.
-      // Re-throw so the modal can show the PII warning UI.
-      throw err;
-    }
-    // For other errors, mark doc flags as false and re-throw
     await updateApplicationDocFlags(category, folder, { has_resume: false, has_cover_letter: false });
     throw err;
   }
