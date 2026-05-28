@@ -214,48 +214,54 @@ Key Requirements: ${(jd.requirements || []).join(', ')}`;
 async function generateCoverLetterHTML(maskedMasterResume: string, jd: FormattedJD): Promise<string> {
   console.log('[AI] Step 3: Generating cover letter HTML');
   const guide = formattingGuides.cover_letter;
-  const system = 'You are an expert cover letter writer. Return ONLY the HTML body content — NO <html>, <head>, or <body> tags.\n\n' + guide.ai_instructions + '\n\n---\nCOVER LETTER FORMATTING GUIDE (reference only — do not output this):\n' + JSON.stringify(guide, null, 2);
+  const system = 'You are an expert cover letter writer. Output plain text paragraphs only — no HTML tags, no structural elements. The cover letter WRAPPER handles all formatting.\n\n' + guide.ai_instructions;
 
   const reqSlice = (jd.requirements || []).slice(0, 5).join(', ');
 
-  const prompt = `TEMPLATE — follow this EXACT structure and output NOTHING else:
+  const prompt = `Write a professional cover letter for the position of ${jd.job_title} at ${jd.company}.
 
-<div class="sender-block">
-<div class="sender-name">[CANDIDATE_NAME]</div>
-<div class="sender-meta">[CANDIDATE_PHONE] | [CANDIDATE_EMAIL]</div>
-</div>
+STRUCTURE — output EXACTLY this, nothing else:
+[PARA1]
+Write a strong opening paragraph. Express interest in the ${jd.job_title} role at ${jd.company}. Mention 1-2 specific qualifications or achievements from the candidate data below that make you a strong fit. Keep it to 3-4 sentences.
 
-<div class="date-block">[Current Date — Month DD, YYYY]</div>
+[PARA2]
+Write a body paragraph. Draw from the candidate's work history below and connect it directly to the job requirements: ${reqSlice}. Use a concrete metric or specific accomplishment where available. Keep it to 3-4 sentences.
 
-<div class="recipient-block">
-Hiring Selection Team<br>
-<strong>${jd.company}</strong>
-</div>
+[PARA3]
+Write a closing paragraph. State availability (days, nights, weekends), express enthusiasm for the role, and include a call to action (available for interview at your convenience). Do NOT mention raw name, phone, or email here. Keep it to 2-3 sentences.
 
-<div class="subject-block">RE: Application for the position of ${jd.job_title}</div>
+RULES:
+- Output ONLY the three paragraphs in plain text — no HTML, no <p> tags, no structural markup of any kind
+- Do NOT invent achievements — derive content ONLY from the candidate data below
+- Do NOT output: sender-block, date-block, recipient-block, subject-block, signature-space, or any HTML elements
+- The WRAPPER handles all letter structure — you write only the paragraph content
 
-<p style="text-align: justify">Para 1: [Strong opening — express interest in ${jd.job_title} at ${jd.company}. Mention specific qualification or achievement that makes you a strong fit. Include the job title explicitly.]</p>
-
-<p style="text-align: justify">Para 2: [Key achievement drawn from master resume work history — use a concrete metric or specific accomplishment. Connect it directly to a requirement from the job: ${reqSlice}. Do NOT invent content.]</p>
-
-<p style="text-align: justify">Para 3: [Closing — state your availability (days, nights, weekends), express enthusiasm for the role, and include a call to action (available for interview at your convenience). Do NOT include raw name/phone/email here.]</p>
-
-<div class="signature-space">
-Sincerely,<br><br><br>
-<strong>[CANDIDATE_NAME]</strong>
-</div>
-
-CRITICAL RULES:
-- Use EXACT class names: .sender-block, .sender-name, .sender-meta, .date-block, .recipient-block, .subject-block, .signature-space
-- All 3 paragraphs MUST have style="text-align: justify"
-- Placeholders [CANDIDATE_NAME], [CANDIDATE_PHONE], [CANDIDATE_EMAIL] are left as-is — they are replaced server-side
-- Do NOT invent achievements — derive ONLY from the master resume data below
-- Do NOT output <html>, <head>, or <body> tags
-
-CANDIDATE DATA (from master resume):
+CANDIDATE DATA:
 ${maskedMasterResume}`;
 
-  return minimaxChat(prompt, system);
+  const raw = await minimaxChat(prompt, system);
+
+  // Parse out the three labeled paragraphs from plain text response
+  const para1Match = raw.match(/\[PARA1\]\s*\n([\s\S]*?)(?=\[PARA2\]|$)/i);
+  const para2Match = raw.match(/\[PARA2\]\s*\n([\s\S]*?)(?=\[PARA3\]|$)/i);
+  const para3Match = raw.match(/\[PARA3\]\s*\n([\s\S]*?)(?=$)/i);
+
+  const p1 = para1Match?.[1]?.trim() || '';
+  const p2 = para2Match?.[1]?.trim() || '';
+  const p3 = para3Match?.[1]?.trim() || '';
+
+  // If the model ignored the format and returned raw paragraphs, fall back to splitting by double newlines
+  const paragraphs = [p1, p2, p3].filter(Boolean);
+  let html: string;
+  if (paragraphs.length >= 3) {
+    html = paragraphs.map(p => `<p style="text-align: justify">${p}</p>`).join('\n');
+  } else {
+    // Fallback: split by blank line, wrap each non-empty block
+    const blocks = raw.split(/\n\n+/).filter(b => b.trim());
+    html = blocks.map(b => `<p style="text-align: justify">${b.replace(/\n/g, ' ').trim()}</p>`).join('\n');
+  }
+
+  return html;
 }
 
 // ---------------------------------------------------------------------------
