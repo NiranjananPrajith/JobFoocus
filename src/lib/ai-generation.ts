@@ -1,5 +1,5 @@
 import { saveApplication, saveDocumentHTML, getMasterResume, updateApplicationDocFlags } from '@/lib/storage-adapter';
-import { maskPII, demaskPII } from '@/lib/pii-utils';
+import { maskPII, demaskPII, type PIIProfile } from '@/lib/pii-utils';
 import type { CategoryKey, StatusKey } from '@/lib/storage-adapter';
 import formattingGuides from './formatting-guides.json';
 
@@ -494,6 +494,185 @@ export async function generateMaskedDocumentsForExistingJob(
   await saveDocumentHTML(category, folder, 'cover_letter', coverLetterFullHTML);
   await updateApplicationDocFlags(category, folder, { has_resume: true, has_cover_letter: true });
   onStep?.('done');
+}
+
+// ---------------------------------------------------------------------------
+// Edit existing document with user change request
+// ---------------------------------------------------------------------------
+
+async function editResumeBodyHTML(
+  currentBodyHTML: string,
+  maskedMasterResume: string,
+  jd: FormattedJD,
+  userMessage: string
+): Promise<string> {
+  const system = 'You are an expert resume writer. Output ONLY valid HTML for the resume body — NO <html>, <head>, or <body> tags. Do NOT include work experience, education, or certifications sections.\n\n' + formattingGuides.resume.ai_instructions;
+
+  const prompt = `You are editing an EXISTING resume. The user has requested a specific change. Parse their request carefully and apply it to the appropriate section.
+
+CURRENT RESUME BODY (Professional Summary + Skills sections only):
+${currentBodyHTML}
+
+USER'S CHANGE REQUEST:
+"${userMessage}"
+
+TARGET JOB:
+Company: ${jd.company}
+Title: ${jd.job_title}
+Key Requirements: ${(jd.requirements || []).join(', ')}
+
+INSTRUCTIONS:
+1. Read the user's change request carefully
+2. Re-read the current resume Professional Summary and Skills sections
+3. Apply the requested change to the appropriate section(s)
+4. If the user wants to reword the summary — rewrite only the Professional Summary section
+5. If the user wants to change skills — rewrite only the Skills section
+6. If the change affects both — rewrite both sections
+7. Do NOT fabricate skills not present in the master data
+8. Keep work experience, education, and certifications sections exactly as they are in the CURRENT RESUME BODY
+
+MASTER RESUME DATA (skills source):
+${maskedMasterResume}
+
+OUTPUT FORMAT — output ONLY these two sections, nothing else:
+<h2>Professional Summary</h2>
+<div class="summary"><p>Your updated 3-4 sentence tailored professional summary here.</p></div>
+
+<h2>Skills</h2>
+<ul class="skills-list">
+<li><strong>Category Name</strong>: skill 1, skill 2, skill 3</li>
+<li><strong>Category Name</strong>: skill 1, skill 2</li>
+</ul>
+
+RULES:
+- Output ONLY the two sections above — no work experience, no education, no certifications
+- Skills must come ONLY from the master resume data above
+- Match skills to keywords in the target job description: ${jd.job_title}
+- Do NOT invent skills not present in the master data
+- Output NO other content
+- Preserve exact CSS class names: .summary, .summary p, ul.skills-list`;
+
+  return minimaxChat(prompt, system);
+}
+
+async function editCoverLetterBodyHTML(
+  currentBodyHTML: string,
+  maskedMasterResume: string,
+  jd: FormattedJD,
+  userMessage: string
+): Promise<string> {
+  const system = 'You are an expert cover letter writer. Output plain text paragraphs only — no HTML tags, no structural elements. The cover letter WRAPPER handles all formatting.\n\n' + formattingGuides.cover_letter.ai_instructions;
+
+  const reqSlice = (jd.requirements || []).slice(0, 5).join(', ');
+
+  const prompt = `You are editing an EXISTING cover letter. The user has requested a specific change. Parse their request carefully and apply it.
+
+CURRENT COVER LETTER BODY (only the 3 paragraphs):
+${currentBodyHTML}
+
+USER'S CHANGE REQUEST:
+"${userMessage}"
+
+TARGET JOB:
+Company: ${jd.company}
+Title: ${jd.job_title}
+Key Requirements: ${reqSlice}
+
+INSTRUCTIONS:
+1. Read the user's change request carefully
+2. Identify which paragraph(s) need to be changed based on the request
+3. Rewrite ONLY the affected paragraph(s) — keep all other paragraphs exactly as they are
+4. Do NOT invent achievements not in the master data
+5. Maintain the same tone, style, and structure as the original
+
+CURRENT PARAGRAPH STRUCTURE (label your output exactly):
+[PARA1] — Opening paragraph (keep as-is unless the change request affects this paragraph)
+[PARA2] — Body paragraph with achievements/qualifications (keep as-is unless the change request affects this paragraph)
+[PARA3] — Closing paragraph with availability and call to action (keep as-is unless the change request affects this paragraph)
+
+MASTER RESUME DATA:
+${maskedMasterResume}
+
+RULES:
+- Output ONLY the three paragraphs in plain text — no HTML, no <p> tags, no structural markup
+- Keep unaffected paragraphs EXACTLY the same as the current body above
+- Rewrite only the paragraph(s) affected by the user's change request
+- The WRAPPER handles all letter structure — you write only the paragraph content
+- Do NOT output: sender-block, date-block, recipient-block, subject-block, signature-space, or any HTML elements`;
+
+  const raw = await minimaxChat(prompt, system);
+
+  const para1Match = raw.match(/\[PARA1\]\s*\n?([\s\S]*?)(?=\[PARA2\]|$)/i);
+  const para2Match = raw.match(/\[PARA2\]\s*\n?([\s\S]*?)(?=\[PARA3\]|$)/i);
+  const para3Match = raw.match(/\[PARA3\]\s*\n?([\s\S]*?)(?=$)/i);
+
+  const p1 = para1Match?.[1]?.trim() || '';
+  const p2 = para2Match?.[1]?.trim() || '';
+  const p3 = para3Match?.[1]?.trim() || '';
+
+  const paragraphs = [p1, p2, p3].filter(Boolean);
+  let html: string;
+  if (paragraphs.length >= 3) {
+    html = paragraphs.map(p => `<p style="text-align: justify">${p}</p>`).join('\n');
+  } else {
+    const blocks = raw.split(/\n\n+/).filter(b => b.trim());
+    html = blocks.map(b => `<p style="text-align: justify">${b.replace(/\n/g, ' ').trim()}</p>`).join('\n');
+  }
+
+  return html;
+}
+
+function extractResumeBody(fullHTML: string): string {
+  const contactEnd = fullHTML.indexOf('</div>');
+  const afterContact = fullHTML.slice(contactEnd + 6);
+  return afterContact.trim();
+}
+
+function extractCoverLetterBody(fullHTML: string): string {
+  const sigStart = fullHTML.indexOf('<div class="signature-space"');
+  if (sigStart === -1) return fullHTML;
+  const beforeSig = fullHTML.slice(0, sigStart);
+  const sigEnd = beforeSig.lastIndexOf('</div>');
+  const body = beforeSig.slice(0, sigEnd);
+  const lastDivClose = body.lastIndexOf('</div>');
+  return lastDivClose !== -1 ? body.slice(lastDivClose + 6) : body;
+}
+
+function replaceResumeBody(fullHTML: string, newBodyHTML: string): string {
+  const contactEnd = fullHTML.indexOf('</div>');
+  const prefix = fullHTML.slice(0, contactEnd + 6);
+  return prefix + '\n    ' + newBodyHTML + '\n</body>\n</html>';
+}
+
+function replaceCoverLetterBody(fullHTML: string, newBodyHTML: string): string {
+  const sigMarker = '<div class="signature-space"';
+  const sigIdx = fullHTML.indexOf(sigMarker);
+  if (sigIdx === -1) return fullHTML;
+  const prefix = fullHTML.slice(0, sigIdx).trimEnd();
+  return prefix + '\n    ' + newBodyHTML + '\n    ' + sigMarker + fullHTML.slice(sigIdx + sigMarker.length);
+}
+
+export async function editDocumentHTML(
+  fullHTML: string,
+  maskedMasterResume: string,
+  masterResume: PIIProfile,
+  jobDescriptionRaw: string,
+  docType: 'resume' | 'cover_letter',
+  userMessage: string
+): Promise<string> {
+  const jd = await formatJobDescription(jobDescriptionRaw);
+
+  if (docType === 'resume') {
+    const bodyHTML = extractResumeBody(fullHTML);
+    const newBody = await editResumeBodyHTML(bodyHTML, maskedMasterResume, jd, userMessage);
+    const demaskedBody = demaskPII(newBody, masterResume);
+    return replaceResumeBody(fullHTML, demaskedBody);
+  } else {
+    const bodyHTML = extractCoverLetterBody(fullHTML);
+    const newBody = await editCoverLetterBodyHTML(bodyHTML, maskedMasterResume, jd, userMessage);
+    const demaskedBody = demaskPII(newBody, masterResume);
+    return replaceCoverLetterBody(fullHTML, demaskedBody);
+  }
 }
 
 // ---------------------------------------------------------------------------

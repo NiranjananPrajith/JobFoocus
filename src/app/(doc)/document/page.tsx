@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getDocumentHTML } from '@/lib/storage-adapter';
+import { getDocumentHTML, saveDocumentHTML } from '@/lib/storage-adapter';
 
 function DocumentContent() {
   const searchParams = useSearchParams();
@@ -12,6 +12,8 @@ function DocumentContent() {
   const [content, setContent] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingMessage, setEditingMessage] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     async function fetchDocument() {
@@ -46,6 +48,55 @@ function DocumentContent() {
     fetchDocument();
   }, [appId, docType]);
 
+  // Reset editing state when document changes
+  useEffect(() => {
+    setEditingMessage('');
+    setIsEditing(false);
+  }, [appId, docType]);
+
+  const handleEditSubmit = useCallback(async () => {
+    if (!editingMessage.trim() || !appId || !content) return;
+
+    setIsEditing(true);
+
+    try {
+      const [category, ...folderParts] = appId.split('/');
+      const folder = folderParts.join('/');
+      const jdHtml = await getDocumentHTML(category, folder, 'job_description');
+      const jdText = jdHtml ? jdHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+
+      const res = await fetch('/api/ai/edit-document', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentHTML: content,
+          jobDescription: jdText,
+          docType,
+          userMessage: editingMessage,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to edit document');
+      }
+
+      const { newFullHTML } = await res.json();
+
+      // Save the new document
+      await saveDocumentHTML(category, folder, docType, newFullHTML);
+
+      // Update the displayed content
+      setContent(newFullHTML);
+      setEditingMessage('');
+    } catch (err) {
+      console.error('Edit failed:', err);
+      alert(err instanceof Error ? err.message : 'Failed to edit document. Please try again.');
+    } finally {
+      setIsEditing(false);
+    }
+  }, [editingMessage, appId, content, docType]);
+
   const handlePrint = () => {
     window.print();
   };
@@ -79,6 +130,38 @@ function DocumentContent() {
         </div>
         <div className="document-page">
           <p style={{ color: '#6a6a6a' }}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isEditing) {
+    return (
+      <div className="document-container">
+        <div className="document-header no-print bg-white border-b border-stone-200 px-6 py-5">
+          <div className="document-header-inner flex items-center justify-between max-w-screen-xl mx-auto">
+            <div className="document-header-left flex items-center gap-3">
+              <a href={backUrl} className="document-back group flex items-center gap-2 text-stone-500 hover:text-stone-800 transition-colors duration-200 text-sm font-medium">
+                <svg className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>
+                <span>Back</span>
+              </a>
+              <span className="document-type text-stone-400 text-sm font-medium">|</span>
+              <span className="document-type text-stone-500 uppercase tracking-wider text-xs font-semibold">{getDocLabel()}</span>
+            </div>
+          </div>
+        </div>
+        <div className="document-page flex flex-col items-center justify-center min-h-[60vh] gap-6">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
+            <line x1="12" y1="2" x2="12" y2="6" />
+            <line x1="12" y1="18" x2="12" y2="22" />
+            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
+            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
+            <line x1="2" y1="12" x2="6" y2="12" />
+            <line x1="18" y1="12" x2="22" y2="12" />
+            <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
+            <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
+          </svg>
+          <p className="text-[15px] text-steel font-medium">Generating your updated {getDocLabel().toLowerCase()}...</p>
         </div>
       </div>
     );
@@ -129,10 +212,56 @@ function DocumentContent() {
           </div>
         </div>
       </div>
+
+      {/* Document content */}
       <div
-        className="document-page"
+        className="document-page pb-36"
         dangerouslySetInnerHTML={{ __html: content }}
       />
+
+      {/* Floating edit panel */}
+      {(docType === 'resume' || docType === 'cover_letter') && !loading && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-20">
+          <div
+            className="rounded-2xl px-5 py-4 shadow-xl border"
+            style={{ backgroundColor: '#ffffff', borderColor: '#e5e5e5' }}
+          >
+            <p className="text-[13px] font-semibold text-ink mb-3">Want to make a change?</p>
+            <div className="flex items-stretch gap-3">
+              <textarea
+                value={editingMessage}
+                onChange={(e) => setEditingMessage(e.target.value)}
+                placeholder="Describe your change..."
+                rows={2}
+                className="flex-1 resize-none rounded-xl px-4 py-3 text-[13px] text-ink placeholder-steel border border-stone-200 focus:border-primary focus:ring-1 focus:ring-primary/20 focus:outline-none transition-all duration-200 disabled:bg-stone-100 disabled:cursor-not-allowed"
+                style={{ backgroundColor: isEditing ? '#f5f5f4' : '#ffffff' }}
+                disabled={isEditing}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey && editingMessage.trim()) {
+                    e.preventDefault();
+                    handleEditSubmit();
+                  }
+                }}
+              />
+              <button
+                onClick={handleEditSubmit}
+                disabled={!editingMessage.trim() || isEditing}
+                className="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40"
+                style={{
+                  backgroundColor: editingMessage.trim() && !isEditing ? '#fa520f' : '#e5e5e5',
+                  color: editingMessage.trim() && !isEditing ? '#ffffff' : '#999999',
+                }}
+                title="Send"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <style>{`
         @page {
             size: letter;
