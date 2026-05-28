@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase-utils/server'
+import { createClient, createServiceClient } from '@/lib/supabase-utils/server'
 import { NextResponse } from 'next/server'
 
 // POST /api/db/applications/restore — restore application from trash
@@ -12,7 +12,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing category or folder' }, { status: 400 })
   }
 
-  const { error } = await supabase
+  // Use service client to bypass RLS for the UPDATE
+  const svc = await createServiceClient()
+  const { error } = await svc
     .from('applications')
     .update({ deleted_at: null })
     .eq('user_id', user.id).eq('category', category).eq('folder', folder).not('deleted_at', 'is', null)

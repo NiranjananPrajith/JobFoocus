@@ -1,7 +1,8 @@
-import { createClient } from '@/lib/supabase-utils/server'
+import { createClient, createServiceClient } from '@/lib/supabase-utils/server'
 import { NextResponse } from 'next/server'
 
 // DELETE /api/db/applications/permanent — permanently delete application and its documents
+// Uses service role client to bypass RLS (trashed items have deleted_at != null which fails RLS)
 export async function DELETE(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -12,8 +13,10 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'Missing category or folder' }, { status: 400 })
   }
 
+  const svc = await createServiceClient()
+
   // Delete associated documents first
-  const { error: docError } = await supabase
+  const { error: docError } = await svc
     .from('documents')
     .delete()
     .eq('user_id', user.id).eq('category', category).eq('folder', folder)
@@ -23,7 +26,7 @@ export async function DELETE(request: Request) {
   }
 
   // Permanently delete the application
-  const { error: appError } = await supabase
+  const { error: appError } = await svc
     .from('applications')
     .delete()
     .eq('user_id', user.id).eq('category', category).eq('folder', folder)
