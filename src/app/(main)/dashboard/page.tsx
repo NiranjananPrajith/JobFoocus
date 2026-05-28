@@ -149,18 +149,45 @@ export default function DashboardPage() {
       {/* Stats Bar */}
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 md:gap-3 mb-6 md:mb-8">
-          <Card variant="default">
-            <div className="text-[32px] font-semibold text-ink">{stats.total_jobs}</div>
-            <div className="text-[11px] uppercase tracking-wide text-steel mt-1">Total Jobs</div>
-          </Card>
-          <Card variant="default">
-            <div className="text-[32px] font-semibold text-ink">{stats.total_applied}</div>
-            <div className="text-[11px] uppercase tracking-wide text-steel mt-1">Applied</div>
-          </Card>
-          <Card variant="default">
-            <div className="text-[32px] font-semibold text-ink">{stats.total_prospects}</div>
-            <div className="text-[11px] uppercase tracking-wide text-steel mt-1">Prospects</div>
-          </Card>
+          {stats.total_jobs > 0 ? (
+            <a href="/jobs">
+              <Card variant="default" className="cursor-pointer hover:border-primary/40 transition-colors">
+                <div className="text-[32px] font-semibold text-ink">{stats.total_jobs}</div>
+                <div className="text-[11px] uppercase tracking-wide text-steel mt-1">Total Jobs</div>
+              </Card>
+            </a>
+          ) : (
+            <Card variant="default">
+              <div className="text-[32px] font-semibold text-ink">{stats.total_jobs}</div>
+              <div className="text-[11px] uppercase tracking-wide text-steel mt-1">Total Jobs</div>
+            </Card>
+          )}
+          {stats.total_applied > 0 ? (
+            <a href="/jobs?tab=applied">
+              <Card variant="default" className="cursor-pointer hover:border-primary/40 transition-colors">
+                <div className="text-[32px] font-semibold text-ink">{stats.total_applied}</div>
+                <div className="text-[11px] uppercase tracking-wide text-steel mt-1">Applied</div>
+              </Card>
+            </a>
+          ) : (
+            <Card variant="default">
+              <div className="text-[32px] font-semibold text-ink">{stats.total_applied}</div>
+              <div className="text-[11px] uppercase tracking-wide text-steel mt-1">Applied</div>
+            </Card>
+          )}
+          {stats.total_prospects > 0 ? (
+            <a href="/jobs?tab=prospects">
+              <Card variant="default" className="cursor-pointer hover:border-primary/40 transition-colors">
+                <div className="text-[32px] font-semibold text-ink">{stats.total_prospects}</div>
+                <div className="text-[11px] uppercase tracking-wide text-steel mt-1">Prospects</div>
+              </Card>
+            </a>
+          ) : (
+            <Card variant="default">
+              <div className="text-[32px] font-semibold text-ink">{stats.total_prospects}</div>
+              <div className="text-[11px] uppercase tracking-wide text-steel mt-1">Prospects</div>
+            </Card>
+          )}
           <Card variant="default">
             <div className="text-[32px] font-semibold text-ink">{stats.total_responses}</div>
             <div className="text-[11px] uppercase tracking-wide text-steel mt-1">Responses</div>
