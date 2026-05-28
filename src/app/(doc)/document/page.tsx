@@ -88,29 +88,13 @@ function DocumentContent() {
     setIsEditing(true);
 
     try {
-      const [category, ...folderParts] = appId.split('/');
-      const folder = folderParts.join('/');
-      const [jdHtml, masterResume] = await Promise.all([
-        getDocumentHTML(category, folder, 'job_description'),
-        getMasterResume(),
-      ]);
-
-      if (!jdHtml) {
-        throw new Error('Job description not found. Please add a job first.');
-      }
-      if (!masterResume) {
-        throw new Error('Master resume not found. Please save your master resume first.');
-      }
-
       const res = await fetch('/api/ai/edit-document', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           currentHTML: content,
-          jobDescriptionHTML: jdHtml,
           docType,
           userMessage: editingMessage,
-          masterResume,
         }),
       });
 
@@ -122,7 +106,9 @@ function DocumentContent() {
       const { newFullHTML } = await res.json();
 
       // Save the new document
-      await saveDocumentHTML(category, folder, docType, newFullHTML);
+      const [cat, ...folderParts] = (appId || '').split('/');
+      const fol = folderParts.join('/');
+      await saveDocumentHTML(cat, fol, docType as 'resume' | 'cover_letter', newFullHTML);
 
       // Update the displayed content
       setContent(newFullHTML);
