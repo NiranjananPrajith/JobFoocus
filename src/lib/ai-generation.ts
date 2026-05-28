@@ -67,6 +67,11 @@ async function minimaxChat(prompt: string, system: string): Promise<string> {
         return textBlocks.map((b: any) => b.text || '').join('');
       })();
 
+  if (typeof content !== 'string') {
+    console.error('[AI] Invalid response type from Minimax:', typeof content, String(content));
+    throw new Error('Minimax returned invalid response type: ' + typeof content);
+  }
+
   if (!content) {
     console.error('[AI] Empty response from Minimax.');
     throw new Error('Minimax returned empty response.');
@@ -503,7 +508,7 @@ export async function generateMaskedDocumentsForExistingJob(
 async function editResumeBodyHTML(
   currentBodyHTML: string,
   maskedMasterResume: string,
-  jd: FormattedJD,
+  jd: { company: string; job_title: string; requirements: string[] },
   userMessage: string
 ): Promise<string> {
   const system = 'You are an expert resume writer. Output ONLY valid HTML for the resume body — NO <html>, <head>, or <body> tags. Do NOT include work experience, education, or certifications sections.\n\n' + formattingGuides.resume.ai_instructions;
@@ -562,7 +567,7 @@ RULES:
 async function editCoverLetterBodyHTML(
   currentBodyHTML: string,
   maskedMasterResume: string,
-  jd: FormattedJD,
+  jd: { company: string; job_title: string; requirements: string[] },
   userMessage: string
 ): Promise<string> {
   const system = 'You are an expert cover letter writer. Output plain text paragraphs only — no HTML tags, no structural elements. The cover letter WRAPPER handles all formatting.\n\n' + formattingGuides.cover_letter.ai_instructions;
@@ -662,15 +667,37 @@ function replaceCoverLetterBody(fullHTML: string, newBodyHTML: string): string {
   return prefix + '\n    ' + newBodyHTML + '\n    ' + sigMarker + fullHTML.slice(sigIdx + sigMarker.length);
 }
 
+function extractJDFromHTML(jdHtml: string): { company: string; job_title: string; requirements: string[] } {
+  const titleMatch = jdHtml.match(/<h1[^>]*>([^<]+)<\/h1>/);
+  const job_title = titleMatch?.[1]?.trim() || '';
+
+  const metaMatch = jdHtml.match(/<p>([^<]+)/);
+  const company = metaMatch?.[1]?.split(' · ')[0]?.trim() || '';
+
+  const reqs: string[] = [];
+  const reqMatch = jdHtml.match(/<h2>Requirements<\/h2>\s*<ul>([\s\S]*?)<\/ul>/i);
+  if (reqMatch) {
+    const liMatches = reqMatch[1].match(/<li>([^<]+)<\/li>/g);
+    if (liMatches) {
+      for (const li of liMatches) {
+        const contentMatch = li.match(/^<li>([^<]+)<\/li>$/);
+        if (contentMatch) reqs.push(contentMatch[1].trim());
+      }
+    }
+  }
+
+  return { company, job_title, requirements: reqs };
+}
+
 export async function editDocumentHTML(
   fullHTML: string,
   maskedMasterResume: string,
   masterResume: PIIProfile,
-  jobDescriptionRaw: string,
+  jobDescriptionHTML: string,
   docType: 'resume' | 'cover_letter',
   userMessage: string
 ): Promise<string> {
-  const jd = await formatJobDescription(jobDescriptionRaw);
+  const jd = extractJDFromHTML(jobDescriptionHTML);
 
   if (docType === 'resume') {
     const bodyHTML = extractResumeBody(fullHTML);

@@ -94,8 +94,10 @@ function DocumentContent() {
         getDocumentHTML(category, folder, 'job_description'),
         getMasterResume(),
       ]);
-      const jdText = jdHtml ? jdHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
 
+      if (!jdHtml) {
+        throw new Error('Job description not found. Please add a job first.');
+      }
       if (!masterResume) {
         throw new Error('Master resume not found. Please save your master resume first.');
       }
@@ -105,7 +107,7 @@ function DocumentContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           currentHTML: content,
-          jobDescription: jdText,
+          jobDescriptionHTML: jdHtml,
           docType,
           userMessage: editingMessage,
           masterResume,

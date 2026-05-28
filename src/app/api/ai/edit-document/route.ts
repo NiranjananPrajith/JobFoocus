@@ -5,9 +5,9 @@ import type { PIIProfile } from '@/lib/pii-utils';
 
 export async function POST(req: NextRequest) {
   try {
-    const { currentHTML, jobDescription, docType, userMessage, masterResume } = await req.json();
+    const { currentHTML, jobDescriptionHTML, docType, userMessage, masterResume } = await req.json();
 
-    if (!currentHTML || !jobDescription || !docType || !userMessage || !masterResume) {
+    if (!currentHTML || !jobDescriptionHTML || !docType || !userMessage || !masterResume) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       currentHTML,
       maskedMasterResume,
       masterResume as unknown as PIIProfile,
-      jobDescription,
+      jobDescriptionHTML,
       docType,
       userMessage
     );
