@@ -16,18 +16,26 @@ export async function POST(req: NextRequest) {
   }
 
   // ── PII Guard: strip [CANDIDATE_*] placeholders, then test for real PII ──
-  // After stripping, no false positives from masked tokens remain
+  // Focus on email/phone only — these are the truly sensitive PII fields.
+  // Name detection is skipped because:
+  //  1. [CANDIDATE_NAME] placeholders are stripped before this check
+  //  2. Names in work history (supervisors, references) are not direct contact PII
+  //  3. Job titles like "Customer Service Associate" match name patterns too easily
   const stripped = prompt.replace(/\[[\w_]+\]/g, 'X');
   const rawEmail = /[\w.+-]+@[\w.-]+\.\w+/.test(stripped);
   const rawPhone = /\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/.test(stripped);
-  const rawName = /\b[A-Z][a-z]+ [A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/.test(stripped);
+  // rawName check intentionally omitted — see comment above
 
-  if (rawEmail || rawPhone || rawName) {
-    console.warn('[AI] PII Guard: blocked', { rawEmail, rawPhone, rawName });
-    return NextResponse.json(
-      { error: 'Security Exception: Raw unmasked PII intercepted at server boundary.' },
-      { status: 400 }
-    );
+  if (rawEmail || rawPhone) {
+    console.warn('[AI] PII Guard: flagged', { rawEmail, rawPhone });
+    // Return 200 with a warning flag so the client can decide how to handle it.
+    // The pipeline continues so we don't lose the user's job entry mid-flow.
+    return NextResponse.json({
+      warning: true,
+      reason: 'Security Exception: Raw unmasked PII intercepted at server boundary.',
+      detected: { email: rawEmail, phone: rawPhone },
+      content: null,
+    });
   }
 
   const response = await fetch(BASE_URL, {

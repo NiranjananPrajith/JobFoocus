@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Card from '@/components/design/Card';
 import Button from '@/components/design/Button';
-import { isMasterResumeBlank, generateMaskedJobEntryAndDocuments } from '@/lib/ai-generation';
+import { isMasterResumeBlank, generateMaskedJobEntryAndDocuments, PIIWarningError } from '@/lib/ai-generation';
 
-type ModalState = 'two_column' | 'paste_jd' | 'blank_resume' | 'processing' | 'done';
+type ModalState = 'two_column' | 'paste_jd' | 'blank_resume' | 'processing' | 'pii_warning' | 'done';
 type ProcessingStep = 'analyzing' | 'resume' | 'cover_letter' | 'saving' | 'done';
 
 const CHROME_STORE_URL = 'https://chrome.google.com/webstore';
@@ -51,8 +51,10 @@ interface AddJobModalProps {
 export default function AddJobModal({ isOpen, onClose }: AddJobModalProps) {
   const [state, setState] = useState<ModalState>('two_column');
   const [jdText, setJdText] = useState('');
-  const [mounted, setMounted] = useState(false);
+  const [piiDetected, setPiiDetected] = useState<{ email: boolean; phone: boolean } | null>(null);
+  const [piiDismissed, setPiiDismissed] = useState(false);
   const [processingStep, setProcessingStep] = useState<ProcessingStep>('analyzing');
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -110,6 +112,11 @@ export default function AddJobModal({ isOpen, onClose }: AddJobModalProps) {
       console.log('[AddJobModal] Job created successfully');
     } catch (err) {
       console.error('[AddJobModal] Failed to process job:', err);
+      if (err instanceof PIIWarningError) {
+        setPiiDetected(err.detected);
+        setState('pii_warning');
+        return;
+      }
       setProcessingStep('done');
     }
     setState('done');
@@ -312,6 +319,87 @@ export default function AddJobModal({ isOpen, onClose }: AddJobModalProps) {
             <p className="text-[14px] text-steel">
               Your resume and cover letter are being generated. Check the Jobs page to view and print them.
             </p>
+          </div>
+        )}
+
+        {/* ─── State: PII Warning ─── */}
+        {state === 'pii_warning' && piiDetected && (
+          <div className="p-8">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-[20px] font-semibold text-ink mb-1">Sensitive Information Detected</h2>
+                <p className="text-[14px] text-steel leading-relaxed">
+                  We detected unreplaced personal information in your master resume. This can expose your PII to the AI server. Review the detected fields below and choose how to proceed.
+                </p>
+              </div>
+            </div>
+
+            {/* Detected PII summary */}
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 space-y-2">
+              <p className="text-[13px] font-semibold text-red-700 mb-2">Detected sensitive fields:</p>
+              {piiDetected.email && (
+                <div className="flex items-center gap-2 text-[13px] text-red-800">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
+                  </svg>
+                  <span>Email address — found in your master resume's contact info</span>
+                </div>
+              )}
+              {piiDetected.phone && (
+                <div className="flex items-center gap-2 text-[13px] text-red-800">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                  <span>Phone number — found in your master resume's contact info</span>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <a href="/master-resume" onClick={onClose} className="flex-1">
+                  <Button variant="primary" className="w-full justify-center">
+                    Edit Master Resume
+                  </Button>
+                </a>
+                <Button
+                  variant="dark"
+                  onClick={() => {
+                    setPiiDismissed(true);
+                    setState('paste_jd');
+                  }}
+                  className="flex-1 justify-center"
+                >
+                  Proceed Anyway
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="pii-dismiss-checkbox"
+                  checked={piiDismissed}
+                  onChange={(e) => setPiiDismissed(e.target.checked)}
+                  className="w-4 h-4 rounded border-hairline-strong text-primary focus:ring-primary"
+                />
+                <label htmlFor="pii-dismiss-checkbox" className="text-[12px] text-steel">
+                  Don&apos;t ask again for this session
+                </label>
+              </div>
+              <div className="pt-2 border-t border-hairline-soft">
+                <Button variant="ghost" onClick={() => setState('two_column')} className="w-full justify-center">
+                  Cancel and Go Back
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </div>
