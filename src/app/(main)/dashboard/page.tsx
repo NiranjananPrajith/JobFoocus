@@ -189,7 +189,7 @@ export default function DashboardPage() {
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-medium text-ink truncate">{app.company}</p>
-                  <p className="text-[12px] text-steel truncate hidden sm:block">{app.job_title}</p>
+                  <p className="text-[12px] text-steel truncate">{app.job_title}</p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   <Badge status={app.status as any} />

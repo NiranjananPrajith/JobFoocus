@@ -8,7 +8,6 @@ import type { User } from '@supabase/supabase-js'
 
 export default function NavBar() {
   const pathname = usePathname()
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [addJobOpen, setAddJobOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
@@ -66,37 +65,22 @@ export default function NavBar() {
             />
           </a>
 
-          {/* Right - Desktop Navigation + CTA */}
-          <div className="flex items-center gap-4 md:gap-6">
-            <nav className="hidden md:flex items-center gap-1">
-              {navLinks.map((link) => {
-                const isActive = link.href === '/'
-                  ? pathname === '/'
-                  : pathname.startsWith(link.href)
-                return (
+          {/* Right */}
+          <div className="flex items-center gap-4">
+            {!user && (
+              <>
+                {!['/login', '/signup', '/pricing'].some(p => pathname === p) && (
                   <a
-                    key={link.href}
-                    href={link.href}
-                    className={[
-                      'px-4 py-2 text-[14px] font-medium transition-colors duration-150',
-                      isActive
-                        ? 'text-primary border-b-2 border-primary'
-                        : 'text-steel hover:text-ink',
-                    ].join(' ')}
+                    href="/pricing"
+                    className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors"
                     style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
                   >
-                    {link.label}
+                    Pricing
                   </a>
-                )
-              })}
-            </nav>
-
-            {/* Login / Sign Up buttons */}
-            {!user && (
-              <div className="hidden md:flex items-center gap-2">
+                )}
                 <a
                   href="/login"
-                  className="px-4 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors"
+                  className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors"
                   style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
                 >
                   Log in
@@ -113,15 +97,14 @@ export default function NavBar() {
                 >
                   Sign up
                 </a>
-              </div>
+              </>
             )}
 
             {/* Logged in */}
             {user && (
               <>
-                {/* Add Job */}
                 <button
-                  className="hidden md:inline-flex px-5 py-2.5 rounded-md text-[14px] font-medium text-white transition-colors duration-150"
+                  className="px-5 py-2.5 rounded-md text-[14px] font-medium text-white transition-colors duration-150"
                   style={{
                     backgroundColor: '#fa520f',
                     fontFamily: 'Inter, system-ui, sans-serif',
@@ -161,142 +144,79 @@ export default function NavBar() {
                   </button>
 
                   {profileOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl border border-hairline-soft shadow-lg z-50 overflow-hidden">
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl border border-hairline-soft shadow-lg z-50 overflow-hidden">
                       <div className="px-4 py-3 border-b border-hairline-soft">
                         <p className="text-[12px] text-steel truncate">{user.email}</p>
                       </div>
-                      <a
-                        href="/master-resume"
-                        className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors"
-                        onClick={() => setProfileOpen(false)}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                          <polyline points="14 2 14 8 20 8" />
-                        </svg>
-                        Master Resume
-                      </a>
-                      <button
-                        onClick={handleSignOut}
-                        className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                          <polyline points="16 17 21 12 16 7" />
-                          <line x1="21" y1="12" x2="9" y2="12" />
-                        </svg>
-                        Sign out
-                      </button>
+                      <div className="py-2">
+                        {navLinks.map((link) => {
+                          const isActive = link.href === '/'
+                            ? pathname === '/'
+                            : pathname.startsWith(link.href)
+                          return (
+                            <a
+                              key={link.href}
+                              href={link.href}
+                              className={[
+                                'flex items-center gap-3 px-4 py-2.5 text-[13px] transition-colors',
+                                isActive
+                                  ? 'text-primary font-medium'
+                                  : 'text-ink hover:bg-surface',
+                              ].join(' ')}
+                              onClick={() => setProfileOpen(false)}
+                            >
+                              {link.href === '/dashboard' && (
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                                </svg>
+                              )}
+                              {link.href === '/jobs' && (
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+                                </svg>
+                              )}
+                              {link.href === '/followups' && (
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                </svg>
+                              )}
+                              {link.label}
+                            </a>
+                          )
+                        })}
+                      </div>
+                      <div className="border-t border-hairline-soft py-2">
+                        <a
+                          href="/master-resume"
+                          className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors"
+                          onClick={() => setProfileOpen(false)}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                          </svg>
+                          Master Resume
+                        </a>
+                        <button
+                          onClick={handleSignOut}
+                          className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                            <polyline points="16 17 21 12 16 7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
+                          </svg>
+                          Sign out
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
               </>
             )}
-
-            {/* Mobile Menu Button */}
-            <button
-              className="md:hidden p-2 text-ink"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle menu"
-            >
-              {mobileMenuOpen ? (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              ) : (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="3" y1="12" x2="21" y2="12" />
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <line x1="3" y1="18" x2="21" y2="18" />
-                </svg>
-              )}
-            </button>
           </div>
         </div>
       </header>
-
-      {/* Mobile Menu Overlay */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-ink/50"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-
-      {/* Mobile Menu Drawer */}
-      <div
-        className={[
-          'fixed top-[64px] left-0 right-0 z-50 bg-canvas border-b border-hairline-soft',
-          'transform transition-transform duration-200 ease-in-out',
-          mobileMenuOpen ? 'translate-x-0' : 'translate-x-full',
-        ].join(' ')}
-      >
-        <nav className="flex flex-col p-4">
-          {navLinks.map((link) => {
-            const isActive = link.href === '/'
-              ? pathname === '/'
-              : pathname.startsWith(link.href)
-            return (
-              <a
-                key={link.href + '-mobile'}
-                href={link.href}
-                className={[
-                  'px-4 py-3 text-[16px] font-medium transition-colors duration-150',
-                  'border-b border-hairline-soft last:border-b-0',
-                  isActive
-                    ? 'text-primary'
-                    : 'text-ink hover:text-primary',
-                ].join(' ')}
-                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {link.label}
-              </a>
-            )
-          })}
-          {!user && (
-            <>
-              <a
-                href="/login"
-                className="px-4 py-3 text-[15px] font-medium text-steel hover:text-ink border-b border-hairline-soft"
-                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Log in
-              </a>
-              <a
-                href="/signup"
-                className="px-4 py-3 text-[15px] font-medium text-white border-b border-hairline-soft"
-                style={{ backgroundColor: '#fa520f', fontFamily: 'Inter, system-ui, sans-serif' }}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Sign up
-              </a>
-            </>
-          )}
-          {user && (
-            <>
-              <button
-                onClick={() => { setMobileMenuOpen(false); setAddJobOpen(true) }}
-                className="w-full px-5 py-3 rounded-md text-[14px] font-medium text-white transition-colors duration-150"
-                style={{
-                  backgroundColor: '#fa520f',
-                  fontFamily: 'Inter, system-ui, sans-serif',
-                }}
-              >
-                Add Job
-              </button>
-              <button
-                onClick={() => { setMobileMenuOpen(false); handleSignOut() }}
-                className="w-full text-left px-4 py-3 text-[14px] font-medium text-steel border-t border-hairline-soft"
-              >
-                Sign out
-              </button>
-            </>
-          )}
-        </nav>
-      </div>
 
       <AddJobModal isOpen={addJobOpen} onClose={() => setAddJobOpen(false)} onJobAdded={() => window.location.reload()} />
     </>
