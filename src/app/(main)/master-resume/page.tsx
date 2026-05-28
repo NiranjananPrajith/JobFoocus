@@ -392,7 +392,7 @@ function MasterResumeContent() {
           <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
         </svg>
         <p className="text-[13px] text-blue-800 leading-relaxed">
-          <strong>Your privacy is guaranteed.</strong> Your name, phone number, email address, social links, and portfolio links are stored only in your browser&apos;s local cache and <strong>never leave your device</strong>. When you generate AI-tailored resumes or cover letters, only the work experience, education, certifications, languages, and professional summary are used — all personal identifiers are completely masked.
+          <strong>Your privacy is protected.</strong> Your name, phone number, email address, social links, and portfolio links are <strong>never sent to any AI model</strong>. When generating tailored resumes or cover letters, only your work experience, education, certifications, languages, and professional summary are used — all personal identifiers are completely masked before any AI processing.
         </p>
       </div>
 

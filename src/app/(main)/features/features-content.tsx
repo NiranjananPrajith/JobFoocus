@@ -58,8 +58,8 @@ const extraFeatures = [
     description: "Every resume and cover letter is formatted for clean printing or PDF export. Clean layouts, proper margins, no weird fonts. What you see is what the employer sees.",
   },
   {
-    title: 'Your Data, Your Control',
-    description: 'Job Foocus stores your data locally by default. Your master resume, job history, and generated documents stay on your device or your own cloud storage — we do not hold your job search hostage.',
+    title: 'Your PII Never Goes to the AI',
+    description: 'Your name, phone number, email, and social links are never sent to any AI model. When generating tailored resumes and cover letters, only your work experience and skills are used — all personal identifiers are masked before any AI processing happens.',
   },
   {
     title: 'Category-Based Workflow',
