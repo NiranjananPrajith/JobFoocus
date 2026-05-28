@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { getDocumentHTML, saveDocumentHTML } from '@/lib/storage-adapter';
+import { getDocumentHTML, saveDocumentHTML, getMasterResume } from '@/lib/storage-adapter';
 
 function DocumentContent() {
   const searchParams = useSearchParams();
@@ -35,9 +35,31 @@ function DocumentContent() {
         }
         setContent(html);
 
-        // Set page title
-        const title = `${folder}_${docType === 'resume' ? 'Resume' : docType === 'cover_letter' ? 'CoverLetter' : 'JobDescription'}`;
-        document.title = title;
+        // Fetch JD and master resume to build the page title
+        const jdHtml = await getDocumentHTML(category, folder, 'job_description');
+        const masterResume = await getMasterResume();
+        const userName = masterResume?.name || '';
+
+        let company = '';
+        let jobTitle = '';
+
+        if (jdHtml) {
+          const titleMatch = jdHtml.match(/<h1[^>]*>([^<]+)<\/h1>/);
+          const metaMatch = jdHtml.match(/<p>([^<]+)/);
+          if (metaMatch) {
+            const metaParts = metaMatch[1].split(' · ');
+            company = metaParts[0] || '';
+          }
+          if (titleMatch) {
+            jobTitle = titleMatch[1] || '';
+          }
+        }
+
+        const docLabel = docType === 'resume' ? 'Resume' : docType === 'cover_letter' ? 'CoverLetter' : 'JobDescription';
+        const titleParts = [userName, company, jobTitle].filter(Boolean);
+        document.title = titleParts.length > 0
+          ? `${titleParts.join('-')}_${docLabel}`
+          : `${folder}_${docLabel}`;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load document');
       } finally {
