@@ -5,6 +5,7 @@ import { getMasterResume, setMasterResume } from '@/lib/storage-adapter';
 import { parseResumeFile, getAcceptedFileTypes, getAcceptedMimeTypes, type ParsedResume } from '@/lib/resume-parser';
 import Card from '@/components/design/Card';
 import Button from '@/components/design/Button';
+import SuccessPopup from '@/components/design/SuccessPopup';
 
 // ---------------------------------------------------------------------------
 // Data Structures
@@ -219,7 +220,7 @@ function CharCounter({ current, max }: { current: number; max: number }) {
 function MasterResumeContent() {
   const [resume, setResume] = useState<MasterResume>(emptyResume);
   const [loading, setLoading] = useState(true);
-  const [saved, setSaved] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -235,7 +236,6 @@ function MasterResumeContent() {
 
   const set = <K extends keyof MasterResume>(key: K, value: MasterResume[K]) => {
     setResume((prev) => ({ ...prev, [key]: value }));
-    setSaved(false);
   };
 
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -323,8 +323,7 @@ function MasterResumeContent() {
 
   const handleSave = async () => {
     await setMasterResume(resume);
-    setSaved(true);
-    alert('Master resume saved successfully!');
+    setShowSuccess(true);
   };
 
   if (loading) {
@@ -374,14 +373,7 @@ function MasterResumeContent() {
               </svg>
               {isImporting ? 'Importing...' : 'Import from PDF / DOCX'}
             </label>
-            {saved && (
-              <span className="text-[13px] text-green-600 font-medium flex items-center gap-1.5">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                Saved
-              </span>
-            )}
+
           </div>
         </div>
         {importError && (
@@ -724,17 +716,21 @@ function MasterResumeContent() {
         )}
       </Card>
 
-      {/* Sticky Save Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-hairline-soft px-4 py-4 shadow-lg">
-        <div className="max-w-5xl mx-auto flex items-center justify-between gap-4">
-          <p className="text-[13px] text-steel">
-            Changes are saved to your browser&apos;s local storage.
-          </p>
-          <Button variant="primary" onClick={handleSave} className="shrink-0">
-            Save Master Resume
-          </Button>
-        </div>
+            {/* Floating Save Button */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <Button variant="primary" onClick={handleSave} className="shadow-lg">
+          Save Master Resume
+        </Button>
       </div>
+
+      <SuccessPopup
+        isOpen={showSuccess}
+        onClose={() => setShowSuccess(false)}
+        title="Resume Saved!"
+        message="Your master resume has been saved. Return to the dashboard to start tailoring applications."
+        actionLabel="Go to Dashboard"
+        actionHref="/dashboard"
+      />
     </div>
   );
 }
