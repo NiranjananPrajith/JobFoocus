@@ -519,11 +519,11 @@ async function editResumeBodyHTML(
   jd: { company: string; job_title: string; requirements: string[] },
   userMessage: string
 ): Promise<string> {
-  const system = 'You are an expert resume writer. Output ONLY valid HTML for the resume body — NO <html>, <head>, or <body> tags. Do NOT include work experience, education, or certifications sections.\n\n' + formattingGuides.resume.ai_instructions;
+  const system = 'You are an expert resume writer. Output ONLY valid HTML for the resume body sections — NO <html>, <head>, or <body> tags.\n\n' + formattingGuides.resume.ai_instructions;
 
-  const prompt = `You are editing an EXISTING resume. The user has requested a specific change. Parse their request carefully and apply it to the appropriate section.
+  const prompt = `You are editing an EXISTING resume tailored for the job below. The user has requested a specific change.
 
-CURRENT RESUME BODY (Professional Summary + Skills sections only):
+CURRENT RESUME BODY (all sections):
 ${currentBodyHTML}
 
 USER'S CHANGE REQUEST:
@@ -536,37 +536,41 @@ Key Requirements: ${(jd.requirements || []).join(', ')}
 
 INSTRUCTIONS:
 1. Read the user's change request carefully
-2. Re-read the current resume Professional Summary and Skills sections
-3. Apply the requested change to the appropriate section(s)
-4. If the user wants to reword the summary — rewrite only the Professional Summary section
-5. If the user wants to change skills — rewrite only the Skills section
-6. If the change affects both — rewrite both sections
-7. Do NOT fabricate skills not present in the master data
-8. Keep work experience, education, and certifications sections exactly as they are in the CURRENT RESUME BODY
+2. Identify which section(s) need to change based on the request
+3. Keep ALL sections — Professional Summary, Skills, Work Experience, and Education — in the output
+4. Rewrite ONLY the section(s) affected by the user's request
+5. If the request is about the summary or skills — rewrite those; keep work experience and education as-is
+6. Do NOT invent work duties, education entries, or skills not in the master data
 
-MASTER RESUME DATA (skills source):
+MASTER RESUME DATA (source of truth for work experience and education):
 ${maskedMasterResume}
 
-OUTPUT FORMAT — output ONLY these two sections, nothing else:
+OUTPUT FORMAT — output the complete resume body HTML with ALL sections:
 <h2>Professional Summary</h2>
-<div class="summary"><p>Your updated 3-4 sentence tailored professional summary here.</p></div>
+<div class="summary"><p>Your 3-4 sentence tailored professional summary here.</p></div>
 
 <h2>Skills</h2>
 <ul class="skills-list">
-<li><strong>Category Name</strong>: skill 1, skill 2, skill 3</li>
-<li><strong>Category Name</strong>: skill 1, skill 2</li>
+<li><strong>Category</strong>: skill 1, skill 2, skill 3</li>
+<li><strong>Category</strong>: skill 1, skill 2</li>
 </ul>
 
+<h2>Professional Experience</h2>
+<div class="job-entry">...unchanged or tailored duties...</div>
+
+<h2>Education</h2>
+<div class="edu-entry">...unchanged...</div>
+
 RULES:
-- Output ONLY the two sections above — no work experience, no education, no certifications
-- Skills must come ONLY from the master resume data above
-- Match skills to keywords in the target job description: ${jd.job_title}
-- Do NOT invent skills not present in the master data
+- Output ALL four sections above — do not omit any section
+- Work Experience bullets must come from the master resume duties list
+- Keep work experience and education EXACTLY as they appear in the current resume body unless the user's change explicitly asks to modify them
+- Skills must come ONLY from the master resume data
 - Output NO other content
-- Preserve exact CSS class names: .summary, .summary p, ul.skills-list`;
+- Preserve exact CSS class names: .summary, .summary p, ul.skills-list, .job-entry, .edu-entry`;
 
   const raw = await minimaxChat(prompt, system);
-  if (!raw || raw.length < 20 || !raw.includes('<h2>')) {
+  if (!raw || raw.length < 50 || !raw.includes('<h2>')) {
     throw new Error('AI returned an invalid or incomplete response. Please try again.');
   }
   return raw;
@@ -578,13 +582,11 @@ async function editCoverLetterBodyHTML(
   jd: { company: string; job_title: string; requirements: string[] },
   userMessage: string
 ): Promise<string> {
-  const system = 'You are an expert cover letter writer. Output plain text paragraphs only — no HTML tags, no structural elements. The cover letter WRAPPER handles all formatting.\n\n' + formattingGuides.cover_letter.ai_instructions;
-
   const reqSlice = (jd.requirements || []).slice(0, 5).join(', ');
 
   const prompt = `You are editing an EXISTING cover letter. The user has requested a specific change. Parse their request carefully and apply it.
 
-CURRENT COVER LETTER BODY (only the 3 paragraphs):
+CURRENT COVER LETTER BODY (HTML paragraphs):
 ${currentBodyHTML}
 
 USER'S CHANGE REQUEST:
@@ -599,48 +601,50 @@ INSTRUCTIONS:
 1. Read the user's change request carefully
 2. Identify which paragraph(s) need to be changed based on the request
 3. Rewrite ONLY the affected paragraph(s) — keep all other paragraphs exactly as they are
-4. Do NOT invent achievements not in the master data
+4. Do NOT invent achievements not in the master resume data
 5. Maintain the same tone, style, and structure as the original
 
-CURRENT PARAGRAPH STRUCTURE (label your output exactly):
-[PARA1] — Opening paragraph (keep as-is unless the change request affects this paragraph)
-[PARA2] — Body paragraph with achievements/qualifications (keep as-is unless the change request affects this paragraph)
-[PARA3] — Closing paragraph with availability and call to action (keep as-is unless the change request affects this paragraph)
-
-MASTER RESUME DATA:
-${maskedMasterResume}
+OUTPUT FORMAT — output EXACTLY this JSON, nothing else:
+{"para1": "unchanged or rewritten opening paragraph text", "para2": "unchanged or rewritten body paragraph text", "para3": "unchanged or rewritten closing paragraph text"}
 
 RULES:
-- Output ONLY the three paragraphs in plain text — no HTML, no <p> tags, no structural markup
-- Keep unaffected paragraphs EXACTLY the same as the current body above
-- Rewrite only the paragraph(s) affected by the user's change request
-- The WRAPPER handles all letter structure — you write only the paragraph content
-- Do NOT output: sender-block, date-block, recipient-block, subject-block, signature-space, or any HTML elements`;
+- Output ONLY valid JSON matching the schema above
+- Keep paragraphs EXACTLY the same as the current body unless the change request explicitly asks to modify them
+- Do NOT add, remove, or reorder paragraphs
+- Do NOT include any text outside the JSON
+- Plain text only — no HTML tags in the values`;
 
-  const raw = await minimaxChat(prompt, system);
-
-  const para1Match = raw.match(/\[PARA1\]\s*\n?([\s\S]*?)(?=\[PARA2\]|$)/i);
-  const para2Match = raw.match(/\[PARA2\]\s*\n?([\s\S]*?)(?=\[PARA3\]|$)/i);
-  const para3Match = raw.match(/\[PARA3\]\s*\n?([\s\S]*?)(?=$)/i);
-
-  const p1 = para1Match?.[1]?.trim() || '';
-  const p2 = para2Match?.[1]?.trim() || '';
-  const p3 = para3Match?.[1]?.trim() || '';
-
-  const paragraphs = [p1, p2, p3].filter(Boolean);
-  let html: string;
-  if (paragraphs.length >= 3) {
-    html = paragraphs.map(p => `<p style="text-align: justify">${p}</p>`).join('\n');
-  } else {
-    const blocks = raw.split(/\n\n+/).filter(b => b.trim());
-    html = blocks.map(b => `<p style="text-align: justify">${b.replace(/\n/g, ' ').trim()}</p>`).join('\n');
-  }
-
-  if (!html || html.length < 50 || !html.includes('<p')) {
+  const raw = await minimaxChat(prompt, '');
+  if (!raw || raw.length < 20) {
     throw new Error('AI returned an invalid or incomplete response. Please try again.');
   }
 
-  return html;
+  // Extract JSON from response
+  const jsonMatch = raw.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error('AI did not return valid JSON. Please try again.');
+  }
+
+  let parsed: { para1?: string; para2?: string; para3?: string };
+  try {
+    parsed = JSON.parse(jsonMatch[0]);
+  } catch {
+    throw new Error('AI returned malformed JSON. Please try again.');
+  }
+
+  const p1 = parsed.para1?.trim() || '';
+  const p2 = parsed.para2?.trim() || '';
+  const p3 = parsed.para3?.trim() || '';
+
+  if (!p1 || !p2 || !p3) {
+    throw new Error('AI did not return all three paragraphs. Please try again.');
+  }
+
+  return [
+    `<p style="text-align: justify">${p1}</p>`,
+    `<p style="text-align: justify">${p2}</p>`,
+    `<p style="text-align: justify">${p3}</p>`,
+  ].join('\n');
 }
 
 function extractResumeBody(fullHTML: string): string {
@@ -714,7 +718,7 @@ export async function editDocumentHTML(
     }
     const newBody = await editResumeBodyHTML(bodyHTML, maskedMasterResume, jd, userMessage);
     const demaskedBody = demaskPII(newBody, masterResume);
-    return replaceResumeBody(fullHTML, demaskedBody);
+    return buildResumeFullHTML(masterResume, demaskedBody);
   } else {
     const bodyHTML = extractCoverLetterBody(fullHTML);
     if (!bodyHTML) {
