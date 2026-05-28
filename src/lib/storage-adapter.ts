@@ -80,6 +80,7 @@ export interface EnrichedApplication extends Application {
   days_since_applied: number;
   needs_followup: boolean;
   files: FileInfo[];
+  deleted_at?: string;
 }
 
 export interface FileInfo {
@@ -138,17 +139,22 @@ async function setLocalData(key: string, value: any): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export async function getAllApplications(): Promise<EnrichedApplication[]> {
+  // Clean up expired trash items (localStorage only; Supabase uses pg_cron)
+  await cleanupExpiredTrash();
+
   const userId = await getUserId();
   if (!userId) {
     const data = await getLocalData('applications');
     if (!data) return [];
     const apps = Object.values(data) as EnrichedApplication[];
-    for (const app of apps) {
+    // Filter out soft-deleted items
+    const active = apps.filter(a => !a.deleted_at);
+    for (const app of active) {
       const catInfo = (CATEGORIES as Record<string, { name: string; color: string }>)[app.category_key];
       if (catInfo) { app.category_name = catInfo.name; app.category_color = catInfo.color; }
     }
-    apps.sort((a, b) => new Date(b.date_applied).getTime() - new Date(a.date_applied).getTime());
-    return apps;
+    active.sort((a, b) => new Date(b.date_applied).getTime() - new Date(a.date_applied).getTime());
+    return active;
   }
   try {
     const rows = await apiFetch('/api/db/applications');
@@ -171,12 +177,13 @@ export async function getAllApplications(): Promise<EnrichedApplication[]> {
     const data = await getLocalData('applications');
     if (!data) return [];
     const apps = Object.values(data) as EnrichedApplication[];
-    for (const app of apps) {
+    const active = apps.filter(a => !a.deleted_at);
+    for (const app of active) {
       const catInfo = (CATEGORIES as Record<string, { name: string; color: string }>)[app.category_key];
       if (catInfo) { app.category_name = catInfo.name; app.category_color = catInfo.color; }
     }
-    apps.sort((a, b) => new Date(b.date_applied).getTime() - new Date(a.date_applied).getTime());
-    return apps;
+    active.sort((a, b) => new Date(b.date_applied).getTime() - new Date(a.date_applied).getTime());
+    return active;
   }
 }
 
@@ -290,23 +297,162 @@ export async function updateApplicationDocFlags(
   }
 }
 
+// Soft-delete: moves to trash (30-day retention)
 export async function deleteApplication(category: CategoryKey, folderName: string): Promise<void> {
+  await trashApplication(category, folderName);
+}
+
+export async function trashApplication(category: CategoryKey, folderName: string): Promise<void> {
+  const userId = await getUserId();
+  const key = `${category}/${folderName}`;
+  if (!userId) {
+    const data = (await getLocalData('applications')) || {};
+    if (data[key]) {
+      data[key].deleted_at = new Date().toISOString();
+      await setLocalData('applications', data);
+    }
+    return;
+  }
+  try {
+    await apiFetch(`/api/db/applications/trash`, {
+      method: 'POST',
+      body: JSON.stringify({ category, folder: folderName }),
+    });
+  } catch (err) {
+    console.error('[storage-adapter] trashApplication failed, falling back to localStorage:', err);
+    const data = (await getLocalData('applications')) || {};
+    if (data[key]) {
+      data[key].deleted_at = new Date().toISOString();
+      await setLocalData('applications', data);
+    }
+  }
+}
+
+export async function getTrashedApplications(): Promise<EnrichedApplication[]> {
+  const userId = await getUserId();
+  if (!userId) {
+    const data = (await getLocalData('applications')) || {};
+    const apps = Object.values(data) as EnrichedApplication[];
+    const trashed = apps.filter(a => a.deleted_at && a.deleted_at !== null);
+    return trashed.sort((a, b) => new Date(b.deleted_at!).getTime() - new Date(a.deleted_at!).getTime());
+  }
+  try {
+    const rows = await apiFetch('/api/db/applications/trash');
+    const apps: EnrichedApplication[] = [];
+    for (const row of rows) {
+      const app = row.data as EnrichedApplication;
+      app.category = row.category;
+      app.category_key = row.category as CategoryKey;
+      app.folder = row.folder;
+      app.path = `${row.category}/${row.folder}`;
+      app.deleted_at = row.deleted_at;
+      const catInfo = (CATEGORIES as Record<string, { name: string; color: string }>)[app.category_key] || { name: String(app.category_key), color: '#888888' };
+      app.category_name = catInfo.name;
+      app.category_color = catInfo.color;
+      apps.push(app);
+    }
+    return apps.sort((a, b) => new Date(b.deleted_at!).getTime() - new Date(a.deleted_at!).getTime());
+  } catch (err) {
+    console.error('[storage-adapter] getTrashedApplications failed, falling back to localStorage:', err);
+    const data = (await getLocalData('applications')) || {};
+    const apps = Object.values(data) as EnrichedApplication[];
+    return apps.filter(a => a.deleted_at && a.deleted_at !== null)
+      .sort((a, b) => new Date(b.deleted_at!).getTime() - new Date(a.deleted_at!).getTime());
+  }
+}
+
+export async function restoreApplication(category: CategoryKey, folderName: string): Promise<void> {
+  const userId = await getUserId();
+  const key = `${category}/${folderName}`;
+  if (!userId) {
+    const data = (await getLocalData('applications')) || {};
+    if (data[key]) {
+      delete data[key].deleted_at;
+      await setLocalData('applications', data);
+    }
+    return;
+  }
+  try {
+    await apiFetch(`/api/db/applications/restore`, {
+      method: 'POST',
+      body: JSON.stringify({ category, folder: folderName }),
+    });
+  } catch (err) {
+    console.error('[storage-adapter] restoreApplication failed, falling back to localStorage:', err);
+    const data = (await getLocalData('applications')) || {};
+    if (data[key]) {
+      delete data[key].deleted_at;
+      await setLocalData('applications', data);
+    }
+  }
+}
+
+export async function permanentlyDeleteApplication(category: CategoryKey, folderName: string): Promise<void> {
   const userId = await getUserId();
   const key = `${category}/${folderName}`;
   if (!userId) {
     const data = (await getLocalData('applications')) || {};
     delete data[key];
     await setLocalData('applications', data);
+    // Also delete related documents
+    const docTypes = ['job_description', 'resume', 'cover_letter'];
+    for (const docType of docTypes) {
+      const docKey = `doc_${category}/${folderName}/${docType}`;
+      const docData = await getLocalData(docKey);
+      if (docData) {
+        if (typeof localStorage !== 'undefined') localStorage.removeItem(docKey);
+      }
+    }
     return;
   }
   try {
-    await apiFetch(`/api/db/applications?category=${encodeURIComponent(category)}&folder=${encodeURIComponent(folderName)}`, { method: 'DELETE' });
+    await apiFetch(`/api/db/applications/permanent`, {
+      method: 'DELETE',
+      body: JSON.stringify({ category, folder: folderName }),
+    });
   } catch (err) {
-    console.error('[storage-adapter] deleteApplication failed, falling back to localStorage:', err);
+    console.error('[storage-adapter] permanentlyDeleteApplication failed, falling back to localStorage:', err);
     const data = (await getLocalData('applications')) || {};
     delete data[key];
     await setLocalData('applications', data);
+    const docTypes = ['job_description', 'resume', 'cover_letter'];
+    for (const docType of docTypes) {
+      const docKey = `doc_${category}/${folderName}/${docType}`;
+      const docData = await getLocalData(docKey);
+      if (docData) {
+        if (typeof localStorage !== 'undefined') localStorage.removeItem(docKey);
+      }
+    }
   }
+}
+
+async function cleanupExpiredTrash(): Promise<void> {
+  const userId = await getUserId();
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  if (!userId) {
+    const data = (await getLocalData('applications')) || {};
+    const toDelete: string[] = [];
+    for (const [key, app] of Object.entries(data)) {
+      const a = app as EnrichedApplication;
+      if (a.deleted_at && a.deleted_at < thirtyDaysAgo) {
+        toDelete.push(key);
+      }
+    }
+    for (const key of toDelete) {
+      delete data[key];
+      // Delete documents
+      const docTypes = ['job_description', 'resume', 'cover_letter'];
+      for (const docType of docTypes) {
+        const docKey = `doc_${key}/${docType}`;
+        if (typeof localStorage !== 'undefined') localStorage.removeItem(docKey);
+      }
+    }
+    await setLocalData('applications', data);
+    return;
+  }
+
+  // For Supabase, pg_cron handles this automatically
 }
 
 // ---------------------------------------------------------------------------

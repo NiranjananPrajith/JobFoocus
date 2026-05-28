@@ -7,8 +7,9 @@ out/
 
 # Build artifacts
 
-# Generated job applications
-applications/
+# Generated job application documents stored locally (not Next.js API routes)
+# Ignores generated application data at project root level only
+/applications/
 
 # OS files
 .DS_Store

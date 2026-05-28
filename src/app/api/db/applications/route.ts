@@ -44,8 +44,11 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'Missing category or folder' }, { status: 400 })
   }
 
+  // Soft delete: set deleted_at instead of removing the row
   const { error } = await supabase
-    .from('applications').delete().eq('user_id', user.id).eq('category', category).eq('folder', folder)
+    .from('applications')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('user_id', user.id).eq('category', category).eq('folder', folder).is('deleted_at', null)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })
