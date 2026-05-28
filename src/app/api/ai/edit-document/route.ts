@@ -1,24 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getMasterResume } from '@/lib/storage-adapter';
 import { maskPII } from '@/lib/pii-utils';
 import { editDocumentHTML } from '@/lib/ai-generation';
 import type { PIIProfile } from '@/lib/pii-utils';
 
 export async function POST(req: NextRequest) {
   try {
-    const { currentHTML, jobDescription, docType, userMessage } = await req.json();
+    const { currentHTML, jobDescription, docType, userMessage, masterResume } = await req.json();
 
-    if (!currentHTML || !jobDescription || !docType || !userMessage) {
+    if (!currentHTML || !jobDescription || !docType || !userMessage || !masterResume) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     if (docType !== 'resume' && docType !== 'cover_letter') {
       return NextResponse.json({ error: 'docType must be resume or cover_letter' }, { status: 400 });
-    }
-
-    const masterResume = await getMasterResume();
-    if (!masterResume) {
-      return NextResponse.json({ error: 'Master resume not found' }, { status: 400 });
     }
 
     const resumeJson = JSON.stringify(masterResume);

@@ -84,8 +84,15 @@ function DocumentContent() {
     try {
       const [category, ...folderParts] = appId.split('/');
       const folder = folderParts.join('/');
-      const jdHtml = await getDocumentHTML(category, folder, 'job_description');
+      const [jdHtml, masterResume] = await Promise.all([
+        getDocumentHTML(category, folder, 'job_description'),
+        getMasterResume(),
+      ]);
       const jdText = jdHtml ? jdHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+
+      if (!masterResume) {
+        throw new Error('Master resume not found. Please save your master resume first.');
+      }
 
       const res = await fetch('/api/ai/edit-document', {
         method: 'POST',
@@ -95,6 +102,7 @@ function DocumentContent() {
           jobDescription: jdText,
           docType,
           userMessage: editingMessage,
+          masterResume,
         }),
       });
 
