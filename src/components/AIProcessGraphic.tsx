@@ -12,7 +12,7 @@ function ProcessStep({ number, label, sublabel, icon, isAi }: StepProps) {
   return (
     <div className="flex flex-col items-center gap-2 relative">
       {/* Connector line to next step */}
-      {number < 4 && (
+      {number < 6 && (
         <div className="absolute right-0 top-10" style={{ transform: 'translateX(50%)' }}>
           <svg width="40" height="12" viewBox="0 0 40 12" fill="none">
             <path
@@ -88,6 +88,20 @@ export default function AIProcessGraphic() {
 
         <ProcessStep
           number={2}
+          label="Mask PII"
+          sublabel="Personal info hidden before AI"
+          isAi={false}
+          icon={
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6a6a6a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+              <line x1="1" y1="1" x2="23" y2="23" />
+            </svg>
+          }
+        />
+
+        <ProcessStep
+          number={3}
           label="AI Analyzes"
           sublabel="Keywords matched to your resume"
           isAi={true}
@@ -102,7 +116,20 @@ export default function AIProcessGraphic() {
         />
 
         <ProcessStep
-          number={3}
+          number={4}
+          label="Replace PII"
+          sublabel="Your info restored to documents"
+          isAi={false}
+          icon={
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6a6a6a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <polyline points="9 12 11 14 15 10" />
+            </svg>
+          }
+        />
+
+        <ProcessStep
+          number={5}
           label="Resume Ready"
           sublabel="ATS-optimized, keyword-matched"
           isAi={false}
@@ -116,7 +143,7 @@ export default function AIProcessGraphic() {
         />
 
         <ProcessStep
-          number={4}
+          number={6}
           label="Cover Letter"
           sublabel="Written to the specific company"
           isAi={false}
