@@ -12,6 +12,7 @@
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.106.2",
     "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "mammoth": "^1.12.0",
     "next": "14.2.29",
     "pdfjs-dist": "^5.7.284",
