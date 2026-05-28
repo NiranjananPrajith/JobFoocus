@@ -20,6 +20,8 @@ create index if not exists applications_deleted_at_idx on applications(deleted_a
 -- UPDATE/DELETE: operate on non-deleted rows
 -- ============================================================
 drop policy if exists "Users manage own applications" on applications;
+drop policy if exists "Users manage own active applications" on applications;
+drop policy if exists "Users insert applications" on applications;
 
 -- SELECT, UPDATE, DELETE: only non-deleted rows
 create policy "Users manage own active applications"
