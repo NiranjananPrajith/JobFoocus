@@ -453,7 +453,7 @@ export async function generateMaskedJobEntryAndDocuments(
   await saveApplication(category, folder, {
     company: formattedJD.company,
     job_title: formattedJD.job_title,
-    date_applied: new Date().toISOString().split('T')[0],
+    date_applied: '', // set only when user marks job as applied
     status: 'prospect' as StatusKey,
     response_date: null,
     notes: '',
@@ -531,7 +531,7 @@ export async function generateJobEntryAndDocuments(
   await saveApplication(category, folder, {
     company: formattedJD.company,
     job_title: formattedJD.job_title,
-    date_applied: new Date().toISOString().split('T')[0],
+    date_applied: '', // set only when user marks job as applied
     status: 'prospect' as StatusKey,
     response_date: null,
     notes: '',

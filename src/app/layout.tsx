@@ -1,4 +1,5 @@
 import { Inter } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import '../styles/globals.css';
 
 const inter = Inter({
@@ -14,7 +15,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${inter.variable}`}>
-      <body className="min-h-screen bg-canvas">{children}</body>
+      <body className="min-h-screen bg-canvas">
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }

@@ -15,21 +15,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
   }
 
-  // ── PII Guard: reject raw PII before forwarding to LLM ──
-  const rawEmailRegex = /[\w.+-]+@[\w.-]+\.\w+/;
-  const rawPhoneRegex = /\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/;
-  const rawNameRegex = /\b[A-Z][a-z]+ [A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/;
+  // ── PII Guard: strip [CANDIDATE_*] placeholders, then test for real PII ──
+  // After stripping, no false positives from masked tokens remain
+  const stripped = prompt.replace(/\[[\w_]+\]/g, 'X');
+  const rawEmail = /[\w.+-]+@[\w.-]+\.\w+/.test(stripped);
+  const rawPhone = /\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/.test(stripped);
+  const rawName = /\b[A-Z][a-z]+ [A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/.test(stripped);
 
-  const hasRawEmail = rawEmailRegex.test(prompt);
-  const hasRawPhone = rawPhoneRegex.test(prompt);
-  const hasRawName = rawNameRegex.test(prompt);
-
-  if (hasRawEmail || hasRawPhone || hasRawName) {
-    console.warn('[AI] PII Guard: blocked request with raw PII', { hasRawEmail, hasRawPhone, hasRawName });
+  if (rawEmail || rawPhone || rawName) {
+    console.warn('[AI] PII Guard: blocked', { rawEmail, rawPhone, rawName });
     return NextResponse.json(
-      {
-        error: 'Security Exception: Raw unmasked PII intercepted at server boundary. Ensure client runs maskPII() before sending prompts.',
-      },
+      { error: 'Security Exception: Raw unmasked PII intercepted at server boundary.' },
       { status: 400 }
     );
   }
@@ -55,8 +51,6 @@ export async function POST(req: NextRequest) {
   }
 
   const data = await response.json();
-
-  // Extract text content from Anthropic blocks
   const contentBlocks = data.content || [];
   const textBlocks = contentBlocks.filter((block: { type: string }) => block.type === 'text');
   const content = textBlocks.map((block: { text?: string }) => block.text || '').join('');
