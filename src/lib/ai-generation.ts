@@ -552,7 +552,11 @@ RULES:
 - Output NO other content
 - Preserve exact CSS class names: .summary, .summary p, ul.skills-list`;
 
-  return minimaxChat(prompt, system);
+  const raw = await minimaxChat(prompt, system);
+  if (!raw || raw.length < 20 || !raw.includes('<h2>')) {
+    throw new Error('AI returned an invalid or incomplete response. Please try again.');
+  }
+  return raw;
 }
 
 async function editCoverLetterBodyHTML(
@@ -619,11 +623,16 @@ RULES:
     html = blocks.map(b => `<p style="text-align: justify">${b.replace(/\n/g, ' ').trim()}</p>`).join('\n');
   }
 
+  if (!html || html.length < 50 || !html.includes('<p')) {
+    throw new Error('AI returned an invalid or incomplete response. Please try again.');
+  }
+
   return html;
 }
 
 function extractResumeBody(fullHTML: string): string {
   const contactEnd = fullHTML.indexOf('</div>');
+  if (contactEnd === -1) return '';
   const afterContact = fullHTML.slice(contactEnd + 6);
   return afterContact.trim();
 }
@@ -640,6 +649,7 @@ function extractCoverLetterBody(fullHTML: string): string {
 
 function replaceResumeBody(fullHTML: string, newBodyHTML: string): string {
   const contactEnd = fullHTML.indexOf('</div>');
+  if (contactEnd === -1) return fullHTML;
   const prefix = fullHTML.slice(0, contactEnd + 6);
   return prefix + '\n    ' + newBodyHTML + '\n</body>\n</html>';
 }
@@ -664,11 +674,17 @@ export async function editDocumentHTML(
 
   if (docType === 'resume') {
     const bodyHTML = extractResumeBody(fullHTML);
+    if (!bodyHTML) {
+      throw new Error('Could not parse the current resume structure. Please regenerate the resume.');
+    }
     const newBody = await editResumeBodyHTML(bodyHTML, maskedMasterResume, jd, userMessage);
     const demaskedBody = demaskPII(newBody, masterResume);
     return replaceResumeBody(fullHTML, demaskedBody);
   } else {
     const bodyHTML = extractCoverLetterBody(fullHTML);
+    if (!bodyHTML) {
+      throw new Error('Could not parse the current cover letter structure. Please regenerate the cover letter.');
+    }
     const newBody = await editCoverLetterBodyHTML(bodyHTML, maskedMasterResume, jd, userMessage);
     const demaskedBody = demaskPII(newBody, masterResume);
     return replaceCoverLetterBody(fullHTML, demaskedBody);
