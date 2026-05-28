@@ -298,7 +298,7 @@ export default function NavBar() {
         </nav>
       </div>
 
-      <AddJobModal isOpen={addJobOpen} onClose={() => setAddJobOpen(false)} />
+      <AddJobModal isOpen={addJobOpen} onClose={() => setAddJobOpen(false)} onJobAdded={() => window.location.reload()} />
     </>
   )
 }

@@ -46,9 +46,10 @@ function CheckIcon() {
 interface AddJobModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onJobAdded?: () => void;
 }
 
-export default function AddJobModal({ isOpen, onClose }: AddJobModalProps) {
+export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModalProps) {
   const [state, setState] = useState<ModalState>('two_column');
   const [jdText, setJdText] = useState('');
   const [processingStep, setProcessingStep] = useState<ProcessingStep>('analyzing');
@@ -108,6 +109,7 @@ export default function AddJobModal({ isOpen, onClose }: AddJobModalProps) {
       });
       setProcessingStep('saving');
       console.log('[AddJobModal] Job created successfully');
+      onJobAdded?.();
     } catch (err) {
       console.error('[AddJobModal] Failed to process job:', err);
     }
