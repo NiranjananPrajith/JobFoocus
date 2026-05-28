@@ -176,7 +176,33 @@ async function generateResumeHTML(maskedMasterResume: string, jd: FormattedJD): 
   const guide = formattingGuides.resume;
   const system = 'You are an expert resume writer. Output ONLY valid HTML for the resume body — NO <html>, <head>, or <body> tags.\n\n' + guide.ai_instructions + '\n\n---\nRESUME FORMATTING GUIDE (reference only — do not output this):\n' + JSON.stringify(guide, null, 2);
 
-  const prompt = 'Using this MASTER RESUME DATA (PII already masked as placeholders):\n' + maskedMasterResume + '\n\nCreate a tailored resume for:\nCompany: ' + jd.company + '\nTitle: ' + jd.job_title + '\nResponsibilities: ' + (jd.responsibilities || []).join(', ') + '\nRequirements: ' + (jd.requirements || []).join(', ') + '\n\nGenerate HTML with:\n1. An h2 "Professional Summary" section with a .summary div containing a <p> with 3-4 sentences tailored to the job\n2. An h2 "Skills" section with a ul.skills-list of 3-4 skills categories using <li><strong>Category</strong>: skills... format\n3. An h2 "Professional Experience" section with 1-2 most relevant job entries using .job-entry, .job-header, .job-title-row, .company-name, .job-title, .job-date-location, ul.achievements structure\n4. An h2 "Education" section with 1-2 most relevant entries using .edu-entry\n\nDo NOT include a header with name/contact info — that is added by the wrapper. Output ONLY the HTML body content.';
+  const prompt = `You are generating ONLY the top portion of a resume — no work experience, no education, no certifications.
+
+OUTPUT FORMAT (strict — generate exactly this, nothing else):
+<h2>Professional Summary</h2>
+<div class="summary"><p>Your 3-4 sentence tailored professional summary here.</p></div>
+
+<h2>Skills</h2>
+<ul class="skills-list">
+<li><strong>Category Name</strong>: skill 1, skill 2, skill 3</li>
+<li><strong>Category Name</strong>: skill 1, skill 2</li>
+<li><strong>Category Name</strong>: skill 1, skill 2, skill 3, skill 4</li>
+</ul>
+
+RULES:
+- ONLY output the two sections above — no h2 for work/education/certs, no .job-entry, no .edu-entry, no .cert-entry
+- Skills must come ONLY from the master resume data provided below
+- Match skills to keywords in the target job description: ${jd.job_title}
+- Do NOT fabricate skills not present in the master data
+- Output NO other content
+
+MASTER RESUME DATA:
+${maskedMasterResume}
+
+TARGET JOB:
+Company: ${jd.company}
+Title: ${jd.job_title}
+Key Requirements: ${(jd.requirements || []).join(', ')}`;
 
   return minimaxChat(prompt, system);
 }
@@ -190,10 +216,44 @@ async function generateCoverLetterHTML(maskedMasterResume: string, jd: Formatted
   const guide = formattingGuides.cover_letter;
   const system = 'You are an expert cover letter writer. Return ONLY the HTML body content — NO <html>, <head>, or <body> tags.\n\n' + guide.ai_instructions + '\n\n---\nCOVER LETTER FORMATTING GUIDE (reference only — do not output this):\n' + JSON.stringify(guide, null, 2);
 
-  const reqSlice = (jd.requirements || []).slice(0, 5).map(function(r: string) { return '- ' + r; }).join('\n');
+  const reqSlice = (jd.requirements || []).slice(0, 5).join(', ');
 
-  // NOTE: name, phone, email are NOT in the prompt — they remain as placeholders [CANDIDATE_NAME] etc.
-  const prompt = 'Write a professional cover letter as HTML for:\nCANDIDATE (already masked in prompt):\n' + maskedMasterResume + '\n\nJOB TARGET:\nCompany: ' + jd.company + '\nPosition: ' + jd.job_title + '\nSummary: ' + (jd.summary || '') + '\n\nKEY REQUIREMENTS: ' + reqSlice + '\nSTRUCTURE REQUIRED — use EXACT class names:\n<div class="sender-block">name + meta</div>\n<div class="date-block">Month DD, YYYY</div>\n<div class="recipient-block">Hiring Team<br><strong>Company</strong></div>\n<div class="subject-block">RE: Job Title</div>\n<p>Para 1: interest + hook</p>\n<p>Para 2: achievements matching requirements</p>\n<p>Para 3: closing + availability + call to action</p>\n<div class="signature-space">Sincerely, Name</div>\n\nIMPORTANT: Do NOT include raw name, phone or email in the prompt. Use placeholder text [CANDIDATE_NAME], [CANDIDATE_PHONE], [CANDIDATE_EMAIL] in the sender-block and signature-space. Output ONLY the HTML body.';
+  const prompt = `TEMPLATE — follow this EXACT structure and output NOTHING else:
+
+<div class="sender-block">
+<div class="sender-name">[CANDIDATE_NAME]</div>
+<div class="sender-meta">[CANDIDATE_PHONE] | [CANDIDATE_EMAIL]</div>
+</div>
+
+<div class="date-block">[Current Date — Month DD, YYYY]</div>
+
+<div class="recipient-block">
+Hiring Selection Team<br>
+<strong>${jd.company}</strong>
+</div>
+
+<div class="subject-block">RE: Application for the position of ${jd.job_title}</div>
+
+<p style="text-align: justify">Para 1: [Strong opening — express interest in ${jd.job_title} at ${jd.company}. Mention specific qualification or achievement that makes you a strong fit. Include the job title explicitly.]</p>
+
+<p style="text-align: justify">Para 2: [Key achievement drawn from master resume work history — use a concrete metric or specific accomplishment. Connect it directly to a requirement from the job: ${reqSlice}. Do NOT invent content.]</p>
+
+<p style="text-align: justify">Para 3: [Closing — state your availability (days, nights, weekends), express enthusiasm for the role, and include a call to action (available for interview at your convenience). Do NOT include raw name/phone/email here.]</p>
+
+<div class="signature-space">
+Sincerely,<br><br><br>
+<strong>[CANDIDATE_NAME]</strong>
+</div>
+
+CRITICAL RULES:
+- Use EXACT class names: .sender-block, .sender-name, .sender-meta, .date-block, .recipient-block, .subject-block, .signature-space
+- All 3 paragraphs MUST have style="text-align: justify"
+- Placeholders [CANDIDATE_NAME], [CANDIDATE_PHONE], [CANDIDATE_EMAIL] are left as-is — they are replaced server-side
+- Do NOT invent achievements — derive ONLY from the master resume data below
+- Do NOT output <html>, <head>, or <body> tags
+
+CANDIDATE DATA (from master resume):
+${maskedMasterResume}`;
 
   return minimaxChat(prompt, system);
 }
