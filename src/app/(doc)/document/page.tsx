@@ -62,7 +62,7 @@ function DocumentContent() {
         }
 
         const docLabel = docType === 'resume' ? 'Resume' : docType === 'cover_letter' ? 'CoverLetter' : 'JobDescription';
-        const titleParts = [userName, company, jobTitle].filter(Boolean);
+        const titleParts = [userName, company, jobTitle].filter(Boolean).map(p => p.replace(/\s+/g, '-'));
         document.title = titleParts.length > 0
           ? `${titleParts.join('-')}_${docLabel}`
           : `${folder}_${docLabel}`;
