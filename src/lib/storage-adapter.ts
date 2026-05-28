@@ -188,7 +188,7 @@ export async function getApplicationById(category: CategoryKey, folderName: stri
     return data?.[key] || null;
   }
   try {
-    const row = await apiFetch(`/api/db/applications/${encodeURIComponent(category)}/${encodeURIComponent(folderName)}`);
+    const row = await apiFetch(`/api/db/applications/${encodeURIComponent(category)}/${encodeURIComponent(folderName)}?category=${encodeURIComponent(category)}&folder=${encodeURIComponent(folderName)}`);
     if (!row) return null;
     const app = row.data as EnrichedApplication;
     app.category = row.category;
@@ -274,7 +274,7 @@ export async function updateApplicationDocFlags(
     return;
   }
   try {
-    const row = await apiFetch(`/api/db/applications/${encodeURIComponent(category)}/${encodeURIComponent(folderName)}`);
+    const row = await apiFetch(`/api/db/applications/${encodeURIComponent(category)}/${encodeURIComponent(folderName)}?category=${encodeURIComponent(category)}&folder=${encodeURIComponent(folderName)}`);
     if (!row) return;
     const updated = { ...row.data, ...flags };
     await apiFetch('/api/db/applications', {
