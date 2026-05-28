@@ -1,4 +1,5 @@
-import { createClient, createServiceClient } from '@/lib/supabase-utils/server'
+import { createClient } from '@/lib/supabase-utils/server'
+import { createServiceClient } from '@/lib/supabase-utils/service'
 import { NextResponse } from 'next/server'
 
 // GET /api/db/applications/trash — list trashed applications
@@ -19,7 +20,7 @@ export async function GET() {
 }
 
 // POST /api/db/applications/trash — move application to trash (soft delete)
-// Uses service role client to bypass RLS for UPDATE operations
+// Uses direct service client to bypass RLS for UPDATE operations
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -30,8 +31,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing category or folder' }, { status: 400 })
   }
 
-  // Use service client to bypass RLS for the UPDATE (RLS blocks UPDATE when setting deleted_at)
-  const svc = await createServiceClient()
+  // Direct service client bypasses RLS entirely
+  const svc = createServiceClient()
   const { error } = await svc
     .from('applications')
     .update({ deleted_at: new Date().toISOString() })

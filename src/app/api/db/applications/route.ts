@@ -1,4 +1,5 @@
-import { createClient, createServiceClient } from '@/lib/supabase-utils/server'
+import { createClient } from '@/lib/supabase-utils/server'
+import { createServiceClient } from '@/lib/supabase-utils/service'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
@@ -45,8 +46,8 @@ export async function DELETE(request: Request) {
   }
 
   // Soft delete: set deleted_at instead of removing the row
-  // Use service client to bypass RLS (RLS blocks UPDATE when setting deleted_at)
-  const svc = await createServiceClient()
+  // Direct service client bypasses RLS entirely
+  const svc = createServiceClient()
   const { error } = await svc
     .from('applications')
     .update({ deleted_at: new Date().toISOString() })
