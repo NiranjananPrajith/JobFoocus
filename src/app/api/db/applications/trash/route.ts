@@ -8,7 +8,9 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data, error } = await supabase
+  // Use service client to bypass RLS (RLS SELECT policy only returns deleted_at IS NULL rows)
+  const svc = createServiceClient()
+  const { data, error } = await svc
     .from('applications')
     .select('category, folder, data, deleted_at')
     .eq('user_id', user.id)
