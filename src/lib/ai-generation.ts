@@ -57,19 +57,27 @@ async function minimaxChat(prompt: string, system: string): Promise<string> {
 
   const data = await res.json();
 
-  const content = data.content != null
-    ? data.content
-    : (() => {
-        const blocks = data.content || [];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const textBlocks = blocks.filter((b: any) => b.type === 'text');
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return textBlocks.map((b: any) => b.text || '').join('');
-      })();
+  let content: string;
 
-  if (typeof content !== 'string') {
-    console.error('[AI] Invalid response type from Minimax:', typeof content, String(content));
-    throw new Error('Minimax returned invalid response type: ' + typeof content);
+  if (typeof data.content === 'string') {
+    // Direct string response
+    content = data.content;
+  } else if (Array.isArray(data.content)) {
+    // Array of content blocks [{type: "text", text: "..."}]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const textBlocks = data.content
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .filter((b: any) => b && b.type === 'text')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .map((b: any) => b.text || '');
+    content = textBlocks.join('');
+  } else if (data.content != null && typeof data.content === 'object') {
+    // Single content object {type: "text", text: "..."}
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    content = (data.content as any).text || '';
+  } else {
+    console.error('[AI] Unexpected Minimax response structure:', typeof data.content, JSON.stringify(data.content).slice(0, 200));
+    throw new Error('Minimax returned an unexpected response format.');
   }
 
   if (!content) {
