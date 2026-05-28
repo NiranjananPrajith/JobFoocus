@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useRef } from 'react';
 import { getMasterResume, setMasterResume } from '@/lib/storage-adapter';
+import { parseResumeFile, getAcceptedFileTypes, getAcceptedMimeTypes, type ParsedResume } from '@/lib/resume-parser';
 import Card from '@/components/design/Card';
 import Button from '@/components/design/Button';
 
@@ -219,6 +220,9 @@ function MasterResumeContent() {
   const [resume, setResume] = useState<MasterResume>(emptyResume);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     getMasterResume().then((data) => {
@@ -232,6 +236,35 @@ function MasterResumeContent() {
   const set = <K extends keyof MasterResume>(key: K, value: MasterResume[K]) => {
     setResume((prev) => ({ ...prev, [key]: value }));
     setSaved(false);
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    setImportError(null);
+
+    try {
+      const parsed = await parseResumeFile(file) as ParsedResume;
+
+      setResume(prev => ({
+        ...prev,
+        name: parsed.name || prev.name,
+        phone: parsed.phone || prev.phone,
+        email: parsed.email || prev.email,
+        summary: parsed.summary || prev.summary,
+        workExperience: parsed.workExperience?.length > 0 ? parsed.workExperience : prev.workExperience,
+        education: parsed.education?.length > 0 ? parsed.education : prev.education,
+      }));
+      alert('Resume imported successfully! Review the prefilled fields and click Save to apply.');
+    } catch (err) {
+      console.error('[Import] Failed to parse resume file:', err);
+      setImportError(err instanceof Error ? err.message : 'Failed to parse file');
+    } finally {
+      setIsImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   // Socials
@@ -314,22 +347,48 @@ function MasterResumeContent() {
 
       {/* Header */}
       <Card variant="cream" className="mb-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1 className="text-[28px] md:text-[36px] font-medium text-ink">Master Resume</h1>
             <p className="text-[14px] text-steel mt-1">
               Your single source of truth for all job applications
             </p>
           </div>
-          {saved && (
-            <span className="text-[13px] text-green-600 font-medium flex items-center gap-1.5">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
+          <div className="flex items-center gap-3">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={getAcceptedFileTypes()}
+              onChange={handleImportFile}
+              className="hidden"
+              id="resume-file-input"
+            />
+            <label
+              htmlFor="resume-file-input"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-hairline-strong bg-white text-[14px] font-medium text-ink hover:bg-surface transition-colors cursor-pointer disabled:opacity-60"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
               </svg>
-              Saved
-            </span>
-          )}
+              {isImporting ? 'Importing...' : 'Import from PDF / DOCX'}
+            </label>
+            {saved && (
+              <span className="text-[13px] text-green-600 font-medium flex items-center gap-1.5">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Saved
+              </span>
+            )}
+          </div>
         </div>
+        {importError && (
+          <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 text-[13px] text-red-700">
+            <strong>Import failed:</strong> {importError}
+          </div>
+        )}
       </Card>
 
       {/* Privacy Notice */}
