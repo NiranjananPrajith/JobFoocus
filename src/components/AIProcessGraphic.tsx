@@ -11,21 +11,6 @@ interface StepProps {
 function ProcessStep({ number, label, sublabel, icon, isAi }: StepProps) {
   return (
     <div className="flex flex-col items-center gap-2 relative">
-      {/* Connector line to next step */}
-      {number < 6 && (
-        <div className="absolute right-0 top-10" style={{ transform: 'translateX(50%)' }}>
-          <svg width="40" height="12" viewBox="0 0 40 12" fill="none">
-            <path
-              d="M0 6h30M28 2l8 4-8 4"
-              stroke="#e6d5a8"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
-      )}
-
       {/* Icon circle */}
       <div
         className="w-20 h-20 rounded-2xl flex items-center justify-center relative"
@@ -62,14 +47,14 @@ function ProcessStep({ number, label, sublabel, icon, isAi }: StepProps) {
 export default function AIProcessGraphic() {
   return (
     <div
-      className="w-full rounded-xl overflow-hidden px-8 py-8"
+      className="w-full rounded-xl overflow-hidden px-4 md:px-8 py-8"
       style={{
         backgroundColor: '#fafaf8',
         border: '1px solid #ededed',
       }}
     >
-      {/* Process steps */}
-      <div className="flex flex-row items-start justify-between gap-2 mb-8">
+      {/* Row 1 — left to right */}
+      <div className="flex flex-row items-start justify-center md:justify-between gap-2 mb-4 md:mb-8">
         <ProcessStep
           number={1}
           label="Paste Job"
@@ -86,6 +71,13 @@ export default function AIProcessGraphic() {
           }
         />
 
+        {/* Arrow 1→2 */}
+        <div className="flex items-center md:hidden">
+          <svg width="24" height="12" viewBox="0 0 40 12" fill="none" className="rotate-90 md:rotate-0">
+            <path d="M0 6h30M28 2l8 4-8 4" stroke="#e6d5a8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+
         <ProcessStep
           number={2}
           label="Mask PII"
@@ -99,35 +91,51 @@ export default function AIProcessGraphic() {
             </svg>
           }
         />
+      </div>
 
-        <ProcessStep
-          number={3}
-          label="AI Analyzes"
-          sublabel="Keywords matched to your resume"
-          isAi={true}
-          icon={
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 16v-4" />
-              <path d="M12 8h.01" />
-              <path d="M8 12a4 4 0 0 1 8 0" />
+      {/* Row 2 — right to left: wrapper reverses on mobile, inner flex keeps steps + arrow together */}
+      <div className="flex flex-row items-start justify-center md:justify-between gap-2 mb-4 md:mb-8">
+        {/* Inner wrapper reverses direction on mobile to create RTL row */}
+        <div className="flex flex-row-reverse items-start md:items-center justify-center gap-2">
+          {/* Arrow between steps 3 and 4 — points left (step 4 → step 3) */}
+          <div className="flex items-center md:hidden rotate-180">
+            <svg width="24" height="12" viewBox="0 0 40 12" fill="none">
+              <path d="M0 6h30M28 2l8 4-8 4" stroke="#e6d5a8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-          }
-        />
+          </div>
 
-        <ProcessStep
-          number={4}
-          label="Replace PII"
-          sublabel="Your info restored to documents"
-          isAi={false}
-          icon={
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6a6a6a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              <polyline points="9 12 11 14 15 10" />
-            </svg>
-          }
-        />
+          <ProcessStep
+            number={3}
+            label="AI Analyzes"
+            sublabel="Keywords matched to your resume"
+            isAi={true}
+            icon={
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 16v-4" />
+                <path d="M12 8h.01" />
+                <path d="M8 12a4 4 0 0 1 8 0" />
+              </svg>
+            }
+          />
 
+          <ProcessStep
+            number={4}
+            label="Replace PII"
+            sublabel="Your info restored to documents"
+            isAi={false}
+            icon={
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#6a6a6a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <polyline points="9 12 11 14 15 10" />
+              </svg>
+            }
+          />
+        </div>
+      </div>
+
+      {/* Row 3 — left to right */}
+      <div className="flex flex-row items-start justify-center md:justify-between gap-2 mb-4 md:mb-8">
         <ProcessStep
           number={5}
           label="Resume Ready"
@@ -141,6 +149,13 @@ export default function AIProcessGraphic() {
             </svg>
           }
         />
+
+        {/* Arrow 5→6 */}
+        <div className="flex items-center md:hidden">
+          <svg width="24" height="12" viewBox="0 0 40 12" fill="none" className="rotate-90 md:rotate-0">
+            <path d="M0 6h30M28 2l8 4-8 4" stroke="#e6d5a8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
 
         <ProcessStep
           number={6}
