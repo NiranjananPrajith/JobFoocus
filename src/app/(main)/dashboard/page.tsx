@@ -180,33 +180,24 @@ export default function DashboardPage() {
       {recentApplications.length > 0 && (
         <div className="mb-6 md:mb-8">
           <h2 className="text-[12px] font-bold uppercase tracking-[0.05em] text-steel mb-4">Recent Activity</h2>
-          <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-            <Card variant="default" className="min-w-[500px]">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-hairline-soft">
-                    <th className="text-left p-3 text-[11px] font-semibold text-steel uppercase tracking-wide">Company</th>
-                    <th className="text-left p-3 text-[11px] font-semibold text-steel uppercase tracking-wide hidden sm:table-cell">Job Title</th>
-                    <th className="text-left p-3 text-[11px] font-semibold text-steel uppercase tracking-wide">Status</th>
-                    <th className="text-left p-3 text-[11px] font-semibold text-steel uppercase tracking-wide hidden md:table-cell">Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentApplications.map((app, idx) => (
-                    <tr key={idx} className="border-b border-hairline-soft last:border-b-0">
-                      <td className="p-3 text-[14px] text-ink whitespace-nowrap">{app.company}</td>
-                      <td className="p-3 text-[14px] text-steel whitespace-nowrap hidden sm:table-cell">{app.job_title}</td>
-                      <td className="p-3 whitespace-nowrap">
-                        <Badge status={app.status as any} />
-                      </td>
-                      <td className="p-3 text-[12px] text-steel font-mono whitespace-nowrap hidden md:table-cell">
-                        {app.response_date || app.date_applied}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Card>
+          <div className="space-y-2">
+            {recentApplications.map((app, idx) => (
+              <div
+                key={idx}
+                className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-white border border-hairline-soft"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-medium text-ink truncate">{app.company}</p>
+                  <p className="text-[12px] text-steel truncate hidden sm:block">{app.job_title}</p>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <Badge status={app.status as any} />
+                  <span className="text-[11px] text-steel font-mono hidden md:block">
+                    {app.response_date || app.date_applied}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
