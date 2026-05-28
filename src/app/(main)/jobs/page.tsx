@@ -4,10 +4,10 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ApplicationCard from '@/components/ApplicationCard';
 import Card from '@/components/design/Card';
-import { deleteApplication, getAllApplications, saveApplication, type EnrichedApplication } from '@/lib/storage-adapter';
+import { deleteApplication, getAllApplications, getTrashedApplications, restoreApplication, permanentlyDeleteApplication, saveApplication, type EnrichedApplication } from '@/lib/storage-adapter';
 import { StatusType } from '@/lib/design-system';
 
-type Tab = 'all' | 'applied' | 'prospects';
+type Tab = 'all' | 'applied' | 'prospects' | 'trashed';
 
 const STATUS_OPTIONS: StatusType[] = ['prospect', 'applied', 'phone_screen', 'interview', 'offer', 'rejected'];
 
@@ -22,6 +22,7 @@ function JobsContent() {
 
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [applications, setApplications] = useState<EnrichedApplication[]>([]);
+  const [trashed, setTrashed] = useState<EnrichedApplication[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Filter state (only meaningful when activeTab === 'all')
@@ -38,6 +39,27 @@ function JobsContent() {
       setApplications((prev) => prev.filter((app) => `${app.category}/${app.folder}` !== id));
     } catch (error) {
       console.error('Error deleting application:', error);
+    }
+  };
+
+  const handleRestore = async (category: string, folder: string) => {
+    try {
+      await restoreApplication(category, folder);
+      const [apps, trash] = await Promise.all([getAllApplications(), getTrashedApplications()]);
+      setApplications(apps);
+      setTrashed(trash);
+    } catch (error) {
+      console.error('Error restoring application:', error);
+    }
+  };
+
+  const handlePermanentDelete = async (category: string, folder: string) => {
+    if (!confirm('Permanently delete this application and all its documents? This cannot be undone.')) return;
+    try {
+      await permanentlyDeleteApplication(category, folder);
+      setTrashed((prev) => prev.filter((app) => !(app.category === category && app.folder === folder)));
+    } catch (error) {
+      console.error('Error permanently deleting application:', error);
     }
   };
 
@@ -74,8 +96,9 @@ function JobsContent() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const apps = await getAllApplications();
+        const [apps, trash] = await Promise.all([getAllApplications(), getTrashedApplications()]);
         setApplications(apps);
+        setTrashed(trash);
       } catch (error) {
         console.error('Error fetching applications:', error);
       } finally {
@@ -158,6 +181,12 @@ function JobsContent() {
           count={prospectCount}
           label="Prospects"
         />
+        <TabButton
+          active={activeTab === 'trashed'}
+          onClick={() => setActiveTab('trashed')}
+          count={trashed.length}
+          label="Trashed"
+        />
       </div>
 
       {/* Filter Bar — only shown on All Jobs tab */}
@@ -212,11 +241,60 @@ function JobsContent() {
       <div className="mb-4 text-[12px] text-steel">
         {activeTab === 'all' && (search || statusFilter || categoryFilter)
           ? `Showing ${filteredApplications.length} of ${applications.length} applications`
+          : activeTab === 'trashed'
+          ? `${trashed.length} item${trashed.length !== 1 ? 's' : ''} in trash`
           : `${filteredApplications.length} ${activeTab === 'all' ? 'total' : activeTab === 'applied' ? 'applied' : 'prospect'} jobs`}
       </div>
 
       {/* Grid */}
-      {filteredApplications.length > 0 ? (
+      {activeTab === 'trashed' ? (
+        trashed.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {trashed.map((app) => (
+              <div key={`${app.category}/${app.folder}`} className="bg-white rounded-xl border border-stone-200 overflow-hidden">
+                <div className="flex items-start">
+                  <div className="w-1 shrink-0" style={{ backgroundColor: app.category_color || '#888888' }} />
+                  <div className="flex-1 min-w-0 px-4 py-4">
+                    <h3 className="text-[15px] font-semibold text-ink truncate">{app.company}</h3>
+                    <p className="text-[13px] text-steel truncate mt-0.5">{app.job_title}</p>
+                    {app.deleted_at && (
+                      <p className="text-[12px] text-red-400 mt-2">
+                        Deleted {new Date(app.deleted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-2 mt-3">
+                      <button
+                        onClick={() => handleRestore(app.category, app.folder)}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-stone-200 text-steel hover:text-ink hover:border-stone-300 transition-all text-[12px] font-medium"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="1 4 1 10 7 10"/>
+                          <path d="M3.51 15a9 9 0 1 0 .49-3.5"/>
+                        </svg>
+                        Restore
+                      </button>
+                      <button
+                        onClick={() => handlePermanentDelete(app.category, app.folder)}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 text-red-500 hover:bg-red-50 transition-all text-[12px] font-medium"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <Card variant="cream" className="text-center py-12">
+            <p className="text-steel">Trash is empty. Deleted jobs will appear here for 30 days.</p>
+          </Card>
+        )
+      ) : filteredApplications.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredApplications.map((app) => (
             <ApplicationCard
