@@ -172,6 +172,10 @@ export async function assignJobToCategory(category: string, folder: string, newC
   const newCatId = newMatchedCat?.id ?? '';
   const newCatColor = newMatchedCat?.color ?? '#888888';
 
+  if (!newCatId) {
+    throw new Error(`Category not found: ${newCategory}`);
+  }
+
   if (!userId) {
     const data = (await getLocalData('applications')) || {};
     const existing = data[key] as EnrichedApplication | undefined;
@@ -204,24 +208,14 @@ export async function assignJobToCategory(category: string, folder: string, newC
         category: newCatName,
         category_key: newCatName,
       };
-      await apiFetch('/api/db/applications', {
+      await apiFetch('/api/db/applications/reassign', {
         method: 'POST',
-        body: JSON.stringify({ category: newCatName, categoryId: newCatId, folder, appData: updated }),
+        body: JSON.stringify({ oldCategoryId: categoryId, newCategoryId: newCatId, newCategoryName: newCatName, folder, appData: updated }),
       });
     }
   } catch (err) {
     console.error('[storage-adapter] assignJobToCategory failed:', err);
-    const data = (await getLocalData('applications')) || {};
-    const existing = data[key] as EnrichedApplication | undefined;
-    if (existing) {
-      existing.category_name = newCatName;
-      existing.category_id = newCatId;
-      existing.category_color = newCatColor;
-      existing.category = newCatName;
-      existing.category_key = newCatName;
-      data[key] = existing;
-      await setLocalData('applications', data);
-    }
+    throw err;
   }
 }
 
@@ -846,14 +840,17 @@ export async function saveDocumentHTML(category: string, folder: string, docType
     const userCats = await getUserCategories();
     const catMap = new Map(userCats.map(c => [c.name.toLowerCase(), c]));
     const catInfo = catMap.get(String(category).toLowerCase());
-    const categoryId = catInfo?.id || '';
+    const categoryId = catInfo?.id;
+    if (!categoryId) {
+      throw new Error(`Category ID not found for category: ${category}`);
+    }
     await apiFetch('/api/db/documents', {
       method: 'POST',
       body: JSON.stringify({ category, categoryId, folder, docType, html }),
     });
   } catch (err) {
-    console.error('[storage-adapter] saveDocumentHTML failed, falling back to localStorage:', err);
-    await setLocalData(`doc_${category}/${folder}/${docType}`, html);
+    console.error('[storage-adapter] saveDocumentHTML failed:', err);
+    throw err;
   }
 }
 
