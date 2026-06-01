@@ -8,28 +8,48 @@ export async function DELETE(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { categoryId, folder } = await request.json()
-  if (!categoryId || !folder) {
-    return NextResponse.json({ error: 'Missing categoryId or folder' }, { status: 400 })
+  const { categoryId, category, folder } = await request.json()
+  if (!folder) {
+    return NextResponse.json({ error: 'Missing folder' }, { status: 400 })
+  }
+
+  if (!categoryId && !category) {
+    return NextResponse.json({ error: 'Missing categoryId or category' }, { status: 400 })
   }
 
   const svc = createServiceClient()
 
   // Delete associated documents first
-  const { error: docError } = await svc
+  let docQuery = svc
     .from('documents')
     .delete()
-    .eq('user_id', user.id).eq('category_id', categoryId).eq('folder', folder)
+    .eq('user_id', user.id).eq('folder', folder)
+
+  if (categoryId) {
+    docQuery = docQuery.eq('category_id', categoryId)
+  } else {
+    docQuery = docQuery.eq('category', category)
+  }
+
+  const { error: docError } = await docQuery
 
   if (docError) {
     return NextResponse.json({ error: docError.message }, { status: 500 })
   }
 
   // Permanently delete the application
-  const { error: appError } = await svc
+  let appQuery = svc
     .from('applications')
     .delete()
-    .eq('user_id', user.id).eq('category_id', categoryId).eq('folder', folder)
+    .eq('user_id', user.id).eq('folder', folder)
+
+  if (categoryId) {
+    appQuery = appQuery.eq('category_id', categoryId)
+  } else {
+    appQuery = appQuery.eq('category', category)
+  }
+
+  const { error: appError } = await appQuery
 
   if (appError) return NextResponse.json({ error: appError.message }, { status: 500 })
   return NextResponse.json({ success: true })

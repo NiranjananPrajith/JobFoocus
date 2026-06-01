@@ -9,6 +9,7 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url)
   const categoryId = searchParams.get('categoryId')
+  const category = searchParams.get('category')
   const folder = searchParams.get('folder')
 
   // If categoryId and folder provided, return single item
@@ -16,6 +17,17 @@ export async function GET(request: Request) {
     const { data, error } = await supabase
       .from('applications').select('category, category_id, folder, data')
       .eq('user_id', user.id).eq('category_id', categoryId).eq('folder', folder).single()
+    if (error?.code === 'PGRST116') return NextResponse.json(null)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json(data)
+  }
+
+  // Fallback: if category (text name) and folder provided, query by category name
+  // Used for legacy jobs where category_id is NULL
+  if (category && folder) {
+    const { data, error } = await supabase
+      .from('applications').select('category, category_id, folder, data')
+      .eq('user_id', user.id).eq('category', category).eq('folder', folder).single()
     if (error?.code === 'PGRST116') return NextResponse.json(null)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json(data)
