@@ -7,7 +7,7 @@ import Button from '@/components/design/Button';
 import CategorySelector from '@/components/CategorySelector';
 import ManageCategoriesModal from '@/components/ManageCategoriesModal';
 import { isMasterResumeBlank, generateMaskedJobEntryAndDocuments } from '@/lib/ai-generation';
-import { migrateCategoriesIfNeeded, getUserCategories, saveCategory, type UserCategory } from '@/lib/storage-adapter';
+import { getUserCategories, saveCategory, type UserCategory } from '@/lib/storage-adapter';
 
 type ModalState = 'two_column' | 'paste_jd' | 'blank_resume' | 'processing' | 'category_prompt' | 'done';
 type ProcessingStep = 'analyzing' | 'resume' | 'cover_letter' | 'saving' | 'done';
@@ -72,9 +72,7 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
 
   useEffect(() => {
     if (mounted) {
-      migrateCategoriesIfNeeded().then(() => {
-        getUserCategories().then(setUserCategories);
-      });
+      getUserCategories().then(setUserCategories);
     }
   }, [mounted]);
 

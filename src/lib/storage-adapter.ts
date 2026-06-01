@@ -28,12 +28,17 @@ async function apiFetch(path: string, options?: RequestInit): Promise<any> {
 // Constants
 // ---------------------------------------------------------------------------
 
-export const CATEGORIES = {} as const;
-
 export type CategoryKey = string;
 
+const SYSTEM_CATEGORIES = ['Uncategorized'] as const;
+export const MAX_USER_CATEGORIES = 100;
+
+export function isSystemCategory(name: string): boolean {
+  return SYSTEM_CATEGORIES.includes(name as any);
+}
+
 // ---------------------------------------------------------------------------
-// User Categories
+// User Categories (Supabase-backed)
 // ---------------------------------------------------------------------------
 
 export interface UserCategory {
@@ -43,179 +48,86 @@ export interface UserCategory {
   createdAt: string;
 }
 
-const SYSTEM_CATEGORIES = ['Uncategorized'] as const;
-export const MAX_USER_CATEGORIES = 100;
-const CATEGORY_COLORS = ['#4a90e2', '#4caf50', '#f5a623', '#9c27b0', '#00bcd4', '#ff5722', '#607d8b', '#e91e63'];
-const USER_CATEGORIES_KEY = 'jf_user_categories';
-const CATEGORY_MIGRATED_KEY = 'jf_categories_migrated';
-const APP_CATEGORIES_MIGRATED_KEY = 'jf_app_categories_migrated';
-
-export function isSystemCategory(name: string): boolean {
-  return SYSTEM_CATEGORIES.includes(name as any);
-}
-
-export async function migrateCategoriesIfNeeded(): Promise<void> {
-  const migrated = await getLocalData(CATEGORY_MIGRATED_KEY);
-  if (migrated) return;
-
-  const stored = await getLocalData(USER_CATEGORIES_KEY);
-  if (stored && Array.isArray(stored)) {
-    const hasOldFormat = stored.length > 0 && typeof stored[0] === 'string';
-    if (hasOldFormat) {
-      const migratedCategories: UserCategory[] = [];
-      let colorIndex = 0;
-      for (const name of stored) {
-        if (typeof name === 'string' && name.trim()) {
-          migratedCategories.push({
-            name: name.trim(),
-            description: '',
-            color: CATEGORY_COLORS[colorIndex % CATEGORY_COLORS.length],
-            createdAt: new Date().toISOString(),
-          });
-          colorIndex++;
-        }
-      }
-      await setLocalData(USER_CATEGORIES_KEY, migratedCategories);
-    }
-  }
-  await setLocalData(CATEGORY_MIGRATED_KEY, true);
-}
-
-async function migrateApplicationCategoriesIfNeeded(): Promise<void> {
-  const migrated = await getLocalData(APP_CATEGORIES_MIGRATED_KEY);
-  if (migrated) return;
-
-  const userCats = await getUserCategories();
-  const userCatNames = new Set(userCats.map(c => c.name.toLowerCase()));
-
-  const userId = await getUserId();
-  let apps: EnrichedApplication[] = [];
-
-  if (!userId) {
-    const data = await getLocalData('applications');
-    if (data) {
-      apps = Object.values(data).filter((a: any) => !a.deleted_at) as EnrichedApplication[];
-    }
-  } else {
-    try {
-      const rows = await apiFetch('/api/db/applications');
-      apps = rows.map((row: any) => ({
-        ...row.data as EnrichedApplication,
-        category: row.category,
-        category_key: row.category as CategoryKey,
-        folder: row.folder,
-        path: `${row.category}/${row.folder}`,
-      }));
-    } catch {
-      const data = await getLocalData('applications');
-      if (data) {
-        apps = Object.values(data).filter((a: any) => !a.deleted_at) as EnrichedApplication[];
-      }
-    }
-  }
-
-  let needsMigration = false;
-  for (const app of apps) {
-    const catKey = app.category_key || app.category || '';
-    if (catKey.includes('_') && !userCatNames.has(catKey.toLowerCase()) && catKey !== 'Uncategorized') {
-      needsMigration = true;
-      break;
-    }
-  }
-
-  if (needsMigration) {
-    for (const app of apps) {
-      const catKey = app.category_key || app.category || '';
-      if (catKey.includes('_') && !userCatNames.has(catKey.toLowerCase()) && catKey !== 'Uncategorized') {
-        try {
-          await assignJobToCategory(app.category, app.folder, 'Uncategorized');
-        } catch (e) {
-          console.warn(`[storage-adapter] Failed to migrate app ${app.folder}:`, e);
-        }
-      }
-    }
-  }
-
-  await setLocalData(APP_CATEGORIES_MIGRATED_KEY, true);
+function transformCategoryFromApi(row: any): UserCategory {
+  return {
+    name: row.name,
+    description: row.description ?? undefined,
+    color: row.color,
+    createdAt: row.created_at,
+  };
 }
 
 export async function getUserCategories(): Promise<UserCategory[]> {
-  await migrateCategoriesIfNeeded();
-  const stored = await getLocalData(USER_CATEGORIES_KEY);
-  if (!stored || !Array.isArray(stored)) return [];
-  return stored.filter((c: any) => c && typeof c.name === 'string' && !isSystemCategory(c.name));
+  const userId = await getUserId();
+  if (!userId) return [];
+
+  try {
+    const rows = await apiFetch('/api/db/categories');
+    await cleanupOldCategoryKeys();
+    return rows.map(transformCategoryFromApi);
+  } catch (err) {
+    console.warn('[storage-adapter] getUserCategories failed:', err);
+    return [];
+  }
 }
 
 export async function saveCategory(cat: UserCategory): Promise<{ success: boolean; error?: string }> {
-  await migrateCategoriesIfNeeded();
-  const existing = await getUserCategories();
-  if (existing.length >= MAX_USER_CATEGORIES) {
-    return { success: false, error: 'Maximum categories reached' };
-  }
+  const userId = await getUserId();
+  if (!userId) return { success: false, error: 'Not authenticated' };
+
   if (!cat.name || !cat.name.trim()) {
     return { success: false, error: 'Category name is required' };
   }
-  const nameTrimmed = cat.name.trim();
-  if (existing.some(c => c.name.toLowerCase() === nameTrimmed.toLowerCase())) {
-    return { success: false, error: 'Category already exists' };
+
+  try {
+    await apiFetch('/api/db/categories', {
+      method: 'POST',
+      body: JSON.stringify({ name: cat.name.trim(), description: cat.description?.trim() }),
+    });
+    return { success: true };
+  } catch (err: any) {
+    if (err?.message?.includes('409') || err?.message?.includes('already exists')) {
+      return { success: false, error: 'A category with this name already exists' };
+    }
+    if (err?.message?.includes('Maximum categories')) {
+      return { success: false, error: 'Maximum categories reached' };
+    }
+    return { success: false, error: err.message || 'Failed to create category' };
   }
-  const colorIndex = existing.length % CATEGORY_COLORS.length;
-  const newCat: UserCategory = {
-    name: nameTrimmed,
-    description: cat.description?.trim() || '',
-    color: CATEGORY_COLORS[colorIndex],
-    createdAt: new Date().toISOString(),
-  };
-  existing.push(newCat);
-  await setLocalData(USER_CATEGORIES_KEY, existing);
-  return { success: true };
 }
 
 export async function updateCategory(oldName: string, updatedCat: Partial<UserCategory>): Promise<{ success: boolean; error?: string }> {
   if (isSystemCategory(oldName)) {
     return { success: false, error: 'Cannot modify system category' };
   }
-  await migrateCategoriesIfNeeded();
-  const existing = await getUserCategories();
-  const idx = existing.findIndex(c => c.name.toLowerCase() === oldName.toLowerCase());
-  if (idx === -1) {
-    return { success: false, error: 'Category not found' };
-  }
-  if (updatedCat.name !== undefined && updatedCat.name.trim()) {
-    const nameTrimmed = updatedCat.name.trim();
-    if (existing.some(c => c.name.toLowerCase() === nameTrimmed.toLowerCase() && c.name.toLowerCase() !== oldName.toLowerCase())) {
-      return { success: false, error: 'Category name already exists' };
-    }
-    existing[idx].name = nameTrimmed;
-  }
-  if (updatedCat.description !== undefined) {
-    existing[idx].description = updatedCat.description.trim();
-  }
-  await setLocalData(USER_CATEGORIES_KEY, existing);
 
-  // Update all applications with this category name
-  const allApps = await getAllApplications();
-  for (const app of allApps) {
-    if (app.category_name.toLowerCase() === oldName.toLowerCase()) {
-      await assignJobToCategory(app.category, app.folder, existing[idx].name);
-    }
-  }
+  try {
+    await apiFetch(`/api/db/categories/${encodeURIComponent(oldName)}`, {
+      method: 'PUT',
+      body: JSON.stringify({ name: updatedCat.name?.trim(), description: updatedCat.description?.trim() }),
+    });
 
-  return { success: true };
+    const allApps = await getAllApplications();
+    for (const app of allApps) {
+      if (app.category_name.toLowerCase() === oldName.toLowerCase()) {
+        await assignJobToCategory(app.category, app.folder, updatedCat.name || oldName);
+      }
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    if (err?.message?.includes('409') || err?.message?.includes('already exists')) {
+      return { success: false, error: 'A category with this name already exists' };
+    }
+    return { success: false, error: err.message || 'Failed to update category' };
+  }
 }
 
 export async function deleteCategory(categoryName: string): Promise<{ success: boolean; error?: string; reassignedCount?: number }> {
   if (isSystemCategory(categoryName)) {
     return { success: false, error: 'Cannot delete system category' };
   }
-  await migrateCategoriesIfNeeded();
-  const existing = await getUserCategories();
-  const idx = existing.findIndex(c => c.name.toLowerCase() === categoryName.toLowerCase());
-  if (idx === -1) {
-    return { success: false, error: 'Category not found' };
-  }
 
-  // Reassign all jobs with this category to Uncategorized
   const allApps = await getAllApplications();
   let reassignedCount = 0;
   for (const app of allApps) {
@@ -225,7 +137,6 @@ export async function deleteCategory(categoryName: string): Promise<{ success: b
     }
   }
 
-  // Also check trashed apps
   const trashedApps = await getTrashedApplications();
   for (const app of trashedApps) {
     if (app.category_name.toLowerCase() === categoryName.toLowerCase()) {
@@ -234,11 +145,14 @@ export async function deleteCategory(categoryName: string): Promise<{ success: b
     }
   }
 
-  // Remove from user categories
-  existing.splice(idx, 1);
-  await setLocalData(USER_CATEGORIES_KEY, existing);
-
-  return { success: true, reassignedCount };
+  try {
+    await apiFetch(`/api/db/categories/${encodeURIComponent(categoryName)}`, {
+      method: 'DELETE',
+    });
+    return { success: true, reassignedCount };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Failed to delete category', reassignedCount };
+  }
 }
 
 export async function getApplicationsByCategory(categoryName: string): Promise<EnrichedApplication[]> {
@@ -397,18 +311,29 @@ async function setLocalData(key: string, value: any): Promise<void> {
   localStorage?.setItem(key, JSON.stringify(value));
 }
 
+async function removeLocalData(key: string): Promise<void> {
+  const storage = getExtensionStorage();
+  if (storage) {
+    return new Promise((resolve) => {
+      storage.remove([key], () => resolve());
+    });
+  }
+  localStorage?.removeItem(key);
+}
+
+async function cleanupOldCategoryKeys(): Promise<void> {
+  await removeLocalData('jf_user_categories');
+  await removeLocalData('jf_categories_migrated');
+  await removeLocalData('jf_app_categories_migrated');
+}
+
 // ---------------------------------------------------------------------------
 // Applications CRUD
 // ---------------------------------------------------------------------------
 
 export async function getAllApplications(): Promise<EnrichedApplication[]> {
-  // Clean up expired trash items (localStorage only; Supabase uses pg_cron)
   await cleanupExpiredTrash();
 
-  // One-time migration: move old prefixed categories (e.g. "1_tech_support") to Uncategorized
-  await migrateApplicationCategoriesIfNeeded();
-
-  // Build user category lookup map
   const userCats = await getUserCategories();
   const catMap = new Map(userCats.map(c => [c.name.toLowerCase(), c]));
 
@@ -519,12 +444,16 @@ export async function saveApplication(
     existingData = (local?.[key] as EnrichedApplication) || null;
   }
 
+  const userCats = userId ? await getUserCategories() : [];
+  const catMap = new Map(userCats.map(c => [c.name.toLowerCase(), c]));
+  const catInfo = catMap.get(String(category).toLowerCase());
+
   const enriched: EnrichedApplication = {
     ...appData,
     category: category,
     category_key: category,
-    category_name: existingData?.category_name || (CATEGORIES as Record<string, { name: string; color: string }>)[category]?.name || String(category),
-    category_color: existingData?.category_color || (CATEGORIES as Record<string, { name: string; color: string }>)[category]?.color || '#888888',
+    category_name: existingData?.category_name || catInfo?.name || String(category),
+    category_color: existingData?.category_color || catInfo?.color || '#888888',
     folder: folderName,
     path: key,
     has_job_description: true,
@@ -626,6 +555,8 @@ export async function getTrashedApplications(): Promise<EnrichedApplication[]> {
     return trashed.sort((a, b) => new Date(b.deleted_at!).getTime() - new Date(a.deleted_at!).getTime());
   }
   try {
+    const userCats = await getUserCategories();
+    const catMap = new Map(userCats.map(c => [c.name.toLowerCase(), c]));
     const rows = await apiFetch('/api/db/applications/trash');
     const apps: EnrichedApplication[] = [];
     for (const row of rows) {
@@ -635,9 +566,9 @@ export async function getTrashedApplications(): Promise<EnrichedApplication[]> {
       app.folder = row.folder;
       app.path = `${row.category}/${row.folder}`;
       app.deleted_at = row.deleted_at;
-      const catInfo = (CATEGORIES as Record<string, { name: string; color: string }>)[app.category_key] || { name: String(app.category_key), color: '#888888' };
-      app.category_name = catInfo.name;
-      app.category_color = catInfo.color;
+      const catInfo = catMap.get(String(app.category_key || '').toLowerCase());
+      app.category_name = catInfo?.name || app.category_key || 'Uncategorized';
+      app.category_color = catInfo?.color || '#888888';
       apps.push(app);
     }
     return apps.sort((a, b) => new Date(b.deleted_at!).getTime() - new Date(a.deleted_at!).getTime());
@@ -884,13 +815,6 @@ export async function getDocumentHTML(category: string, folder: string, docType:
 // ---------------------------------------------------------------------------
 // Utility
 // ---------------------------------------------------------------------------
-
-export function getCategoryFromFolderName(folderName: string): CategoryKey | null {
-  for (const key of Object.keys(CATEGORIES)) {
-    if (folderName.startsWith(key)) return key as CategoryKey;
-  }
-  return null;
-}
 
 export function sanitizeFilename(filename: string): string {
   const basename = filename.replace(/^.*[\\/]/, '').replace(/[^a-zA-Z0-9._-]/g, '_');
