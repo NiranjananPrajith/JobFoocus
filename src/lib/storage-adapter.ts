@@ -769,6 +769,13 @@ export async function getCategoryStats(applications: EnrichedApplication[]): Pro
     for (const app of categoryApps) { byStatus[app.status]++; }
     stats.push({ category: categoryKey, category_key: categoryKey as CategoryKey, category_name: categoryInfo.name, category_color: categoryInfo.color, count: categoryApps.length, by_status: byStatus });
   }
+
+  stats.sort((a, b) => {
+    if (a.category_key === 'Uncategorized') return 1;
+    if (b.category_key === 'Uncategorized') return -1;
+    return 0;
+  });
+
   return stats;
 }
 
