@@ -8,11 +8,10 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // Use service client to bypass RLS (RLS SELECT policy only returns deleted_at IS NULL rows)
   const svc = createServiceClient()
   const { data, error } = await svc
     .from('applications')
-    .select('category, folder, data, deleted_at')
+    .select('category, category_id, folder, data, deleted_at')
     .eq('user_id', user.id)
     .not('deleted_at', 'is', null)
     .order('deleted_at', { ascending: false })
@@ -22,23 +21,21 @@ export async function GET() {
 }
 
 // POST /api/db/applications/trash — move application to trash (soft delete)
-// Uses direct service client to bypass RLS for UPDATE operations
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { category, folder } = await request.json()
-  if (!category || !folder) {
-    return NextResponse.json({ error: 'Missing category or folder' }, { status: 400 })
+  const { categoryId, folder } = await request.json()
+  if (!categoryId || !folder) {
+    return NextResponse.json({ error: 'Missing categoryId or folder' }, { status: 400 })
   }
 
-  // Direct service client bypasses RLS entirely
   const svc = createServiceClient()
   const { error } = await svc
     .from('applications')
     .update({ deleted_at: new Date().toISOString() })
-    .eq('user_id', user.id).eq('category', category).eq('folder', folder).is('deleted_at', null)
+    .eq('user_id', user.id).eq('category_id', categoryId).eq('folder', folder).is('deleted_at', null)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })

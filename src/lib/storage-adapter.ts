@@ -42,6 +42,7 @@ export function isSystemCategory(name: string): boolean {
 // ---------------------------------------------------------------------------
 
 export interface UserCategory {
+  id?: string;
   name: string;
   description?: string;
   color: string;
@@ -50,6 +51,7 @@ export interface UserCategory {
 
 function transformCategoryFromApi(row: any): UserCategory {
   return {
+    id: row.id,
     name: row.name,
     description: row.description ?? undefined,
     color: row.color,
@@ -165,15 +167,17 @@ export async function assignJobToCategory(category: string, folder: string, newC
   const key = `${category}/${folder}`;
 
   const userCats = await getUserCategories();
-  const matchedCat = userCats.find(c => c.name.toLowerCase() === newCategory.toLowerCase());
-  const newCatName = matchedCat ? matchedCat.name : newCategory;
-  const newCatColor = matchedCat ? matchedCat.color : '#888888';
+  const newMatchedCat = userCats.find(c => c.name.toLowerCase() === newCategory.toLowerCase());
+  const newCatName = newMatchedCat ? newMatchedCat.name : newCategory;
+  const newCatId = newMatchedCat?.id ?? '';
+  const newCatColor = newMatchedCat?.color ?? '#888888';
 
   if (!userId) {
     const data = (await getLocalData('applications')) || {};
     const existing = data[key] as EnrichedApplication | undefined;
     if (existing) {
       existing.category_name = newCatName;
+      existing.category_id = newCatId;
       existing.category_color = newCatColor;
       existing.category = newCatName;
       existing.category_key = newCatName;
@@ -184,18 +188,19 @@ export async function assignJobToCategory(category: string, folder: string, newC
   }
 
   try {
-    const row = await apiFetch(`/api/db/applications/${encodeURIComponent(category)}/${encodeURIComponent(folder)}?category=${encodeURIComponent(category)}&folder=${encodeURIComponent(folder)}`);
+    const row = await apiFetch(`/api/db/applications?categoryId=${encodeURIComponent(category)}&folder=${encodeURIComponent(folder)}`);
     if (row && row.data) {
       const updated = {
         ...row.data,
         category_name: newCatName,
+        category_id: newCatId,
         category_color: newCatColor,
         category: newCatName,
         category_key: newCatName,
       };
       await apiFetch('/api/db/applications', {
         method: 'POST',
-        body: JSON.stringify({ category, folder, appData: updated }),
+        body: JSON.stringify({ category: newCatName, categoryId: newCatId, folder, appData: updated }),
       });
     }
   } catch (err) {
@@ -204,6 +209,7 @@ export async function assignJobToCategory(category: string, folder: string, newC
     const existing = data[key] as EnrichedApplication | undefined;
     if (existing) {
       existing.category_name = newCatName;
+      existing.category_id = newCatId;
       existing.category_color = newCatColor;
       existing.category = newCatName;
       existing.category_key = newCatName;
@@ -246,6 +252,7 @@ export interface Application {
 
 export interface EnrichedApplication extends Application {
   category: string;
+  category_id: string;
   category_key: CategoryKey;
   category_name: string;
   category_color: string;
@@ -363,6 +370,7 @@ export async function getAllApplications(): Promise<EnrichedApplication[]> {
     for (const row of rows) {
       const app = row.data as EnrichedApplication;
       app.category = row.category;
+      app.category_id = row.category_id || '';
       app.category_key = row.category as CategoryKey;
       app.folder = row.folder;
       app.path = `${row.category}/${row.folder}`;
@@ -371,13 +379,14 @@ export async function getAllApplications(): Promise<EnrichedApplication[]> {
       if (catInfo) {
         app.category_name = catInfo.name;
         app.category_color = catInfo.color;
+        app.category_id = catInfo.id || app.category_id;
       } else {
         app.category_name = app.category_key || app.category || 'Uncategorized';
         app.category_color = '#888888';
       }
       apps.push(app);
     }
-    apps.sort((a, b) => new Date(b.date_applied).getTime() - new Date(a.date_applied).getTime());
+    apps.sort((a, b) => new Date(b.date_applied).getTime() - new Date(b.date_applied).getTime());
     return apps;
   } catch (err) {
     console.error('[storage-adapter] getAllApplications failed, falling back to localStorage:', err);
@@ -401,25 +410,26 @@ export async function getAllApplications(): Promise<EnrichedApplication[]> {
   }
 }
 
-export async function getApplicationById(category: CategoryKey, folderName: string): Promise<EnrichedApplication | null> {
+export async function getApplicationById(categoryId: string, folderName: string): Promise<EnrichedApplication | null> {
   const userId = await getUserId();
   if (!userId) {
-    const key = `${category}/${folderName}`;
+    const key = `${categoryId}/${folderName}`;
     const data = await getLocalData('applications');
     return data?.[key] || null;
   }
   try {
-    const row = await apiFetch(`/api/db/applications/${encodeURIComponent(category)}/${encodeURIComponent(folderName)}?category=${encodeURIComponent(category)}&folder=${encodeURIComponent(folderName)}`);
+    const row = await apiFetch(`/api/db/applications?categoryId=${encodeURIComponent(categoryId)}&folder=${encodeURIComponent(folderName)}`);
     if (!row) return null;
     const app = row.data as EnrichedApplication;
     app.category = row.category;
+    app.category_id = row.category_id;
     app.category_key = row.category as CategoryKey;
     app.folder = row.folder;
     app.path = `${row.category}/${row.folder}`;
     return app;
   } catch (err) {
     console.error('[storage-adapter] getApplicationById failed, falling back to localStorage:', err);
-    const key = `${category}/${folderName}`;
+    const key = `${categoryId}/${folderName}`;
     const data = await getLocalData('applications');
     return data?.[key] || null;
   }
@@ -447,10 +457,12 @@ export async function saveApplication(
   const userCats = userId ? await getUserCategories() : [];
   const catMap = new Map(userCats.map(c => [c.name.toLowerCase(), c]));
   const catInfo = catMap.get(String(category).toLowerCase());
+  const categoryId = catInfo?.id || existingData?.category_id || '';
 
   const enriched: EnrichedApplication = {
     ...appData,
     category: category,
+    category_id: categoryId,
     category_key: category,
     category_name: existingData?.category_name || catInfo?.name || String(category),
     category_color: existingData?.category_color || catInfo?.color || '#888888',
@@ -473,7 +485,7 @@ export async function saveApplication(
   try {
     await apiFetch('/api/db/applications', {
       method: 'POST',
-      body: JSON.stringify({ category, folder: folderName, appData: enriched }),
+      body: JSON.stringify({ category, categoryId, folder: folderName, appData: enriched }),
     });
   } catch (err) {
     console.error('[storage-adapter] saveApplication failed, falling back to localStorage:', err);
@@ -532,9 +544,13 @@ export async function trashApplication(category: CategoryKey, folderName: string
     return;
   }
   try {
+    const userCats = await getUserCategories();
+    const catMap = new Map(userCats.map(c => [c.name.toLowerCase(), c]));
+    const catInfo = catMap.get(String(category).toLowerCase());
+    const categoryId = catInfo?.id || '';
     await apiFetch(`/api/db/applications/trash`, {
       method: 'POST',
-      body: JSON.stringify({ category, folder: folderName }),
+      body: JSON.stringify({ categoryId, folder: folderName }),
     });
   } catch (err) {
     console.error('[storage-adapter] trashApplication failed, falling back to localStorage:', err);
@@ -562,16 +578,21 @@ export async function getTrashedApplications(): Promise<EnrichedApplication[]> {
     for (const row of rows) {
       const app = row.data as EnrichedApplication;
       app.category = row.category;
+      app.category_id = row.category_id || '';
       app.category_key = row.category as CategoryKey;
       app.folder = row.folder;
       app.path = `${row.category}/${row.folder}`;
       app.deleted_at = row.deleted_at;
-      const catInfo = catMap.get(String(app.category_key || '').toLowerCase());
+      const catKey = (app.category_key || '').toLowerCase();
+      const catInfo = catMap.get(catKey);
       app.category_name = catInfo?.name || app.category_key || 'Uncategorized';
       app.category_color = catInfo?.color || '#888888';
+      if (catInfo) {
+        app.category_id = catInfo.id || app.category_id;
+      }
       apps.push(app);
     }
-    return apps.sort((a, b) => new Date(b.deleted_at!).getTime() - new Date(a.deleted_at!).getTime());
+    return apps.sort((a, b) => new Date(b.deleted_at!).getTime() - new Date(b.deleted_at!).getTime());
   } catch (err) {
     console.error('[storage-adapter] getTrashedApplications failed, falling back to localStorage:', err);
     const data = (await getLocalData('applications')) || {};
@@ -593,9 +614,13 @@ export async function restoreApplication(category: CategoryKey, folderName: stri
     return;
   }
   try {
+    const userCats = await getUserCategories();
+    const catMap = new Map(userCats.map(c => [c.name.toLowerCase(), c]));
+    const catInfo = catMap.get(String(category).toLowerCase());
+    const categoryId = catInfo?.id || '';
     await apiFetch(`/api/db/applications/restore`, {
       method: 'POST',
-      body: JSON.stringify({ category, folder: folderName }),
+      body: JSON.stringify({ categoryId, folder: folderName }),
     });
   } catch (err) {
     console.error('[storage-adapter] restoreApplication failed, falling back to localStorage:', err);
@@ -614,7 +639,6 @@ export async function permanentlyDeleteApplication(category: CategoryKey, folder
     const data = (await getLocalData('applications')) || {};
     delete data[key];
     await setLocalData('applications', data);
-    // Also delete related documents
     const docTypes = ['job_description', 'resume', 'cover_letter'];
     for (const docType of docTypes) {
       const docKey = `doc_${category}/${folderName}/${docType}`;
@@ -626,9 +650,13 @@ export async function permanentlyDeleteApplication(category: CategoryKey, folder
     return;
   }
   try {
+    const userCats = await getUserCategories();
+    const catMap = new Map(userCats.map(c => [c.name.toLowerCase(), c]));
+    const catInfo = catMap.get(String(category).toLowerCase());
+    const categoryId = catInfo?.id || '';
     await apiFetch(`/api/db/applications/permanent`, {
       method: 'DELETE',
-      body: JSON.stringify({ category, folder: folderName }),
+      body: JSON.stringify({ categoryId, folder: folderName }),
     });
   } catch (err) {
     console.error('[storage-adapter] permanentlyDeleteApplication failed, falling back to localStorage:', err);
@@ -791,9 +819,13 @@ export async function saveDocumentHTML(category: string, folder: string, docType
   const userId = await getUserId();
   if (!userId) { await setLocalData(`doc_${category}/${folder}/${docType}`, html); return; }
   try {
+    const userCats = await getUserCategories();
+    const catMap = new Map(userCats.map(c => [c.name.toLowerCase(), c]));
+    const catInfo = catMap.get(String(category).toLowerCase());
+    const categoryId = catInfo?.id || '';
     await apiFetch('/api/db/documents', {
       method: 'POST',
-      body: JSON.stringify({ category, folder, docType, html }),
+      body: JSON.stringify({ category, categoryId, folder, docType, html }),
     });
   } catch (err) {
     console.error('[storage-adapter] saveDocumentHTML failed, falling back to localStorage:', err);
@@ -805,7 +837,11 @@ export async function getDocumentHTML(category: string, folder: string, docType:
   const userId = await getUserId();
   if (!userId) return getLocalData(`doc_${category}/${folder}/${docType}`);
   try {
-    return await apiFetch(`/api/db/documents?category=${encodeURIComponent(category)}&folder=${encodeURIComponent(folder)}&docType=${encodeURIComponent(docType)}`);
+    const userCats = await getUserCategories();
+    const catMap = new Map(userCats.map(c => [c.name.toLowerCase(), c]));
+    const catInfo = catMap.get(String(category).toLowerCase());
+    const categoryId = catInfo?.id || '';
+    return await apiFetch(`/api/db/documents?categoryId=${encodeURIComponent(categoryId)}&folder=${encodeURIComponent(folder)}&docType=${encodeURIComponent(docType)}`);
   } catch (err) {
     console.error('[storage-adapter] getDocumentHTML failed, falling back to localStorage:', err);
     return getLocalData(`doc_${category}/${folder}/${docType}`);

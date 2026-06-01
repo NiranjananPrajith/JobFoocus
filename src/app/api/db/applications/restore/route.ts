@@ -8,16 +8,16 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { category, folder } = await request.json()
-  if (!category || !folder) {
-    return NextResponse.json({ error: 'Missing category or folder' }, { status: 400 })
+  const { categoryId, folder } = await request.json()
+  if (!categoryId || !folder) {
+    return NextResponse.json({ error: 'Missing categoryId or folder' }, { status: 400 })
   }
 
   const svc = createServiceClient()
   const { error } = await svc
     .from('applications')
     .update({ deleted_at: null })
-    .eq('user_id', user.id).eq('category', category).eq('folder', folder).not('deleted_at', 'is', null)
+    .eq('user_id', user.id).eq('category_id', categoryId).eq('folder', folder).not('deleted_at', 'is', null)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ success: true })
