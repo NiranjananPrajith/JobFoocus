@@ -48,6 +48,7 @@ export const MAX_USER_CATEGORIES = 100;
 const CATEGORY_COLORS = ['#4a90e2', '#4caf50', '#f5a623', '#9c27b0', '#00bcd4', '#ff5722', '#607d8b', '#e91e63'];
 const USER_CATEGORIES_KEY = 'jf_user_categories';
 const CATEGORY_MIGRATED_KEY = 'jf_categories_migrated';
+const APP_CATEGORIES_MIGRATED_KEY = 'jf_app_categories_migrated';
 
 export function isSystemCategory(name: string): boolean {
   return SYSTEM_CATEGORIES.includes(name as any);
@@ -78,6 +79,64 @@ export async function migrateCategoriesIfNeeded(): Promise<void> {
     }
   }
   await setLocalData(CATEGORY_MIGRATED_KEY, true);
+}
+
+async function migrateApplicationCategoriesIfNeeded(): Promise<void> {
+  const migrated = await getLocalData(APP_CATEGORIES_MIGRATED_KEY);
+  if (migrated) return;
+
+  const userCats = await getUserCategories();
+  const userCatNames = new Set(userCats.map(c => c.name.toLowerCase()));
+
+  const userId = await getUserId();
+  let apps: EnrichedApplication[] = [];
+
+  if (!userId) {
+    const data = await getLocalData('applications');
+    if (data) {
+      apps = Object.values(data).filter((a: any) => !a.deleted_at) as EnrichedApplication[];
+    }
+  } else {
+    try {
+      const rows = await apiFetch('/api/db/applications');
+      apps = rows.map((row: any) => ({
+        ...row.data as EnrichedApplication,
+        category: row.category,
+        category_key: row.category as CategoryKey,
+        folder: row.folder,
+        path: `${row.category}/${row.folder}`,
+      }));
+    } catch {
+      const data = await getLocalData('applications');
+      if (data) {
+        apps = Object.values(data).filter((a: any) => !a.deleted_at) as EnrichedApplication[];
+      }
+    }
+  }
+
+  let needsMigration = false;
+  for (const app of apps) {
+    const catKey = app.category_key || app.category || '';
+    if (catKey.includes('_') && !userCatNames.has(catKey.toLowerCase()) && catKey !== 'Uncategorized') {
+      needsMigration = true;
+      break;
+    }
+  }
+
+  if (needsMigration) {
+    for (const app of apps) {
+      const catKey = app.category_key || app.category || '';
+      if (catKey.includes('_') && !userCatNames.has(catKey.toLowerCase()) && catKey !== 'Uncategorized') {
+        try {
+          await assignJobToCategory(app.category, app.folder, 'Uncategorized');
+        } catch (e) {
+          console.warn(`[storage-adapter] Failed to migrate app ${app.folder}:`, e);
+        }
+      }
+    }
+  }
+
+  await setLocalData(APP_CATEGORIES_MIGRATED_KEY, true);
 }
 
 export async function getUserCategories(): Promise<UserCategory[]> {
@@ -346,16 +405,29 @@ export async function getAllApplications(): Promise<EnrichedApplication[]> {
   // Clean up expired trash items (localStorage only; Supabase uses pg_cron)
   await cleanupExpiredTrash();
 
+  // One-time migration: move old prefixed categories (e.g. "1_tech_support") to Uncategorized
+  await migrateApplicationCategoriesIfNeeded();
+
+  // Build user category lookup map
+  const userCats = await getUserCategories();
+  const catMap = new Map(userCats.map(c => [c.name.toLowerCase(), c]));
+
   const userId = await getUserId();
   if (!userId) {
     const data = await getLocalData('applications');
     if (!data) return [];
     const apps = Object.values(data) as EnrichedApplication[];
-    // Filter out soft-deleted items
     const active = apps.filter(a => !a.deleted_at);
     for (const app of active) {
-      const catInfo = (CATEGORIES as Record<string, { name: string; color: string }>)[app.category_key];
-      if (catInfo) { app.category_name = catInfo.name; app.category_color = catInfo.color; }
+      const catKey = (app.category_key || app.category || '').toLowerCase();
+      const catInfo = catMap.get(catKey);
+      if (catInfo) {
+        app.category_name = catInfo.name;
+        app.category_color = catInfo.color;
+      } else {
+        app.category_name = app.category_key || app.category || 'Uncategorized';
+        app.category_color = '#888888';
+      }
     }
     active.sort((a, b) => new Date(b.date_applied).getTime() - new Date(a.date_applied).getTime());
     return active;
@@ -369,9 +441,15 @@ export async function getAllApplications(): Promise<EnrichedApplication[]> {
       app.category_key = row.category as CategoryKey;
       app.folder = row.folder;
       app.path = `${row.category}/${row.folder}`;
-      const catInfo = (CATEGORIES as Record<string, { name: string; color: string }>)[app.category_key] || { name: String(app.category_key), color: '#888888' };
-      app.category_name = catInfo.name;
-      app.category_color = catInfo.color;
+      const catKey = (app.category_key || '').toLowerCase();
+      const catInfo = catMap.get(catKey);
+      if (catInfo) {
+        app.category_name = catInfo.name;
+        app.category_color = catInfo.color;
+      } else {
+        app.category_name = app.category_key || app.category || 'Uncategorized';
+        app.category_color = '#888888';
+      }
       apps.push(app);
     }
     apps.sort((a, b) => new Date(b.date_applied).getTime() - new Date(a.date_applied).getTime());
@@ -383,8 +461,15 @@ export async function getAllApplications(): Promise<EnrichedApplication[]> {
     const apps = Object.values(data) as EnrichedApplication[];
     const active = apps.filter(a => !a.deleted_at);
     for (const app of active) {
-      const catInfo = (CATEGORIES as Record<string, { name: string; color: string }>)[app.category_key];
-      if (catInfo) { app.category_name = catInfo.name; app.category_color = catInfo.color; }
+      const catKey = (app.category_key || app.category || '').toLowerCase();
+      const catInfo = catMap.get(catKey);
+      if (catInfo) {
+        app.category_name = catInfo.name;
+        app.category_color = catInfo.color;
+      } else {
+        app.category_name = app.category_key || app.category || 'Uncategorized';
+        app.category_color = '#888888';
+      }
     }
     active.sort((a, b) => new Date(b.date_applied).getTime() - new Date(a.date_applied).getTime());
     return active;
