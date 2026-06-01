@@ -46,7 +46,11 @@ alter table documents drop constraint if exists documents_user_id_category_folde
 -- (category_id is nullable - apps/categories created before this migration
 -- retain category_id = NULL and use the category text column as fallback.
 -- PostgreSQL unique constraints allow multiple NULL values.)
+-- Use drop if exists so this migration is idempotent (safe to re-run)
 -- ============================================================
+alter table applications drop constraint if exists applications_user_id_category_id_folder_key;
+alter table documents drop constraint if exists documents_user_id_category_id_folder_doc_type_key;
+
 alter table applications add constraint applications_user_id_category_id_folder_key
   unique (user_id, category_id, folder);
 
