@@ -28,11 +28,7 @@ async function apiFetch(path: string, options?: RequestInit): Promise<any> {
 // Constants
 // ---------------------------------------------------------------------------
 
-export const CATEGORIES = {
-  '1_tech_support': { name: 'Tech Support', color: '#4a90e2' },
-  '2_general_basic': { name: 'General Basic', color: '#4caf50' },
-  '3_kitchen_cook': { name: 'Kitchen / Cook', color: '#f5a623' },
-} as const;
+export const CATEGORIES = {} as const;
 
 export type CategoryKey = string;
 

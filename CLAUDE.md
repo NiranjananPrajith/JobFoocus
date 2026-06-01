@@ -3,17 +3,18 @@
 ## System Overview
 This project automates the creation, tailoring, and organization of job applications based on a user-provided Master Resume (`base_materials/master_resume.html`), Contact Information (`base_materials/contact_info.html`), and a target Job Description. The generated documents are parsed natively by the Next.js app, served inside a webview dashboard, and compiled to PDF using the browser's native print framework.
 
-## Category Classification & Priorities
-When given a job description, classify it into one of these three targeted folders:
-1. `applications/1_tech_support/` (TOP PRIORITY) - IT helpdesk, desktop support, technical customer service.
-2. `applications/2_general_basic/` (MEDIUM PRIORITY) - Cashier, stock associate, fast food (McDonalds, Tim Hortons, etc.).
-3. `applications/3_kitchen_cook/` (LOW PRIORITY) - Line cook, kitchen helper, food prep.
+## Category System
+Categories are user-defined. When adding a job, users can:
+- Select an existing category from their custom list
+- Create a new category on-the-fly
+
+Default category: `General` (always available)
 
 ## Workflow for New Job Applications
 When the user provides a job description, execute the following steps sequentially:
 
-1. **Classify the Role**: Determine if it belongs to category 1, 2, or 3.
-2. **Create Target Directory**: Create a folder inside the correct category using the format: `YYYY-MM-DD_[Company]_[JobTitle]`.
+1. **Select/Create Category**: User picks from existing categories or creates a new one.
+2. **Create Target Directory**: Create a folder inside the chosen category using the format: `YYYY-MM-DD_[Company]_[JobTitle]`.
 3. **Save Job Description**: Save the raw text provided by the user as `job_description.html` inside that new folder.
 4. **Draft Tailored Resume**: Read `base_materials/master_resume.html` and generate a highly tailored `resume.html` optimized for target keywords matching the structural layout below.
 5. **Draft Cover Letter**: Generate a compelling `cover_letter.html` addressing the hiring manager using the structural template below.
@@ -38,7 +39,6 @@ The tracker dashboard and document webview are served natively via the Next.js d
 
 * **Browser Print Engineering**: All documents must incorporate self-contained CSS styles that natively hook into browser print settings via `@page` structures. Use `-webkit-print-color-adjust: exact;` to ensure structural borders and layout dividers print perfectly.
 * **No Layout Floats or Columns**: Text must flow linearly from top to bottom within simple block wrappers (`<div>`, `<section>`). Do not use flex-direction column-reverse, CSS multi-columns, or complex grid matrix systems that trick or break automated parsing spiders.
-* **Conditional Certifications**: Include the `SafeCheck Advanced Food Safety Certification` ONLY for Category 3 (Kitchen / Cook) and applications containing explicit food-handling duties. Omit it completely from Category 1 (Tech Support) and Category 2 (General Basic) to maintain maximum resume relevance.
 
 ---
 

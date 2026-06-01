@@ -90,47 +90,6 @@ async function minimaxChat(prompt: string, system: string): Promise<string> {
 }
 
 // ---------------------------------------------------------------------------
-// Category Definitions
-// ---------------------------------------------------------------------------
-
-const CATEGORY_DEFS: Record<string, { name: string; color: string; keywords: string[] }> = {
-  '1_tech_support': {
-    name: 'Tech Support',
-    color: '#4a90e2',
-    keywords: ['helpdesk', 'help desk', 'tech support', 'technical support', 'it support', 'desktop support', 'customer service', 'technical', 'software support', 'hardware support', 'tier 1', 'tier 2', 'service desk', 'it helpdesk'],
-  },
-  '2_general_basic': {
-    name: 'General Basic',
-    color: '#4caf50',
-    keywords: ['cashier', 'stock associate', 'retail', 'fast food', 'mcdonalds', 'tim hortons', 'restaurant', 'server', 'host', 'busser', 'warehouse', 'general labour', 'labourer', 'customer service', 'sales associate', 'cash handling'],
-  },
-  '3_kitchen_cook': {
-    name: 'Kitchen / Cook',
-    color: '#f5a623',
-    keywords: ['line cook', 'cook', 'kitchen', 'chef', 'food prep', 'food preparation', 'prep cook', 'busser', 'dishwasher', 'grill', 'fry', 'saute', 'broil', 'kitchen helper', 'sous chef', 'restaurant cook'],
-  },
-};
-
-function classifyCategory(jobDescription: string): CategoryKey {
-  const text = jobDescription.toLowerCase();
-  let bestCategory: CategoryKey = '2_general_basic';
-  let bestScore = 0;
-
-  for (const [key, def] of Object.entries(CATEGORY_DEFS)) {
-    let score = 0;
-    for (const kw of def.keywords) {
-      if (text.includes(kw)) score++;
-    }
-    if (score > bestScore) {
-      bestScore = score;
-      bestCategory = key as CategoryKey;
-    }
-  }
-
-  return bestCategory;
-}
-
-// ---------------------------------------------------------------------------
 // AI Step 1: Format raw job description
 // ---------------------------------------------------------------------------
 
@@ -594,6 +553,7 @@ export async function editDocumentHTML(
 
 export async function generateMaskedJobEntryAndDocuments(
   jobDescription: string,
+  category: string,
   onStep?: ProgressCallback
 ): Promise<GeneratedJob> {
   console.log('[AI] generateMaskedJobEntryAndDocuments called');
@@ -604,8 +564,6 @@ export async function generateMaskedJobEntryAndDocuments(
   const formattedJD = await formatJobDescription(jobDescription);
   console.log('[AI] JD formatted:', formattedJD.company, formattedJD.job_title);
 
-  const category = classifyCategory(jobDescription);
-  const def = CATEGORY_DEFS[category];
   const folder = 'job-' + Date.now();
 
   await saveApplication(category, folder, {
@@ -661,8 +619,8 @@ export async function generateMaskedJobEntryAndDocuments(
     company: formattedJD.company,
     job_title: formattedJD.job_title,
     category,
-    category_name: def.name,
-    category_color: def.color,
+    category_name: category,
+    category_color: '#888888',
     folder,
   };
 }
@@ -674,6 +632,7 @@ export async function generateMaskedJobEntryAndDocuments(
 
 export async function generateJobEntryAndDocuments(
   jobDescription: string,
+  category: string,
   onStep?: ProgressCallback
 ): Promise<GeneratedJob> {
   console.log('[AI] generateJobEntryAndDocuments called');
@@ -682,8 +641,6 @@ export async function generateJobEntryAndDocuments(
   const formattedJD = await formatJobDescription(jobDescription);
   console.log('[AI] JD formatted, company:', formattedJD.company, 'title:', formattedJD.job_title);
 
-  const category = classifyCategory(jobDescription);
-  const def = CATEGORY_DEFS[category];
   const folder = 'job-' + Date.now();
 
   await saveApplication(category, folder, {
@@ -719,8 +676,8 @@ export async function generateJobEntryAndDocuments(
       company: formattedJD.company,
       job_title: formattedJD.job_title,
       category,
-      category_name: def.name,
-      category_color: def.color,
+      category_name: category,
+      category_color: '#888888',
       folder,
     };
   } catch (err) {

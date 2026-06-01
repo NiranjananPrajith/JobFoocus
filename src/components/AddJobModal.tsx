@@ -53,10 +53,18 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
   const [state, setState] = useState<ModalState>('two_column');
   const [jdText, setJdText] = useState('');
   const [processingStep, setProcessingStep] = useState<ProcessingStep>('analyzing');
+  const [selectedCategory, setSelectedCategory] = useState('General');
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+  const [existingCategories, setExistingCategories] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    const stored = localStorage.getItem('jf_user_categories');
+    if (stored) {
+      try { setExistingCategories(JSON.parse(stored)); } catch { /* ignore */ }
+    }
   }, []);
 
   useEffect(() => {
@@ -103,8 +111,14 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
     if (!jdText.trim()) return;
     setState('processing');
     setProcessingStep('analyzing');
+    const categoryToUse = showNewCategoryInput && newCategoryName.trim() ? newCategoryName.trim() : selectedCategory;
+    if (showNewCategoryInput && newCategoryName.trim() && !existingCategories.includes(newCategoryName.trim())) {
+      const updated = [...existingCategories, newCategoryName.trim()];
+      setExistingCategories(updated);
+      localStorage.setItem('jf_user_categories', JSON.stringify(updated));
+    }
     try {
-      await generateMaskedJobEntryAndDocuments(jdText, (step) => {
+      await generateMaskedJobEntryAndDocuments(jdText, categoryToUse, (step) => {
         setProcessingStep(step);
       });
       setProcessingStep('saving');
@@ -231,8 +245,43 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
           <div className="p-8">
             <h2 className="text-[22px] font-semibold text-ink mb-1">Paste Job Description</h2>
             <p className="text-[14px] text-steel mb-6">
-              Paste the full job posting text. Our AI will classify the role and generate your tailored resume and cover letter.
+              Paste the full job posting text. Our AI will generate your tailored resume and cover letter.
             </p>
+
+            <div className="mb-4">
+              <label className="block text-[11px] uppercase tracking-wide text-steel mb-2">
+                Category
+              </label>
+              <div className="flex gap-2">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => { setSelectedCategory(e.target.value); setShowNewCategoryInput(false); }}
+                  className="flex-1 px-4 py-3 rounded-md border border-hairline-strong bg-canvas text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                >
+                  <option value="General">General</option>
+                  {existingCategories.filter(c => c !== 'General').map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowNewCategoryInput(!showNewCategoryInput)}
+                  className="shrink-0"
+                >
+                  {showNewCategoryInput ? 'Cancel' : 'New'}
+                </Button>
+              </div>
+              {showNewCategoryInput && (
+                <input
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="Enter new category name..."
+                  className="mt-2 w-full px-4 py-3 rounded-md border border-hairline-strong bg-canvas text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-stone-400"
+                  autoFocus
+                />
+              )}
+            </div>
 
             <div className="mb-2">
               <label className="block text-[11px] uppercase tracking-wide text-steel mb-2">
