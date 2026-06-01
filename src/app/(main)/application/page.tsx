@@ -65,6 +65,7 @@ function ApplicationContent() {
   const [jobDescExpanded, setJobDescExpanded] = useState(true);
   const [isGeneratingResume, setIsGeneratingResume] = useState(false);
   const [isGeneratingCoverLetter, setIsGeneratingCoverLetter] = useState(false);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Effect 1: Handle Job Description loading
   useEffect(() => {
@@ -168,6 +169,14 @@ function ApplicationContent() {
     fetchData();
   }, [appId, extTitle, extCompany, extJd]);
 
+  // Auto-dismiss notification after 3 seconds
+  useEffect(() => {
+    if (notification) {
+      const t = setTimeout(() => setNotification(null), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [notification]);
+
   const handleSave = async () => {
     if (!application) return;
 
@@ -206,7 +215,7 @@ function ApplicationContent() {
         setIsNewFromExtension(false); // Transition out of extension layout initialization state
       }
 
-      alert('Application saved successfully!');
+      setNotification({ message: 'Application saved successfully!', type: 'success' });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save');
     }
@@ -235,7 +244,7 @@ function ApplicationContent() {
         job_url: null,
       });
 
-      alert('Marked as applied!');
+      setNotification({ message: 'Marked as applied!', type: 'success' });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update');
     }
@@ -669,10 +678,100 @@ function ApplicationContent() {
         </div>
       </div>
 
+      {notification && (
+        <div
+          className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] animate-in fade-in slide-in-from-top-2 duration-300"
+        >
+          <div
+            className={`flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-lg ${
+              notification.type === 'success'
+                ? 'bg-green-50 border border-green-200'
+                : 'bg-red-50 border border-red-200'
+            }`}
+          >
+            {notification.type === 'success' ? (
+              <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+            ) : (
+              <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center shrink-0">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </div>
+            )}
+            <p className={`text-[14px] font-medium ${
+              notification.type === 'success' ? 'text-green-800' : 'text-red-800'
+            }`}>
+              {notification.message}
+            </p>
+            <button
+              onClick={() => setNotification(null)}
+              className={`ml-2 p-1 rounded hover:bg-black/5 ${
+                notification.type === 'success' ? 'text-green-600' : 'text-red-600'
+              }`}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
       <ManageCategoriesModal
         isOpen={showManageCategories}
         onClose={() => setShowManageCategories(false)}
       />
+
+      {notification && (
+        <div
+          className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] animate-in fade-in slide-in-from-top-2 duration-300"
+        >
+          <div
+            className={`flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-lg ${
+              notification.type === 'success'
+                ? 'bg-green-50 border border-green-200'
+                : 'bg-red-50 border border-red-200'
+            }`}
+          >
+            {notification.type === 'success' ? (
+              <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+            ) : (
+              <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center shrink-0">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </div>
+            )}
+            <p className={`text-[14px] font-medium ${
+              notification.type === 'success' ? 'text-green-800' : 'text-red-800'
+            }`}>
+              {notification.message}
+            </p>
+            <button
+              onClick={() => setNotification(null)}
+              className={`ml-2 p-1 rounded hover:bg-black/5 ${
+                notification.type === 'success' ? 'text-green-600' : 'text-red-600'
+              }`}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
