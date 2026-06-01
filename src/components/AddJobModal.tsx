@@ -4,9 +4,12 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Card from '@/components/design/Card';
 import Button from '@/components/design/Button';
+import CategorySelector from '@/components/CategorySelector';
+import ManageCategoriesModal from '@/components/ManageCategoriesModal';
 import { isMasterResumeBlank, generateMaskedJobEntryAndDocuments } from '@/lib/ai-generation';
+import { migrateCategoriesIfNeeded, getUserCategories, saveCategory, type UserCategory } from '@/lib/storage-adapter';
 
-type ModalState = 'two_column' | 'paste_jd' | 'blank_resume' | 'processing' | 'done';
+type ModalState = 'two_column' | 'paste_jd' | 'blank_resume' | 'processing' | 'category_prompt' | 'done';
 type ProcessingStep = 'analyzing' | 'resume' | 'cover_letter' | 'saving' | 'done';
 
 const CHROME_STORE_URL = 'https://chrome.google.com/webstore';
@@ -53,36 +56,45 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
   const [state, setState] = useState<ModalState>('two_column');
   const [jdText, setJdText] = useState('');
   const [processingStep, setProcessingStep] = useState<ProcessingStep>('analyzing');
-  const [selectedCategory, setSelectedCategory] = useState('General');
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
-  const [existingCategories, setExistingCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('Uncategorized');
+  const [userCategories, setUserCategories] = useState<UserCategory[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [showManageCategories, setShowManageCategories] = useState(false);
+  const [showNewCatPopup, setShowNewCatPopup] = useState(false);
+
+  // For tracking AI-assigned category after processing
+  const [assignedCategory, setAssignedCategory] = useState('Uncategorized');
+  const [pendingCategory, setPendingCategory] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
-    const stored = localStorage.getItem('jf_user_categories');
-    if (stored) {
-      try { setExistingCategories(JSON.parse(stored)); } catch { /* ignore */ }
-    }
   }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      migrateCategoriesIfNeeded().then(() => {
+        getUserCategories().then(setUserCategories);
+      });
+    }
+  }, [mounted]);
 
   useEffect(() => {
     if (isOpen) {
       setState('two_column');
       setJdText('');
+      setSelectedCategory('Uncategorized');
     }
   }, [isOpen]);
 
-  // Auto-close after done
+  // Auto-close after done (only if skipping category prompt)
   useEffect(() => {
-    if (state === 'done') {
+    if (state === 'done' && !pendingCategory) {
       const t = setTimeout(() => {
         onClose();
       }, 2500);
       return () => clearTimeout(t);
     }
-  }, [state, onClose]);
+  }, [state, onClose, pendingCategory]);
 
   // Prevent scroll when modal open
   useEffect(() => {
@@ -111,23 +123,60 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
     if (!jdText.trim()) return;
     setState('processing');
     setProcessingStep('analyzing');
-    const categoryToUse = showNewCategoryInput && newCategoryName.trim() ? newCategoryName.trim() : selectedCategory;
-    if (showNewCategoryInput && newCategoryName.trim() && !existingCategories.includes(newCategoryName.trim())) {
-      const updated = [...existingCategories, newCategoryName.trim()];
-      setExistingCategories(updated);
-      localStorage.setItem('jf_user_categories', JSON.stringify(updated));
-    }
+    setPendingCategory(null);
+
     try {
-      await generateMaskedJobEntryAndDocuments(jdText, categoryToUse, (step) => {
+      const result = await generateMaskedJobEntryAndDocuments(jdText, selectedCategory, (step) => {
         setProcessingStep(step);
       });
-      setProcessingStep('saving');
-      console.log('[AddJobModal] Job created successfully');
-      onJobAdded?.();
+
+      // AI has auto-assigned a category - this comes back in result.category_name
+      const aiAssigned = result.category_name || 'Uncategorized';
+      setAssignedCategory(aiAssigned);
+
+      // If AI assigned "Uncategorized", prompt user to set/confirm category
+      // Otherwise, just go to done
+      if (aiAssigned === 'Uncategorized') {
+        setState('category_prompt');
+      } else {
+        // Auto-accepted the AI assignment, go to done
+        setState('done');
+        console.log('[AddJobModal] Job created successfully, AI assigned:', aiAssigned);
+        onJobAdded?.();
+      }
     } catch (err) {
       console.error('[AddJobModal] Failed to process job:', err);
+      setState('done'); // Still go to done to let user retry
     }
+  };
+
+  const handleCategoryPromptSkip = () => {
+    setPendingCategory(null);
     setState('done');
+    console.log('[AddJobModal] Job created with Uncategorized');
+    onJobAdded?.();
+  };
+
+  const handleCategoryPromptSave = async (category: string) => {
+    setPendingCategory(category);
+    setState('done');
+    console.log('[AddJobModal] Job created with user category:', category);
+    onJobAdded?.();
+  };
+
+  const handleCreateNewCategory = async (newCat: UserCategory) => {
+    const result = await saveCategory(newCat);
+    if (result.success) {
+      const cats = await getUserCategories();
+      setUserCategories(cats);
+      setSelectedCategory(newCat.name);
+    }
+    setShowNewCatPopup(false);
+  };
+
+  const handleCategoriesChanged = async () => {
+    const cats = await getUserCategories();
+    setUserCategories(cats);
   };
 
   const extensionUrl = browser === 'firefox' ? FIREFOX_ADDONS_URL : CHROME_STORE_URL;
@@ -136,14 +185,14 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
     <div
       className="fixed inset-0 z-[9999] flex items-start justify-center pt-16 px-4"
       style={{ backgroundColor: 'rgba(30, 25, 20, 0.55)', backdropFilter: 'blur(2px)' }}
-      onClick={(e) => { if (e.target === e.currentTarget && state !== 'processing' && state !== 'done') onClose(); }}
+      onClick={(e) => { if (e.target === e.currentTarget && state !== 'processing' && state !== 'done' && state !== 'category_prompt') onClose(); }}
     >
       <div
         className="bg-canvas rounded-2xl shadow-2xl w-full max-w-2xl relative animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
-        {state !== 'processing' && state !== 'done' && (
+        {state !== 'processing' && state !== 'done' && state !== 'category_prompt' && (
           <button
             onClick={onClose}
             className="absolute top-4 right-4 w-9 h-9 rounded-lg flex items-center justify-center text-steel hover:bg-stone-100 hover:text-ink transition-colors"
@@ -252,35 +301,11 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
               <label className="block text-[11px] uppercase tracking-wide text-steel mb-2">
                 Category
               </label>
-              <div className="flex gap-2">
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => { setSelectedCategory(e.target.value); setShowNewCategoryInput(false); }}
-                  className="flex-1 px-4 py-3 rounded-md border border-hairline-strong bg-canvas text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                >
-                  <option value="General">General</option>
-                  {existingCategories.filter(c => c !== 'General').map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowNewCategoryInput(!showNewCategoryInput)}
-                  className="shrink-0"
-                >
-                  {showNewCategoryInput ? 'Cancel' : 'New'}
-                </Button>
-              </div>
-              {showNewCategoryInput && (
-                <input
-                  type="text"
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  placeholder="Enter new category name..."
-                  className="mt-2 w-full px-4 py-3 rounded-md border border-hairline-strong bg-canvas text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-stone-400"
-                  autoFocus
-                />
-              )}
+              <CategorySelector
+                value={selectedCategory}
+                onChange={setSelectedCategory}
+                onManageClick={() => setShowManageCategories(true)}
+              />
             </div>
 
             <div className="mb-2">
@@ -352,6 +377,45 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
           </div>
         )}
 
+        {/* ─── State: Category Prompt ─── */}
+        {state === 'category_prompt' && (
+          <div className="p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                  <line x1="7" y1="7" x2="7.01" y2="7"/>
+                </svg>
+              </div>
+              <h2 className="text-[20px] font-semibold text-ink">Set a Category for This Job</h2>
+            </div>
+
+            <p className="text-[14px] text-steel mb-6">
+              This job was auto-assigned to &quot;Uncategorized&quot;. Select an existing category or create a new one.
+            </p>
+
+            <div className="mb-6">
+              <CategorySelector
+                value={selectedCategory}
+                onChange={setSelectedCategory}
+                onManageClick={() => setShowManageCategories(true)}
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-3">
+              <Button variant="ghost" onClick={handleCategoryPromptSkip}>
+                Skip for Now
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => handleCategoryPromptSave(selectedCategory)}
+              >
+                Save & Finish
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* ─── State: Done ─── */}
         {state === 'done' && (
           <div className="p-12 text-center">
@@ -369,9 +433,16 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
   );
 
   const modalRoot = typeof document !== 'undefined' ? document.getElementById('modal-root') : null;
-  if (modalRoot) {
-    return createPortal(content, modalRoot);
-  }
-  // Fallback: render inline
-  return content;
+
+  return (
+    <>
+      {modalRoot && createPortal(content, modalRoot)}
+      {!modalRoot && content}
+      <ManageCategoriesModal
+        isOpen={showManageCategories}
+        onClose={() => setShowManageCategories(false)}
+        onCategoriesChanged={handleCategoriesChanged}
+      />
+    </>
+  );
 }

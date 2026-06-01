@@ -1,4 +1,4 @@
-import { saveApplication, saveDocumentHTML, getMasterResume, updateApplicationDocFlags } from '@/lib/storage-adapter';
+import { saveApplication, saveDocumentHTML, getMasterResume, updateApplicationDocFlags, getUserCategories, assignJobToCategory, type UserCategory } from '@/lib/storage-adapter';
 import { maskPII, demaskPII, type PIIProfile } from '@/lib/pii-utils';
 import type { CategoryKey, StatusKey } from '@/lib/storage-adapter';
 import formattingGuides from './formatting-guides.json';
@@ -136,6 +136,55 @@ async function formatJobDescription(rawJD: string): Promise<FormattedJD> {
   } catch {
     console.error('[AI] Step 1: JSON parse failed. Response was:', result.substring(0, 300));
     throw new Error('Failed to parse job description: JSON was malformed');
+  }
+}
+
+// ---------------------------------------------------------------------------
+// AI Classification: Assign job to category
+// ---------------------------------------------------------------------------
+
+async function classifyJobToCategory(
+  jd: FormattedJD,
+  categories: UserCategory[]
+): Promise<string> {
+  if (categories.length === 0) return 'Uncategorized';
+
+  const categoryList = categories
+    .map(c => `- ${c.name}: ${c.description || 'No description'}`)
+    .join('\n');
+
+  const system = 'You are an expert job classification assistant. Given a job posting and a list of categories, determine which single category best fits the job. Be permissive - return the best match even if the fit is partial. If no category clearly fits, respond with "Uncategorized".';
+
+  const prompt = `Job Title: ${jd.job_title}
+Company: ${jd.company}
+Role Summary: ${jd.summary}
+Key Requirements: ${(jd.requirements || []).slice(0, 5).join(', ')}
+
+Available Categories:
+${categoryList}
+
+Based on the job title, company, and description, which single category best fits this job?
+Respond with ONLY the category name, or "Uncategorized" if none clearly fit.`;
+
+  try {
+    const result = await minimaxChat(prompt, system);
+    const trimmed = result.trim();
+
+    // Check if the result matches one of our category names
+    const matched = categories.find(
+      c => c.name.toLowerCase() === trimmed.toLowerCase()
+    );
+
+    if (matched) {
+      console.log('[AI] classifyJobToCategory: matched to:', matched.name);
+      return matched.name;
+    }
+
+    console.log('[AI] classifyJobToCategory: no match, defaulting to Uncategorized. Response was:', trimmed);
+    return 'Uncategorized';
+  } catch (err) {
+    console.error('[AI] classifyJobToCategory error:', err);
+    return 'Uncategorized';
   }
 }
 
@@ -583,6 +632,15 @@ export async function generateMaskedJobEntryAndDocuments(
   const jdHTML = buildJobDescriptionHTML(formattedJD, jobDescription);
   await saveDocumentHTML(category, folder, 'job_description', jdHTML);
 
+  // Auto-classify the job to a category using AI
+  const userCategories = await getUserCategories();
+  let assignedCategory = 'Uncategorized';
+  if (userCategories.length > 0) {
+    assignedCategory = await classifyJobToCategory(formattedJD, userCategories);
+  }
+  // Update the application with the AI-assigned category
+  await assignJobToCategory(category, folder, assignedCategory);
+
   // Mask resume before sending to LLM
   const resumeJson = JSON.stringify(masterResume);
   const maskedResume = maskPII(resumeJson, masterResume);
@@ -618,9 +676,9 @@ export async function generateMaskedJobEntryAndDocuments(
   return {
     company: formattedJD.company,
     job_title: formattedJD.job_title,
-    category,
-    category_name: category,
-    category_color: '#888888',
+    category: assignedCategory,
+    category_name: assignedCategory,
+    category_color: userCategories.find(c => c.name === assignedCategory)?.color || '#888888',
     folder,
   };
 }
@@ -660,6 +718,15 @@ export async function generateJobEntryAndDocuments(
   const jdHTML = buildJobDescriptionHTML(formattedJD, jobDescription);
   await saveDocumentHTML(category, folder, 'job_description', jdHTML);
 
+  // Auto-classify the job to a category using AI
+  const userCategories = await getUserCategories();
+  let assignedCategory = 'Uncategorized';
+  if (userCategories.length > 0) {
+    assignedCategory = await classifyJobToCategory(formattedJD, userCategories);
+  }
+  // Update the application with the AI-assigned category
+  await assignJobToCategory(category, folder, assignedCategory);
+
   try {
     console.log('[AI] Running document generation...');
     const { resumeFullHTML, coverLetterFullHTML } = await processJobDescription(formattedJD, jobDescription, onStep);
@@ -675,9 +742,9 @@ export async function generateJobEntryAndDocuments(
     return {
       company: formattedJD.company,
       job_title: formattedJD.job_title,
-      category,
-      category_name: category,
-      category_color: '#888888',
+      category: assignedCategory,
+      category_name: assignedCategory,
+      category_color: userCategories.find(c => c.name === assignedCategory)?.color || '#888888',
       folder,
     };
   } catch (err) {

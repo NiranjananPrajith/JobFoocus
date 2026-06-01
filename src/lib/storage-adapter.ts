@@ -32,6 +32,214 @@ export const CATEGORIES = {} as const;
 
 export type CategoryKey = string;
 
+// ---------------------------------------------------------------------------
+// User Categories
+// ---------------------------------------------------------------------------
+
+export interface UserCategory {
+  name: string;
+  description?: string;
+  color: string;
+  createdAt: string;
+}
+
+const SYSTEM_CATEGORIES = ['Uncategorized'] as const;
+export const MAX_USER_CATEGORIES = 100;
+const CATEGORY_COLORS = ['#4a90e2', '#4caf50', '#f5a623', '#9c27b0', '#00bcd4', '#ff5722', '#607d8b', '#e91e63'];
+const USER_CATEGORIES_KEY = 'jf_user_categories';
+const CATEGORY_MIGRATED_KEY = 'jf_categories_migrated';
+
+export function isSystemCategory(name: string): boolean {
+  return SYSTEM_CATEGORIES.includes(name as any);
+}
+
+export async function migrateCategoriesIfNeeded(): Promise<void> {
+  const migrated = await getLocalData(CATEGORY_MIGRATED_KEY);
+  if (migrated) return;
+
+  const stored = await getLocalData(USER_CATEGORIES_KEY);
+  if (stored && Array.isArray(stored)) {
+    const hasOldFormat = stored.length > 0 && typeof stored[0] === 'string';
+    if (hasOldFormat) {
+      const migratedCategories: UserCategory[] = [];
+      let colorIndex = 0;
+      for (const name of stored) {
+        if (typeof name === 'string' && name.trim()) {
+          migratedCategories.push({
+            name: name.trim(),
+            description: '',
+            color: CATEGORY_COLORS[colorIndex % CATEGORY_COLORS.length],
+            createdAt: new Date().toISOString(),
+          });
+          colorIndex++;
+        }
+      }
+      await setLocalData(USER_CATEGORIES_KEY, migratedCategories);
+    }
+  }
+  await setLocalData(CATEGORY_MIGRATED_KEY, true);
+}
+
+export async function getUserCategories(): Promise<UserCategory[]> {
+  await migrateCategoriesIfNeeded();
+  const stored = await getLocalData(USER_CATEGORIES_KEY);
+  if (!stored || !Array.isArray(stored)) return [];
+  return stored.filter((c: any) => c && typeof c.name === 'string' && !isSystemCategory(c.name));
+}
+
+export async function saveCategory(cat: UserCategory): Promise<{ success: boolean; error?: string }> {
+  await migrateCategoriesIfNeeded();
+  const existing = await getUserCategories();
+  if (existing.length >= MAX_USER_CATEGORIES) {
+    return { success: false, error: 'Maximum categories reached' };
+  }
+  if (!cat.name || !cat.name.trim()) {
+    return { success: false, error: 'Category name is required' };
+  }
+  const nameTrimmed = cat.name.trim();
+  if (existing.some(c => c.name.toLowerCase() === nameTrimmed.toLowerCase())) {
+    return { success: false, error: 'Category already exists' };
+  }
+  const colorIndex = existing.length % CATEGORY_COLORS.length;
+  const newCat: UserCategory = {
+    name: nameTrimmed,
+    description: cat.description?.trim() || '',
+    color: CATEGORY_COLORS[colorIndex],
+    createdAt: new Date().toISOString(),
+  };
+  existing.push(newCat);
+  await setLocalData(USER_CATEGORIES_KEY, existing);
+  return { success: true };
+}
+
+export async function updateCategory(oldName: string, updatedCat: Partial<UserCategory>): Promise<{ success: boolean; error?: string }> {
+  if (isSystemCategory(oldName)) {
+    return { success: false, error: 'Cannot modify system category' };
+  }
+  await migrateCategoriesIfNeeded();
+  const existing = await getUserCategories();
+  const idx = existing.findIndex(c => c.name.toLowerCase() === oldName.toLowerCase());
+  if (idx === -1) {
+    return { success: false, error: 'Category not found' };
+  }
+  if (updatedCat.name !== undefined && updatedCat.name.trim()) {
+    const nameTrimmed = updatedCat.name.trim();
+    if (existing.some(c => c.name.toLowerCase() === nameTrimmed.toLowerCase() && c.name.toLowerCase() !== oldName.toLowerCase())) {
+      return { success: false, error: 'Category name already exists' };
+    }
+    existing[idx].name = nameTrimmed;
+  }
+  if (updatedCat.description !== undefined) {
+    existing[idx].description = updatedCat.description.trim();
+  }
+  await setLocalData(USER_CATEGORIES_KEY, existing);
+
+  // Update all applications with this category name
+  const allApps = await getAllApplications();
+  for (const app of allApps) {
+    if (app.category_name.toLowerCase() === oldName.toLowerCase()) {
+      await assignJobToCategory(app.category, app.folder, existing[idx].name);
+    }
+  }
+
+  return { success: true };
+}
+
+export async function deleteCategory(categoryName: string): Promise<{ success: boolean; error?: string; reassignedCount?: number }> {
+  if (isSystemCategory(categoryName)) {
+    return { success: false, error: 'Cannot delete system category' };
+  }
+  await migrateCategoriesIfNeeded();
+  const existing = await getUserCategories();
+  const idx = existing.findIndex(c => c.name.toLowerCase() === categoryName.toLowerCase());
+  if (idx === -1) {
+    return { success: false, error: 'Category not found' };
+  }
+
+  // Reassign all jobs with this category to Uncategorized
+  const allApps = await getAllApplications();
+  let reassignedCount = 0;
+  for (const app of allApps) {
+    if (app.category_name.toLowerCase() === categoryName.toLowerCase()) {
+      await assignJobToCategory(app.category, app.folder, 'Uncategorized');
+      reassignedCount++;
+    }
+  }
+
+  // Also check trashed apps
+  const trashedApps = await getTrashedApplications();
+  for (const app of trashedApps) {
+    if (app.category_name.toLowerCase() === categoryName.toLowerCase()) {
+      await assignJobToCategory(app.category, app.folder, 'Uncategorized');
+      reassignedCount++;
+    }
+  }
+
+  // Remove from user categories
+  existing.splice(idx, 1);
+  await setLocalData(USER_CATEGORIES_KEY, existing);
+
+  return { success: true, reassignedCount };
+}
+
+export async function getApplicationsByCategory(categoryName: string): Promise<EnrichedApplication[]> {
+  const allApps = await getAllApplications();
+  return allApps.filter(app => app.category_name.toLowerCase() === categoryName.toLowerCase());
+}
+
+export async function assignJobToCategory(category: string, folder: string, newCategory: string): Promise<void> {
+  const userId = await getUserId();
+  const key = `${category}/${folder}`;
+
+  const userCats = await getUserCategories();
+  const matchedCat = userCats.find(c => c.name.toLowerCase() === newCategory.toLowerCase());
+  const newCatName = matchedCat ? matchedCat.name : newCategory;
+  const newCatColor = matchedCat ? matchedCat.color : '#888888';
+
+  if (!userId) {
+    const data = (await getLocalData('applications')) || {};
+    const existing = data[key] as EnrichedApplication | undefined;
+    if (existing) {
+      existing.category_name = newCatName;
+      existing.category_color = newCatColor;
+      existing.category = newCatName;
+      existing.category_key = newCatName;
+      data[key] = existing;
+      await setLocalData('applications', data);
+    }
+    return;
+  }
+
+  try {
+    const row = await apiFetch(`/api/db/applications/${encodeURIComponent(category)}/${encodeURIComponent(folder)}?category=${encodeURIComponent(category)}&folder=${encodeURIComponent(folder)}`);
+    if (row && row.data) {
+      const updated = {
+        ...row.data,
+        category_name: newCatName,
+        category_color: newCatColor,
+        category: newCatName,
+        category_key: newCatName,
+      };
+      await apiFetch('/api/db/applications', {
+        method: 'POST',
+        body: JSON.stringify({ category, folder, appData: updated }),
+      });
+    }
+  } catch (err) {
+    console.error('[storage-adapter] assignJobToCategory failed, falling back to localStorage:', err);
+    const data = (await getLocalData('applications')) || {};
+    const existing = data[key] as EnrichedApplication | undefined;
+    if (existing) {
+      existing.category_name = newCatName;
+      existing.category_color = newCatColor;
+      existing.category = newCatName;
+      existing.category_key = newCatName;
+      data[key] = existing;
+      await setLocalData('applications', data);
+    }
+  }
+}
+
 export const STATUS_CONFIG = {
   prospect: { label: 'Prospect', color: '#888888' },
   applied: { label: 'Applied', color: '#4a90e2' },
@@ -467,15 +675,37 @@ export async function getApplicationsByStatus(applications: EnrichedApplication[
 export async function getCategoryStats(applications: EnrichedApplication[]): Promise<CategoryStats[]> {
   const stats: CategoryStats[] = [];
   const categoryMap = new Map<string, { name: string; color: string }>();
+
+  // Build a map of user categories for quick lookup
+  const userCats = await getUserCategories();
+  const userCatMap = new Map(userCats.map(c => [c.name.toLowerCase(), c]));
+
+  // Always add Uncategorized as a system category
+  categoryMap.set('Uncategorized', { name: 'Uncategorized', color: '#888888' });
+
   for (const app of applications) {
     const key = app.category_key as CategoryKey;
-    categoryMap.set(key, {
-      name: (CATEGORIES as Record<string, { name: string; color: string }>)[key]?.name || app.category_name || key,
-      color: (CATEGORIES as Record<string, { name: string; color: string }>)[key]?.color || app.category_color || '#888888',
-    });
+    const appCatName = app.category_name || key;
+
+    if (appCatName.toLowerCase() === 'uncategorized') {
+      categoryMap.set('Uncategorized', { name: 'Uncategorized', color: '#888888' });
+    } else if (!categoryMap.has(appCatName)) {
+      // Check if it's a user category
+      const userCat = userCatMap.get(appCatName.toLowerCase());
+      if (userCat) {
+        categoryMap.set(appCatName, { name: userCat.name, color: userCat.color });
+      } else {
+        // Fallback for any category not in user list
+        categoryMap.set(appCatName, {
+          name: app.category_name || key,
+          color: app.category_color || '#888888',
+        });
+      }
+    }
   }
+
   for (const [categoryKey, categoryInfo] of Array.from(categoryMap.entries())) {
-    const categoryApps = applications.filter(a => a.category_key === categoryKey);
+    const categoryApps = applications.filter(a => a.category_key === categoryKey || a.category_name === categoryKey || a.category_name?.toLowerCase() === categoryKey.toLowerCase());
     const byStatus: Record<StatusKey, number> = { prospect: 0, applied: 0, phone_screen: 0, interview: 0, offer: 0, rejected: 0 };
     for (const app of categoryApps) { byStatus[app.status]++; }
     stats.push({ category: categoryKey, category_key: categoryKey as CategoryKey, category_name: categoryInfo.name, category_color: categoryInfo.color, count: categoryApps.length, by_status: byStatus });

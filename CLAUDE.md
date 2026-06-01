@@ -7,8 +7,37 @@ This project automates the creation, tailoring, and organization of job applicat
 Categories are user-defined. When adding a job, users can:
 - Select an existing category from their custom list
 - Create a new category on-the-fly
+- AI automatically assigns jobs to the best-matching user category
 
-Default category: `General` (always available)
+**System Categories:**
+- `Uncategorized` is a reserved system category that cannot be deleted
+- It serves as the fallback when AI cannot determine a category match
+- When a user deletes a category, all jobs in that category move to `Uncategorized`
+
+**Category Limits:**
+- Maximum 100 user-defined categories (silently enforced as anti-exploitation guardrail)
+
+**Category Data Model:**
+```typescript
+interface UserCategory {
+  name: string;           // Category display name
+  description?: string;    // Optional description for AI context
+  color: string;          // Auto-assigned from 8-color palette
+  createdAt: string;      // ISO timestamp
+}
+```
+
+**AI Auto-Classification:**
+- When jobs are created via AI, the system analyzes job title, company, and description
+- Compares against user's category names and descriptions
+- Assigns the best-matching category (permissive - always picks best match even if weak)
+- If no category clearly fits, assigns `Uncategorized`
+
+**Category Management:**
+- Dedicated page at `/categories` for viewing, creating, editing, and deleting categories
+- Accessible via "Manage Categories" link in the profile dropdown menu (above Trash)
+- Deleting a category reassigns all its jobs to `Uncategorized`
+- Editing a category name automatically updates all jobs with that category
 
 ## Workflow for New Job Applications
 When the user provides a job description, execute the following steps sequentially:

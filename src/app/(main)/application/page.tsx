@@ -5,7 +5,9 @@ import { useSearchParams } from 'next/navigation';
 import Card from '@/components/design/Card';
 import Button from '@/components/design/Button';
 import Badge from '@/components/design/Badge';
-import { getDocumentHTML, getAllApplications, getMasterResume } from '@/lib/storage-adapter';
+import CategorySelector from '@/components/CategorySelector';
+import ManageCategoriesModal from '@/components/ManageCategoriesModal';
+import { getDocumentHTML, getAllApplications, getMasterResume, assignJobToCategory } from '@/lib/storage-adapter';
 import { StatusType } from '@/lib/design-system';
 import { generateMaskedDocumentsForExistingJob } from '@/lib/ai-generation';
 import { maskPII, demaskPII, extractPIIProfile } from '@/lib/pii-utils';
@@ -57,6 +59,8 @@ function ApplicationContent() {
   const [contactName, setContactName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [source, setSource] = useState('');
+  const [category, setCategory] = useState('Uncategorized');
+  const [showManageCategories, setShowManageCategories] = useState(false);
   const [jobDescContent, setJobDescContent] = useState('');
   const [jobDescExpanded, setJobDescExpanded] = useState(true);
   const [isGeneratingResume, setIsGeneratingResume] = useState(false);
@@ -95,6 +99,7 @@ function ApplicationContent() {
         setJobDescContent(extJd || '');
         setStatus('prospect');
         setSource('Extension Scraper');
+        setCategory('Uncategorized');
 
         // Generate a provisional storage path context for the browser cache storage adapter
         const generatedFolder = `job-${Date.now()}`;
@@ -109,9 +114,9 @@ function ApplicationContent() {
           notes: '',
           response_date: '',
           needs_followup: false,
-          category: 'prospect',
-          category_name: 'Prospect',
-          category_color: '#3B82F6',
+          category: 'Uncategorized',
+          category_name: 'Uncategorized',
+          category_color: '#888888',
           folder: generatedFolder,
           has_resume: false,
           has_cover_letter: false,
@@ -151,6 +156,7 @@ function ApplicationContent() {
         setContactName(found.contact_name || '');
         setContactEmail(found.contact_email || '');
         setSource(found.source || '');
+        setCategory(found.category_name || found.category || 'Uncategorized');
         setIsNewFromExtension(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load');
@@ -182,6 +188,9 @@ function ApplicationContent() {
         documents: [],
         job_url: null,
       });
+
+      // Update the category if changed
+      await assignJobToCategory(application.category, application.folder, category);
 
       // If it is a new application from the extension, save the text as the job description asset
       if (isNewFromExtension && jobDescContent) {
@@ -464,6 +473,15 @@ function ApplicationContent() {
                   />
                 </div>
                 <div>
+                  <label className="block text-[11px] uppercase tracking-wide text-steel mb-2">Category</label>
+                  <CategorySelector
+                    value={category}
+                    onChange={setCategory}
+                    includeUncategorized={true}
+                    onManageClick={() => setShowManageCategories(true)}
+                  />
+                </div>
+                <div>
                   <label className="block text-[11px] uppercase tracking-wide text-steel mb-2">Contact Name</label>
                   <input
                     type="text"
@@ -650,6 +668,11 @@ function ApplicationContent() {
           )}
         </div>
       </div>
+
+      <ManageCategoriesModal
+        isOpen={showManageCategories}
+        onClose={() => setShowManageCategories(false)}
+      />
     </div>
   );
 }
