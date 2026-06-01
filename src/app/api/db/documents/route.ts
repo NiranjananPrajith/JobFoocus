@@ -32,8 +32,16 @@ export async function POST(request: Request) {
   const body = await request.json()
   const { category, categoryId, folder, docType, html } = body
 
-  if (!categoryId || !folder || !docType) {
+  if (!folder || !docType) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+  }
+
+  if (!categoryId) {
+    const { error } = await supabase
+      .from('documents')
+      .upsert({ user_id: user.id, category: category || 'Uncategorized', folder, doc_type: docType, html: html ?? '' }, { onConflict: 'user_id,category,folder,doc_type' })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ success: true })
   }
 
   const { error } = await supabase

@@ -188,7 +188,13 @@ export async function assignJobToCategory(category: string, folder: string, newC
   }
 
   try {
-    const row = await apiFetch(`/api/db/applications?categoryId=${encodeURIComponent(category)}&folder=${encodeURIComponent(folder)}`);
+    const catMap = new Map(userCats.map(c => [c.name.toLowerCase(), c]));
+    const catInfo = catMap.get(String(category).toLowerCase());
+    const categoryId = catInfo?.id;
+    if (!categoryId) {
+      throw new Error(`Category ID not found for category: ${category}`);
+    }
+    const row = await apiFetch(`/api/db/applications?categoryId=${encodeURIComponent(categoryId)}&folder=${encodeURIComponent(folder)}`);
     if (row && row.data) {
       const updated = {
         ...row.data,
@@ -204,7 +210,7 @@ export async function assignJobToCategory(category: string, folder: string, newC
       });
     }
   } catch (err) {
-    console.error('[storage-adapter] assignJobToCategory failed, falling back to localStorage:', err);
+    console.error('[storage-adapter] assignJobToCategory failed:', err);
     const data = (await getLocalData('applications')) || {};
     const existing = data[key] as EnrichedApplication | undefined;
     if (existing) {
@@ -511,14 +517,23 @@ export async function updateApplicationDocFlags(
     return;
   }
   try {
-    const row = await apiFetch(`/api/db/applications/${encodeURIComponent(category)}/${encodeURIComponent(folderName)}?category=${encodeURIComponent(category)}&folder=${encodeURIComponent(folderName)}`);
+    const userCats = await getUserCategories();
+    const catMap = new Map(userCats.map(c => [c.name.toLowerCase(), c]));
+    const catInfo = catMap.get(String(category).toLowerCase());
+    const categoryId = catInfo?.id;
+    if (!categoryId) {
+      throw new Error(`Category ID not found for category: ${category}`);
+    }
+    const row = await apiFetch(`/api/db/applications?categoryId=${encodeURIComponent(categoryId)}&folder=${encodeURIComponent(folderName)}`);
     if (!row) return;
-    const updated = { ...row.data, ...flags };
+    const existingRow = row.data as EnrichedApplication;
+    const updated = { ...existingRow, ...flags };
     await apiFetch('/api/db/applications', {
       method: 'POST',
-      body: JSON.stringify({ category, folder: folderName, appData: updated }),
+      body: JSON.stringify({ category, categoryId, folder: folderName, appData: updated }),
     });
-  } catch {
+  } catch (err) {
+    console.error('[storage-adapter] updateApplicationDocFlags failed:', err);
     const existingData = (await getLocalData('applications')) || {};
     const existing = existingData[key] as EnrichedApplication | undefined;
     if (!existing) return;
@@ -547,13 +562,16 @@ export async function trashApplication(category: CategoryKey, folderName: string
     const userCats = await getUserCategories();
     const catMap = new Map(userCats.map(c => [c.name.toLowerCase(), c]));
     const catInfo = catMap.get(String(category).toLowerCase());
-    const categoryId = catInfo?.id || '';
+    const categoryId = catInfo?.id;
+    if (!categoryId) {
+      throw new Error(`Category ID not found for category: ${category}`);
+    }
     await apiFetch(`/api/db/applications/trash`, {
       method: 'POST',
       body: JSON.stringify({ categoryId, folder: folderName }),
     });
   } catch (err) {
-    console.error('[storage-adapter] trashApplication failed, falling back to localStorage:', err);
+    console.error('[storage-adapter] trashApplication failed:', err);
     const data = (await getLocalData('applications')) || {};
     if (data[key]) {
       data[key].deleted_at = new Date().toISOString();
@@ -617,13 +635,16 @@ export async function restoreApplication(category: CategoryKey, folderName: stri
     const userCats = await getUserCategories();
     const catMap = new Map(userCats.map(c => [c.name.toLowerCase(), c]));
     const catInfo = catMap.get(String(category).toLowerCase());
-    const categoryId = catInfo?.id || '';
+    const categoryId = catInfo?.id;
+    if (!categoryId) {
+      throw new Error(`Category ID not found for category: ${category}`);
+    }
     await apiFetch(`/api/db/applications/restore`, {
       method: 'POST',
       body: JSON.stringify({ categoryId, folder: folderName }),
     });
   } catch (err) {
-    console.error('[storage-adapter] restoreApplication failed, falling back to localStorage:', err);
+    console.error('[storage-adapter] restoreApplication failed:', err);
     const data = (await getLocalData('applications')) || {};
     if (data[key]) {
       delete data[key].deleted_at;
@@ -653,13 +674,16 @@ export async function permanentlyDeleteApplication(category: CategoryKey, folder
     const userCats = await getUserCategories();
     const catMap = new Map(userCats.map(c => [c.name.toLowerCase(), c]));
     const catInfo = catMap.get(String(category).toLowerCase());
-    const categoryId = catInfo?.id || '';
+    const categoryId = catInfo?.id;
+    if (!categoryId) {
+      throw new Error(`Category ID not found for category: ${category}`);
+    }
     await apiFetch(`/api/db/applications/permanent`, {
       method: 'DELETE',
       body: JSON.stringify({ categoryId, folder: folderName }),
     });
   } catch (err) {
-    console.error('[storage-adapter] permanentlyDeleteApplication failed, falling back to localStorage:', err);
+    console.error('[storage-adapter] permanentlyDeleteApplication failed:', err);
     const data = (await getLocalData('applications')) || {};
     delete data[key];
     await setLocalData('applications', data);
