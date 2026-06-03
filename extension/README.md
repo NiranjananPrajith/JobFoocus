@@ -16,11 +16,16 @@ Navigate to any job posting on a supported job board and click the JobFoocus ext
 
 By default the extension sends data to `http://localhost:3000/application` (your local dev server).
 
+Three deployment environments are supported:
+
+| Environment | DASHBOARD_URL value |
+|---|---|
+| Local dev | `http://localhost:3000/application` |
+| Vercel alt | `https://job-foocus.vercel.app/application` |
+| Production | `https://jobfoocus.com/application` (or your custom domain) |
+
 To change it:
 
 1. Open `extension/background.js`.
-2. Update the `DASHBOARD_URL` constant on line 2 to your production URL, for example:
-   ```js
-   const DASHBOARD_URL = "https://yourdomain.com/application";
-   ```
+2. Update the `DASHBOARD_URL` constant (line 2) to your target URL.
 3. Reload the extension at `chrome://extensions` (click the refresh icon on the JobFoocus card).

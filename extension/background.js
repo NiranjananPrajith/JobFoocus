@@ -1,6 +1,14 @@
-// Target URL for your local development or production hosted NextJS environment
-// ⚠️ Change this to your actual domain before distributing.
-// See extension/README.md for details.
+// DASHBOARD_URL: the deep-link target for scraped job data.
+//
+// Three deployment environments are supported:
+//   - Local dev:    http://localhost:3000/application
+//   - Vercel alt:   https://job-foocus.vercel.app/application
+//   - Production:   https://jobfoocus.com/application
+//                   (Hostinger VPS or custom domain — change to yours)
+//
+// Switch by changing the value of DASHBOARD_URL below.
+// Reload the extension at chrome://extensions after changing.
+// See extension/README.md for full details.
 const DASHBOARD_URL = "http://localhost:3000/application";
 
 chrome.action.onClicked.addListener((tab) => {
