@@ -12,8 +12,12 @@
   if (jdContainer) {
     description = jdContainer.innerText.trim();
   } else {
-    // Fallback approach if selectors mismatch: capture structural text node regions safely
-    description = document.body.innerText.replace(/\s+/g, ' ').trim().slice(0, 5000);
+    // Privacy guard: only fall back to body text on known job board domains
+    const JOB_BOARD_PATTERN = /(indeed|linkedin|glassdoor|monster|ziprecruiter|careerbuilder)\.(com|ca|co\.uk)$/i;
+    const isJobBoard = JOB_BOARD_PATTERN.test(window.location.hostname);
+    if (isJobBoard) {
+      description = document.body.innerText.replace(/\s+/g, ' ').trim().slice(0, 5000);
+    }
   }
 
   // Fallback parsing heuristics if explicit tags were unmapped

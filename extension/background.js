@@ -1,6 +1,7 @@
 // Target URL for your local development or production hosted NextJS environment
+// ⚠️ Change this to your actual domain before distributing.
+// See extension/README.md for details.
 const DASHBOARD_URL = "http://localhost:3000/application";
-// Change to "https://yourdomain.com/application" when deploying to Hostinger VPS
 
 chrome.action.onClicked.addListener((tab) => {
   // Execute the data extraction routine on the active page

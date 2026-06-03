@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { createPortal } from 'react-dom';
 import Card from '@/components/design/Card';
 import Button from '@/components/design/Button';
@@ -12,16 +13,7 @@ import { getUserCategories, saveCategory, type UserCategory } from '@/lib/storag
 type ModalState = 'two_column' | 'paste_jd' | 'blank_resume' | 'processing' | 'category_prompt' | 'done';
 type ProcessingStep = 'analyzing' | 'resume' | 'cover_letter' | 'saving' | 'done';
 
-const CHROME_STORE_URL = 'https://chrome.google.com/webstore';
-const FIREFOX_ADDONS_URL = 'https://addons.mozilla.org';
-
-function detectBrowser(): 'chrome' | 'firefox' | 'other' {
-  if (typeof navigator === 'undefined') return 'other';
-  const ua = navigator.userAgent;
-  if (ua.includes('Firefox')) return 'firefox';
-  if (ua.includes('Chrome')) return 'chrome';
-  return 'other';
-}
+const INSTALL_GUIDE_URL = '/extension-install';
 
 function SpinnerIcon() {
   return (
@@ -106,8 +98,6 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
 
   if (!mounted || !isOpen) return null;
 
-  const browser = detectBrowser();
-
   const handleAddManually = async () => {
     const blank = await isMasterResumeBlank();
     if (blank) {
@@ -177,8 +167,6 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
     setUserCategories(cats);
   };
 
-  const extensionUrl = browser === 'firefox' ? FIREFOX_ADDONS_URL : CHROME_STORE_URL;
-
   const content = (
     <div
       className="fixed inset-0 z-[9999] flex items-start justify-center pt-16 px-4"
@@ -225,17 +213,15 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
                     The easiest way — browse any job posting and click the extension to import it automatically.
                   </p>
                 </div>
-                <a
-                  href={extensionUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  href={INSTALL_GUIDE_URL}
                   className="w-full"
                 >
                   <Button variant="primary" className="w-full justify-center">
-                    Add Extension
+                    How to Install
                   </Button>
-                </a>
-                <p className="text-[11px] text-stone-400">Opens Chrome Web Store or Firefox Add-ons</p>
+                </Link>
+                <p className="text-[11px] text-stone-400">Open the install guide</p>
               </Card>
 
               {/* Right: Manual */}
