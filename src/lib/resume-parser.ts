@@ -68,10 +68,6 @@ async function parseTXT(file: File): Promise<string> {
 // ---------------------------------------------------------------------------
 
 async function extractWithAI(rawText: string): Promise<ParsedResume> {
-  const API_KEY = process.env.NEXT_PUBLIC_MINIMAX_API_KEY || process.env.MINIMAX_API_KEY || '';
-  const MODEL = 'MiniMax-M2.7';
-  const BASE_URL = 'https://api.minimax.io/anthropic/v1/messages';
-
   const system = `You are an expert resume parser. Analyze the provided resume text and return a JSON object with exactly these fields:
 - name: string (full name, or "" if not found)
 - phone: string (phone number, or "" if not found)
@@ -85,30 +81,19 @@ async function extractWithAI(rawText: string): Promise<ParsedResume> {
 
 Return ONLY the valid JSON object. No markdown, no explanation.`;
 
-  const response = await fetch(BASE_URL, {
+  const res = await fetch('/api/ai', {
     method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: 4096,
-      system,
-      messages: [{ role: 'user', content: [{ type: 'text', text: rawText }] }],
-      temperature: 0.3,
-    }),
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt: rawText, system }),
   });
 
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Resume parsing failed: ${response.status} ${errText}`);
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Resume parsing failed: ${res.status} ${errText}`);
   }
 
-  const data = await response.json();
-  const contentBlocks = data.content || [];
-  const textBlocks = contentBlocks.filter((block: { type: string }) => block.type === 'text');
-  const content = textBlocks.map((block: { text?: string }) => block.text || '').join('');
+  const data = await res.json();
+  const content = data.content || '';
 
   if (!content) throw new Error('Empty response from AI parser');
 
