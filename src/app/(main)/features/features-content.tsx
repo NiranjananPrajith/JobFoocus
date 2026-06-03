@@ -61,16 +61,6 @@ const extraFeatures = [
     title: 'Your PII Never Goes to the AI',
     description: 'Your name, phone number, email, and social links are never sent to any AI model. When generating tailored resumes and cover letters, only your work experience and skills are used — all personal identifiers are masked before any AI processing happens.',
   },
-  {
-    title: 'Category-Based Workflow',
-    description: 'Applications auto-sort into three tracks — Tech Support, General Basic, and Kitchen/Cook. Each gets its own folder structure, tailored templates, and optimized formatting for that role type.',
-  },
-];
-
-const stats = [
-  { value: '5min', label: 'To generate a full application pack' },
-  { value: '87%', label: 'Of users hear back within 2 weeks' },
-  { value: '3×', label: 'More interviews with tailored documents' },
 ];
 
 export default function FeaturesPageContent() {
@@ -102,28 +92,6 @@ export default function FeaturesPageContent() {
             </Button>
           </div>
         </div>
-        </div>
-      </section>
-
-      {/* ── Stats Row ────────────────────────────────────────── */}
-      <section className="px-6 pt-16 pb-16">
-        <div className="max-w-[1280px] mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 border-y border-hairline-soft">
-          {stats.map((stat, i) => (
-            <div
-              key={stat.label}
-              className={`py-8 px-4 text-center ${i < stats.length - 1 ? 'md:border-r border-hairline-soft' : ''}`}
-            >
-              <p
-                className="text-[52px] font-normal text-ink leading-none mb-2"
-                style={{ fontFamily: 'PP Editorial Old, Times New Roman, serif', letterSpacing: '-1px' }}
-              >
-                {stat.value}
-              </p>
-              <p className="text-[14px] text-steel">{stat.label}</p>
-            </div>
-          ))}
-          </div>
         </div>
       </section>
 
@@ -234,7 +202,7 @@ export default function FeaturesPageContent() {
               The Job Foocus browser extension sits in your toolbar. When you're on a job posting page, click the icon and Job Foocus captures the job title, company, description, and URL — categorizes it, files it, and queues your AI documents for generation. No more copypasting into forms.
             </p>
             <ul className="space-y-3">
-              {['Works on LinkedIn, Indeed, Glassdoor, and any posting page', 'Auto-classifies into Tech Support, General Basic, or Kitchen/Cook', 'Captures full job description with one click', 'Works on Chrome and Firefox'].map((item) => (
+              {['Works on LinkedIn, Indeed, Glassdoor, and any posting page', 'Captures full job description with one click', 'Works on Chrome and Firefox'].map((item) => (
                 <li key={item} className="flex items-center gap-3 text-[14px] text-ink">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
                     <polyline points="20 6 9 17 4 12" />
@@ -262,13 +230,7 @@ export default function FeaturesPageContent() {
                 </div>
                 <div>
                   <p className="text-[15px] font-semibold text-ink">Job Foocus Assistant</p>
-                  <p className="text-[12px] text-steel">Productivity • 12,834 users</p>
-                </div>
-                <div className="ml-auto">
-                  <div className="inline-flex items-center gap-1 bg-green-100 text-green-700 text-[11px] font-semibold px-2 py-1 rounded-full">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
-                    4.8
-                  </div>
+                  <p className="text-[12px] text-steel">Productivity • Early access</p>
                 </div>
               </div>
               <p className="text-[13px] text-steel leading-relaxed mb-4">
@@ -347,7 +309,7 @@ export default function FeaturesPageContent() {
               Your next job starts here
             </h2>
             <p className="text-[16px] text-steel max-w-[460px] mx-auto leading-relaxed mb-8">
-              Join thousands of job seekers who've cut their application time in half and started getting responses. Free to start — no credit card required.
+              Job Foocus is in early alpha. Create job-specific resumes, cover letters, and track applications — all in one place. Free to start — no credit card required.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <Button variant="primary" className="px-7 py-3 text-[15px]">

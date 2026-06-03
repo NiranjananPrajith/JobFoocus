@@ -1,7 +1,7 @@
 # Job Application Automation Project (Next.js Edition)
 
 ## System Overview
-This project automates the creation, tailoring, and organization of job applications based on a user-provided Master Resume (`base_materials/master_resume.html`), Contact Information (`base_materials/contact_info.html`), and a target Job Description. The generated documents are parsed natively by the Next.js app, served inside a webview dashboard, and compiled to PDF using the browser's native print framework.
+This project automates the creation, tailoring, and organization of job applications based on a user-provided Master Resume, Contact Information, and a target Job Description. Master resumes are stored in the `master_resumes` Supabase table and fetched via the storage adapter (`src/lib/storage-adapter.ts`). Generated documents are saved to the `documents` table and served inside the Next.js dashboard, compiled to PDF using the browser's native print framework.
 
 ## Category System
 Categories are user-defined. When adding a job, users can:
@@ -43,11 +43,11 @@ interface UserCategory {
 When the user provides a job description, execute the following steps sequentially:
 
 1. **Select/Create Category**: User picks from existing categories or creates a new one.
-2. **Create Target Directory**: Create a folder inside the chosen category using the format: `YYYY-MM-DD_[Company]_[JobTitle]`.
-3. **Save Job Description**: Save the raw text provided by the user as `job_description.html` inside that new folder.
-4. **Draft Tailored Resume**: Read `base_materials/master_resume.html` and generate a highly tailored `resume.html` optimized for target keywords matching the structural layout below.
+2. **Create Application Record**: Call `POST /api/db/applications` to create the application row. Use the category and a folder key formatted as `YYYY-MM-DD_[Company]_[JobTitle]`.
+3. **Save Job Description**: Save the raw text provided by the user via the storage adapter (`dbSaveDocument` in `src/lib/storage-adapter.ts` → `POST /api/db/documents`) with doctype `job_description`.
+4. **Draft Tailored Resume**: Fetch the master resume via `getMasterResume()` (backed by the `master_resumes` table) and generate a highly tailored `resume.html` optimized for target keywords matching the structural layout below.
 5. **Draft Cover Letter**: Generate a compelling `cover_letter.html` addressing the hiring manager using the structural template below.
-6. **Create Tracking File**: Create `application.json` with fields: `company`, `job_title`, `date_applied`, `status` (default: "prospect"), `source`, `contact_name`, `contact_email`, `notes`, and `response_date`.
+6. **Create Tracking Record**: Save the application tracking data (company, job_title, date_applied, status defaulting to "prospect", source, contact_name, contact_email, notes, response_date) to the `applications` table via the API route.
 
 ## Next.js UI Application
 The tracker dashboard and document webview are served natively via the Next.js development environment.
@@ -58,11 +58,13 @@ The tracker dashboard and document webview are served natively via the Next.js d
 
 ```
 
-* **Dashboard Access (Production)**: Click the extension icon in Chrome → the dashboard opens in an extension tab at `chrome-extension://<id>/index.html`. This is the production UI and uses `chrome.storage.local` (extension isolated storage).
-
 * **Local Dev Server**: Run `npm run dev` and open [http://localhost:3000](https://www.google.com/search?q=http://localhost:3000) only for live-reload design testing. **Data is separate** — localhost uses browser `localStorage`, so any data created there will NOT appear in the production extension dashboard and vice versa.
 
 * **Document Viewer Tab Title**: When viewing a document, the browser tab displays the document name in the format `{folder}_Resume` or `{folder}_CoverLetter` (e.g., `2026-05-23_RONA_CustomerServiceAssociate_Resume`).
+
+## Storage & DB Layers
+- **Storage layer**: `src/lib/storage-adapter.ts` — client-side storage that reads/writes localStorage and syncs to Supabase via API routes
+- **Database layer**: `supabase/migrations/` — Postgres schema with Row-Level Security, managed via Supabase migrations
 
 ## Document Printing & ATS Optimization Rules
 
