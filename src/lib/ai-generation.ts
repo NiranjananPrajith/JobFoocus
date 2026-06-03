@@ -7,7 +7,7 @@ import formattingGuides from './formatting-guides.json';
 // Minimax API (Anthropic API compatibility via direct fetch)
 // ---------------------------------------------------------------------------
 
-const API_KEY = process.env.NEXT_PUBLIC_MINIMAX_API_KEY || process.env.MINIMAX_API_KEY || '';
+const API_KEY = process.env.MINIMAX_API_KEY || '';
 const MODEL = 'MiniMax-M2.7';
 // Server-side: call Minimax directly. Client-side: call our Next.js API route to avoid CORS.
 const AI_API_URL = typeof window !== 'undefined' ? '/api/ai' : 'https://api.minimax.io/anthropic/v1/messages';
@@ -16,14 +16,15 @@ type AIFunction = 'analyzing' | 'resume' | 'cover_letter' | 'done';
 type ProgressCallback = (step: AIFunction) => void;
 
 async function minimaxChat(prompt: string, system: string): Promise<string> {
-  if (!API_KEY) {
+  const isServer = typeof window === 'undefined';
+
+  if (isServer && !API_KEY) {
     console.error('[AI] MINIMAX_API_KEY is not configured.');
     throw new Error('MINIMAX_API_KEY is not configured.');
   }
 
   console.log('[AI] Sending request to Minimax...', { model: MODEL, promptLength: prompt.length });
 
-  const isServer = typeof window === 'undefined';
   const fetchOptions = isServer
     ? {
         method: 'POST',
