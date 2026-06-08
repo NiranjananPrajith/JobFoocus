@@ -120,7 +120,7 @@ function ApplicationContent() {
     (!!extTitle || !!extCompany || !!extJd || !!extUrl || extHeuristicMiss || !!extLocation || !!extSalary || !!extPosted || !!extWorkType);
 
   type PipelineStep = 'analyzing' | 'resume' | 'cover_letter' | 'done';
-  type PipelineMode = 'auth-checking' | 'processing' | 'manual-fill' | 'error' | null;
+  type PipelineMode = 'auth-checking' | 'processing' | 'manual-fill' | 'jd-retry' | 'error' | null;
 
   // Held while the user is filling in the manual-fill form. Captures
   // everything the AI extracted + the original job description + a
@@ -162,6 +162,12 @@ function ApplicationContent() {
   const [manualCompany, setManualCompany] = useState('');
   const [manualTitle, setManualTitle] = useState('');
   const [manualFillError, setManualFillError] = useState<string | null>(null);
+  // JD-retry state. Populated when the AI couldn't extract a proper
+  // job description from the scraped content (parse failure, empty
+  // response, etc.). The user can paste a cleaner JD into the
+  // textbox and click "Add Job" to retry the pipeline manually.
+  const [jdRetryText, setJdRetryText] = useState('');
+  const [jdRetryError, setJdRetryError] = useState<string | null>(null);
 
   const [application, setApplication] = useState<Application | null>(null);
   const [loading, setLoading] = useState(true);
@@ -338,6 +344,116 @@ function ApplicationContent() {
   //      On success, replace the URL with the saved app so the existing
   //      app-loading effect takes over with the resume + cover letter
   //      already attached.
+
+  // The shared pipeline core (ensureUncategorizedCategory →
+  // formatJobDescription → required-field gate → saveApplication →
+  // saveDocumentHTML → generateMaskedDocumentsForExistingJob). Used
+  // by BOTH the auto-pipeline effect and the jd-retry button handler.
+  // Returns a discriminated outcome so the caller can dispatch to the
+  // right UI state.
+  type PipelineOutcome =
+    | { kind: 'success'; folder: string }
+    | { kind: 'parse-fail'; message: string }
+    | { kind: 'manual-fill'; folder: string; formattedJD: ManualFillPayload['formattedJD']; missingCompany: boolean; missingTitle: boolean }
+    | { kind: 'other-fail'; message: string };
+
+  async function runExtensionPipelineCore(
+    jdText: string,
+    cancelled: { current: boolean }
+  ): Promise<PipelineOutcome> {
+    // 3a. Ensure Uncategorized exists.
+    const uncategorized = await ensureUncategorizedCategory();
+    if (cancelled.current) return { kind: 'other-fail', message: 'Cancelled' };
+    if (!uncategorized) {
+      return {
+        kind: 'other-fail',
+        message: 'Could not set up the Uncategorized category for your account. Please refresh and try again.',
+      };
+    }
+
+    // 3b. Format the JD. Parse / format failures here are what
+    // send the caller to the jd-retry state.
+    let formattedJD;
+    try {
+      formattedJD = await formatJobDescription(jdText);
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : 'The AI did not return a parseable job description.';
+      return { kind: 'parse-fail', message: raw };
+    }
+    if (cancelled.current) return { kind: 'other-fail', message: 'Cancelled' };
+
+    const folder = 'job-' + Date.now();
+
+    // 3c. Required-field gate.
+    const missingCompany = isUnknownValue(formattedJD.company);
+    const missingTitle = isUnknownValue(formattedJD.job_title);
+    if (missingCompany || missingTitle) {
+      return {
+        kind: 'manual-fill',
+        folder,
+        formattedJD: {
+          company: formattedJD.company || '',
+          job_title: formattedJD.job_title || '',
+          location: formattedJD.location || '',
+          employment_type: formattedJD.employment_type || '',
+          summary: formattedJD.summary || '',
+          responsibilities: formattedJD.responsibilities || [],
+          requirements: formattedJD.requirements || [],
+          preferred: formattedJD.preferred || [],
+        },
+        missingCompany,
+        missingTitle,
+      };
+    }
+
+    // 3d. Save application.
+    try {
+      await saveApplication('Uncategorized', folder, {
+        company: formattedJD.company,
+        job_title: formattedJD.job_title,
+        date_applied: '',
+        status: 'prospect',
+        response_date: null,
+        notes: '',
+        contact_name: null,
+        contact_email: null,
+        source: extractDomain(extUrl || ''),
+        documents: [],
+        job_url: extUrl || null,
+      });
+    } catch (err) {
+      return { kind: 'other-fail', message: err instanceof Error ? err.message : 'Could not save the application.' };
+    }
+    if (cancelled.current) return { kind: 'other-fail', message: 'Cancelled' };
+
+    // 3e. Save JD HTML.
+    try {
+      const jdHTML = buildJobDescriptionHTML(formattedJD, jdText);
+      await saveDocumentHTML('Uncategorized', folder, 'job_description', jdHTML);
+    } catch (err) {
+      return { kind: 'other-fail', message: err instanceof Error ? err.message : 'Could not save the job description.' };
+    }
+    if (cancelled.current) return { kind: 'other-fail', message: 'Cancelled' };
+
+    // 3f. Generate resume + cover letter.
+    try {
+      await generateMaskedDocumentsForExistingJob(
+        'Uncategorized',
+        folder,
+        jdText,
+        (step) => {
+          if (cancelled.current) return;
+          setPipelineStep(step);
+        }
+      );
+    } catch (err) {
+      return { kind: 'other-fail', message: err instanceof Error ? err.message : 'Could not generate the resume or cover letter.' };
+    }
+    if (cancelled.current) return { kind: 'other-fail', message: 'Cancelled' };
+
+    return { kind: 'success', folder };
+  }
+
   useEffect(() => {
     if (!isExtensionMode) return;
 
@@ -383,136 +499,53 @@ function ApplicationContent() {
         return;
       }
 
-      // 3. Pipeline
+      // 3. Pipeline (delegates to the shared core so the jd-retry
+      // handler can re-run the same logic with a user-typed JD).
       setPipelineMode('processing');
       setPipelineStep('analyzing');
 
-      try {
-        // 3a. Make sure the user has a real Uncategorized row in
-        // user_categories. The storage layer requires every category used
-        // in saves to have a UUID (applications and documents reference
-        // it as a foreign key). Without this, saveApplication +
-        // saveDocumentHTML would fall through to localStorage for the
-        // metadata, then throw "Category ID not found for category:
-        // Uncategorized" on the first document save.
-        const uncategorized = await ensureUncategorizedCategory();
-        if (cancelled) return;
-        if (!uncategorized) {
-          setPipelineError(
-            'Could not set up the Uncategorized category for your account. Please refresh and try again.'
-          );
-          setPipelineMode('error');
+      const outcome = await runExtensionPipelineCore(extJd || '', { current: cancelled });
+
+      if (cancelled) return;
+
+      switch (outcome.kind) {
+        case 'parse-fail':
+          // The AI couldn't extract a proper job description from the
+          // scraped content. Fall through to the jd-retry state so the
+          // user can paste a cleaner JD.
+          setJdRetryText(extJd || '');
+          setJdRetryError(null);
+          setPipelineMode('jd-retry');
           return;
-        }
-
-        // 3b. Format the JD via AI (drives the 'analyzing' step).
-        const jobDescription = extJd || '';
-        const formattedJD = await formatJobDescription(jobDescription);
-        if (cancelled) return;
-
-        const folder = 'job-' + Date.now();
-
-        // 3c. Required-field gate. The user explicitly does not want
-        // applications saved with an unknown/blank company or job
-        // title — those are the two fields that make a job identifiable
-        // in the dashboard and are needed for resume tailoring too. If
-        // either came back missing (the JD was too sparse, or the AI
-        // wasn't confident), pause the pipeline and ask the user to
-        // type them in. Everything else the AI extracted is preserved
-        // and pre-filled into the manual-fill form below.
-        const missingCompany = isUnknownValue(formattedJD.company);
-        const missingTitle = isUnknownValue(formattedJD.job_title);
-        if (missingCompany || missingTitle) {
+        case 'manual-fill':
           setManualFill({
-            folder,
-            jobDescription,
-            formattedJD: {
-              company: formattedJD.company || '',
-              job_title: formattedJD.job_title || '',
-              location: formattedJD.location || '',
-              employment_type: formattedJD.employment_type || '',
-              summary: formattedJD.summary || '',
-              responsibilities: formattedJD.responsibilities || [],
-              requirements: formattedJD.requirements || [],
-              preferred: formattedJD.preferred || [],
-            },
-            missingCompany,
-            missingTitle,
+            folder: outcome.folder,
+            jobDescription: extJd || '',
+            formattedJD: outcome.formattedJD,
+            missingCompany: outcome.missingCompany,
+            missingTitle: outcome.missingTitle,
           });
-          // Pre-fill the form with whatever the scrape provided, so the
-          // user only has to type the genuinely missing pieces.
-          setManualCompany(extCompany || formattedJD.company || '');
-          setManualTitle(extTitle || formattedJD.job_title || '');
+          setManualCompany(extCompany || outcome.formattedJD.company);
+          setManualTitle(extTitle || outcome.formattedJD.job_title);
           setManualFillError(null);
           setPipelineMode('manual-fill');
           return;
+        case 'other-fail':
+          setPipelineError(outcome.message);
+          setPipelineMode('error');
+          return;
+        case 'success': {
+          // Brief pause so the user sees the "done" state before the
+          // view swaps. Without this, the transition can feel like
+          // the stepper flickered and was gone.
+          const destination = `/application?app=Uncategorized/${encodeURIComponent(outcome.folder)}`;
+          setPipelineDestination(destination);
+          await new Promise((r) => setTimeout(r, 700));
+          if (cancelled) return;
+          setPipelineMode(null);
+          router.replace(destination);
+          return;
         }
-
-        // 3d. Save the application metadata. Company/title come from
-        // the formatted JD so the canonical values come from the JD
-        // itself, not the loose scrape. job_url is preserved from the
-        // extension payload so the "View original posting" link works.
-        await saveApplication('Uncategorized', folder, {
-          company: formattedJD.company,
-          job_title: formattedJD.job_title,
-          date_applied: '',
-          status: 'prospect',
-          response_date: null,
-          notes: '',
-          contact_name: null,
-          contact_email: null,
-          source: extractDomain(extUrl || ''),
-          documents: [],
-          job_url: extUrl || null,
-        });
-        if (cancelled) return;
-
-        // 3d. Save the JD HTML so the saved-app view can render it.
-        const jdHTML = buildJobDescriptionHTML(formattedJD, jobDescription);
-        await saveDocumentHTML('Uncategorized', folder, 'job_description', jdHTML);
-        if (cancelled) return;
-
-        // 3e. Generate resume + cover letter and write the doc flags.
-        // We deliberately do NOT call assignJobToCategory here — the
-        // app should stay in Uncategorized so the user can pick a
-        // category (or leave it) on the saved-app view. This is the
-        // divergence from generateJobEntryAndDocuments, which would
-        // auto-classify via AI and move the app into a user category.
-        await generateMaskedDocumentsForExistingJob(
-          'Uncategorized',
-          folder,
-          jobDescription,
-          (step) => {
-            if (cancelled) return;
-            setPipelineStep(step);
-          }
-        );
-        if (cancelled) return;
-
-        // Hand off to the saved-app view. We clear pipelineMode to null
-        // BEFORE the URL change so the render path falls through to the
-        // existing form (otherwise the stepper keeps showing because the
-        // 'processing' early-return still matches). router.replace then
-        // updates the URL, the searchParams hook fires, Effect 2
-        // re-runs with the new appId, and the saved app loads. We
-        // also stash the destination URL so the stepper's "View job"
-        // safety-net button (rendered when pipelineStep === 'done')
-        // can navigate to the same place if the auto-transition
-        // somehow doesn't fire.
-        const destination = `/application?app=Uncategorized/${encodeURIComponent(folder)}`;
-        setPipelineDestination(destination);
-        // Brief pause so the user sees the "done" state (all three
-        // check marks) before the view swaps. Without this, the
-        // transition can feel like the stepper flickered and was gone.
-        await new Promise((r) => setTimeout(r, 700));
-        if (cancelled) return;
-        setPipelineMode(null);
-        router.replace(destination);
-      } catch (err) {
-        if (cancelled) return;
-        console.error('Extension pipeline failed:', err);
-        setPipelineError(err instanceof Error ? err.message : 'Failed to add this job.');
-        setPipelineMode('error');
       }
     }
 
@@ -626,6 +659,72 @@ function ApplicationContent() {
     setManualCompany('');
     setManualTitle('');
     setManualFillError(null);
+    setPipelineMode(null);
+    router.replace('/dashboard');
+  };
+
+  // Called from the jd-retry view when the user clicks "Add Job"
+  // after pasting a cleaner JD. Re-runs the same pipeline core the
+  // auto-pipeline uses, but with the textarea content instead of
+  // the original extension scrape. All four outcomes dispatch the
+  // same way as the auto path: success → saved-app, parse-fail →
+  // stay in jd-retry with a new error, manual-fill → switch to the
+  // manual-fill form, other-fail → generic error card.
+  const handleJdRetry = async () => {
+    if (!jdRetryText.trim()) return;
+    setJdRetryError(null);
+    setPipelineMode('processing');
+    setPipelineStep('analyzing');
+
+    const cancelled = { current: false };
+    try {
+      const outcome = await runExtensionPipelineCore(jdRetryText, cancelled);
+      if (cancelled.current) return;
+
+      switch (outcome.kind) {
+        case 'parse-fail':
+          setJdRetryError(
+            "We still couldn't find a proper job description in your text. Make sure it includes the full job title, company name, responsibilities, and requirements — then try again."
+          );
+          setPipelineMode('jd-retry');
+          return;
+        case 'manual-fill':
+          setManualFill({
+            folder: outcome.folder,
+            jobDescription: jdRetryText,
+            formattedJD: outcome.formattedJD,
+            missingCompany: outcome.missingCompany,
+            missingTitle: outcome.missingTitle,
+          });
+          setManualCompany(outcome.formattedJD.company);
+          setManualTitle(outcome.formattedJD.job_title);
+          setManualFillError(null);
+          setPipelineMode('manual-fill');
+          return;
+        case 'other-fail':
+          setPipelineError(outcome.message);
+          setPipelineMode('error');
+          return;
+        case 'success': {
+          const destination = `/application?app=Uncategorized/${encodeURIComponent(outcome.folder)}`;
+          setPipelineDestination(destination);
+          await new Promise((r) => setTimeout(r, 700));
+          if (cancelled.current) return;
+          setPipelineMode(null);
+          router.replace(destination);
+          return;
+        }
+      }
+    } catch (err) {
+      if (cancelled.current) return;
+      setPipelineError(err instanceof Error ? err.message : 'Failed to add this job.');
+      setPipelineMode('error');
+    }
+  };
+
+  const handleJdRetryCancel = () => {
+    setJdRetryText('');
+    setJdRetryError(null);
     setPipelineMode(null);
     router.replace('/dashboard');
   };
@@ -805,6 +904,69 @@ function ApplicationContent() {
             <button
               type="button"
               onClick={handleManualFillCancel}
+              className="text-[14px] text-steel hover:text-ink transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (pipelineMode === 'jd-retry') {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-4">
+        <Card variant="cream" className="max-w-[640px] w-full p-8">
+          <div className="mb-1 text-[12px] font-semibold uppercase tracking-wider text-primary">
+            One more step
+          </div>
+          <h2 className="text-[22px] md:text-[24px] font-semibold text-ink mb-2">
+            We couldn&apos;t find a proper job description
+          </h2>
+          <p className="text-[14px] text-steel leading-relaxed mb-4">
+            The page content didn&apos;t look like a job posting to our AI. Copy the full job
+            description — including the job title, company name, responsibilities, and
+            requirements — from the original posting, paste it below, and click{' '}
+            <strong className="text-ink">Add Job</strong> to try again.
+          </p>
+
+          {jdRetryError && (
+            <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-[13px] text-amber-900 leading-relaxed">
+              {jdRetryError}
+            </div>
+          )}
+
+          <div className="mb-2">
+            <label className="block text-[11px] uppercase tracking-wide text-steel mb-2">
+              Job description
+            </label>
+            <textarea
+              value={jdRetryText}
+              onChange={(e) => {
+                setJdRetryText(e.target.value);
+                if (jdRetryError) setJdRetryError(null);
+              }}
+              rows={12}
+              placeholder="Paste the full job posting here — include the job title, company name, responsibilities, and requirements..."
+              className="w-full px-4 py-3 rounded-xl border border-hairline-strong bg-white text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none placeholder:text-stone-400"
+              autoFocus
+            />
+          </div>
+
+          <p className="text-[12px] text-steel mb-4">{jdRetryText.length} characters</p>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              variant="primary"
+              onClick={handleJdRetry}
+              disabled={!jdRetryText.trim()}
+            >
+              Add Job
+            </Button>
+            <button
+              type="button"
+              onClick={handleJdRetryCancel}
               className="text-[14px] text-steel hover:text-ink transition-colors"
             >
               Cancel

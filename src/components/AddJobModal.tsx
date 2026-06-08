@@ -30,6 +30,10 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
   const router = useRouter();
   const [state, setState] = useState<ModalState>('two_column');
   const [jdText, setJdText] = useState('');
+  // Shown above the textarea in paste_jd when the AI pipeline failed
+  // to extract a proper job description. Cleared as soon as the user
+  // starts editing the text, so they see a clean field on retry.
+  const [pasteError, setPasteError] = useState<string | null>(null);
   const [processingStep, setProcessingStep] = useState<AddJobStep>('analyzing');
   const [selectedCategory, setSelectedCategory] = useState('Uncategorized');
   const [userCategories, setUserCategories] = useState<UserCategory[]>([]);
@@ -61,6 +65,7 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
     if (isOpen) {
       setState('two_column');
       setJdText('');
+      setPasteError(null);
       setSelectedCategory('Uncategorized');
       setDestination(null);
       setResultHeader(null);
@@ -102,6 +107,7 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
 
   const handleSubmitJD = async () => {
     if (!jdText.trim()) return;
+    setPasteError(null);
     setState('processing');
     setProcessingStep('analyzing');
 
@@ -129,9 +135,23 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
     } catch (err) {
       console.error('[AddJobModal] Failed to process job:', err);
       // Roll back to paste_jd with the JD preserved so the user can
-      // retry without re-typing. (Previously the modal went to a
-      // "done" state with a generic success message, which masked
-      // the failure.)
+      // retry without re-typing. The error message is friendlier
+      // than a raw "Failed to parse: JSON was malformed" — most
+      // failures here mean the AI couldn't extract a proper job
+      // description from the pasted text, so we tell the user that
+      // and leave them on the form.
+      const raw = err instanceof Error ? err.message : '';
+      const isParseFailure =
+        /json|parse|format/i.test(raw) ||
+        raw.toLowerCase().includes('malformed') ||
+        raw.toLowerCase().includes('did not return') ||
+        raw.toLowerCase().includes('no company') ||
+        raw.toLowerCase().includes('no job title');
+      setPasteError(
+        isParseFailure
+          ? "We couldn't find a proper job description in your text. Make sure you've pasted the full posting — including the job title, company name, responsibilities, and requirements — then try again."
+          : `Something went wrong while processing this job. ${raw ? `(${raw})` : ''} You can edit the text below and try again.`
+      );
       setState('paste_jd');
       setProcessingStep('analyzing');
     }
@@ -283,13 +303,24 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
               />
             </div>
 
+            {pasteError && (
+              <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-[13px] text-amber-900 leading-relaxed">
+                {pasteError}
+              </div>
+            )}
+
             <div className="mb-2">
               <label className="block text-[11px] uppercase tracking-wide text-steel mb-2">
                 Job Description
               </label>
               <textarea
                 value={jdText}
-                onChange={(e) => setJdText(e.target.value)}
+                onChange={(e) => {
+                  setJdText(e.target.value);
+                  // Clear the error as soon as the user starts editing
+                  // so they see a clean field on retry.
+                  if (pasteError) setPasteError(null);
+                }}
                 placeholder="Paste the full job posting here — include the job title, company name, responsibilities, and requirements..."
                 rows={12}
                 className="w-full px-4 py-3 rounded-xl border border-hairline-strong bg-canvas text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none placeholder:text-stone-400"
