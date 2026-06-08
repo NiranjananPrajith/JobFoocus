@@ -5,6 +5,7 @@ import ApplicationCard from '@/components/ApplicationCard';
 import Badge from '@/components/design/Badge';
 import Card from '@/components/design/Card';
 import CategoryStats from '@/components/CategoryStats';
+import ManageCategoriesModal from '@/components/ManageCategoriesModal';
 import DataManagement from '@/components/DataManagement';
 import { deleteApplication, getAllApplications, getCategoryStats, getUserCategories, saveApplication, type EnrichedApplication, type CategoryStats as CategoryStatsType, type UserCategory } from '@/lib/storage-adapter';
 import { bootstrapFromLocalStorage } from '@/lib/db/bootstrap';
@@ -26,6 +27,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [categoryStats, setCategoryStats] = useState<CategoryStatsType[]>([]);
   const [userCategories, setUserCategories] = useState<UserCategory[]>([]);
+  const [showManageCategories, setShowManageCategories] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const computeStats = useCallback((apps: EnrichedApplication[]) => {
@@ -295,6 +297,7 @@ export default function DashboardPage() {
                     onStatusChange={handleStatusChange}
                     onCategoryChange={handleCategoryChange}
                     userCategories={userCategories}
+                    onManageClick={() => setShowManageCategories(true)}
                   />
                 ))}
               </div>
@@ -307,6 +310,12 @@ export default function DashboardPage() {
       <Card variant="elevated" className="p-6 mt-12">
         <DataManagement />
       </Card>
+
+      <ManageCategoriesModal
+        isOpen={showManageCategories}
+        onClose={() => setShowManageCategories(false)}
+        onCategoriesChanged={refreshData}
+      />
     </div>
   );
 }

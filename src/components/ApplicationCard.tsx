@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Badge from './design/Badge';
+import CategorySelector from './CategorySelector';
 import { StatusType } from '@/lib/design-system';
 import type { UserCategory } from '@/lib/storage-adapter';
 
@@ -32,6 +33,13 @@ interface ApplicationCardProps {
    * is always available as a fallback option.
    */
   userCategories?: UserCategory[];
+  /**
+   * Optional. When provided, the category popover shows a
+   * "Manage Categories..." option that calls this callback. The
+   * parent page is expected to render the actual
+   * `<ManageCategoriesModal>` (the card is just the trigger).
+   */
+  onManageClick?: () => void;
 }
 
 export default function ApplicationCard({
@@ -48,6 +56,7 @@ export default function ApplicationCard({
   onStatusChange,
   onCategoryChange,
   userCategories = [],
+  onManageClick,
 }: ApplicationCardProps) {
   const daysSinceApplied = date_applied
     ? Math.floor(
@@ -55,38 +64,11 @@ export default function ApplicationCard({
       )
     : null;
 
-  const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false);
-  const categoryPopoverRef = useRef<HTMLDivElement>(null);
-  const categoryButtonRef = useRef<HTMLButtonElement>(null);
-
-  // Close the category popover on click outside / Escape.
-  useEffect(() => {
-    if (!categoryPopoverOpen) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        categoryPopoverRef.current &&
-        !categoryPopoverRef.current.contains(e.target as Node) &&
-        categoryButtonRef.current &&
-        !categoryButtonRef.current.contains(e.target as Node)
-      ) {
-        setCategoryPopoverOpen(false);
-      }
-    };
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setCategoryPopoverOpen(false);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleEscape);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [categoryPopoverOpen]);
-
   // The category currently in effect for this card. We track it
-  // locally so the popover label updates immediately on click
-  // without waiting for the parent's onCategoryChange to round-trip
-  // the server. The parent will re-fetch the app list and the local
+  // locally so the accent bar (which is colored from
+  // optimisticCategoryColor) updates immediately on click without
+  // waiting for the parent's onCategoryChange to round-trip the
+  // server. The parent will re-fetch the app list and the local
   // state will be reconciled.
   const [optimisticCategory, setOptimisticCategory] = useState(category);
   const [optimisticCategoryName, setOptimisticCategoryName] = useState(category_name);
@@ -107,27 +89,6 @@ export default function ApplicationCard({
     e.preventDefault();
     e.stopPropagation();
     if (onStatusChange) onStatusChange(id, e.target.value as StatusType);
-  };
-
-  const handleCategoryButtonClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setCategoryPopoverOpen((open) => !open);
-  };
-
-  const handleCategorySelect = (e: React.MouseEvent, cat: { name: string; color: string }) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (cat.name === optimisticCategory) {
-      setCategoryPopoverOpen(false);
-      return;
-    }
-    // Optimistic update so the chip swaps color + label immediately.
-    setOptimisticCategory(cat.name);
-    setOptimisticCategoryName(cat.name);
-    setOptimisticCategoryColor(cat.color);
-    setCategoryPopoverOpen(false);
-    if (onCategoryChange) onCategoryChange(id, cat.name);
   };
 
   const formatDate = (dateStr: string) => {
@@ -182,86 +143,34 @@ export default function ApplicationCard({
             </div>
 
             {/* ── Actions: Category + Status dropdowns side-by-side ──
-                The category chip doubles as a popover trigger when
-                interactive; otherwise it falls back to the read-only
-                badge. The status chip is always a native <select>
-                — same dropdown style as before. */}
+                The category uses the same CategorySelector component
+                the job details page uses (with popoverDirection="up"
+                so it doesn't clip the card's bottom edge). The status
+                chip is a native <select>. */}
             <div className="flex items-center gap-2 px-4 pb-3">
-              {/* Category popover / badge */}
+              {/* Category selector — same component the form uses,
+                  with the popover opening upward to fit the card. */}
               {isCategoryInteractive ? (
-                <div className="relative flex-1 min-w-0">
-                  <button
-                    ref={categoryButtonRef}
-                    type="button"
-                    onClick={handleCategoryButtonClick}
-                    className="w-full inline-flex items-center gap-1.5 text-[12px] font-semibold rounded-md pl-2 pr-1.5 py-1 text-left transition-colors hover:brightness-95"
-                    style={{
-                      backgroundColor: optimisticCategoryColor ? `${optimisticCategoryColor}18` : '#f5f5f5',
-                      color: optimisticCategoryColor || '#6a6a6a',
-                      border: `1px solid ${optimisticCategoryColor ? `${optimisticCategoryColor}30` : '#e5e5e5'}`,
+                <div className="flex-1 min-w-0">
+                  <CategorySelector
+                    value={optimisticCategory}
+                    onChange={(catName) => {
+                      // Find the color so the optimistic local-state
+                      // update (which is what the accent bar + left
+                      // border pick up) reflects the new category
+                      // immediately. The parent will refetch and the
+                      // useEffect above reconciles.
+                      const found = userCategories.find((c) => c.name === catName);
+                      const color = found?.color || '#888888';
+                      setOptimisticCategory(catName);
+                      setOptimisticCategoryName(catName);
+                      setOptimisticCategoryColor(color);
+                      if (onCategoryChange) onCategoryChange(id, catName);
                     }}
-                    aria-label="Change category"
-                    aria-haspopup="listbox"
-                    aria-expanded={categoryPopoverOpen}
-                  >
-                    <span
-                      className="w-2 h-2 rounded-full shrink-0"
-                      style={{ backgroundColor: optimisticCategoryColor || '#888888' }}
-                    />
-                    <span className="truncate flex-1 min-w-0">{optimisticCategoryName || 'Uncategorized'}</span>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-70">
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </button>
-                  {categoryPopoverOpen && (
-                    <div
-                      ref={categoryPopoverRef}
-                      role="listbox"
-                      className="absolute z-30 bottom-full left-0 mb-1 w-full min-w-[180px] max-h-64 overflow-y-auto bg-white rounded-lg border border-hairline-strong shadow-lg"
-                    >
-                      {/* Uncategorized is always available as a fallback
-                          so the user can move a job back to Uncategorized
-                          from the card. */}
-                      <button
-                        type="button"
-                        role="option"
-                        aria-selected={optimisticCategory === 'Uncategorized'}
-                        onClick={(e) => handleCategorySelect(e, { name: 'Uncategorized', color: '#888888' })}
-                        className="w-full px-3 py-2 text-[12px] text-ink hover:bg-surface transition-colors flex items-center gap-2 text-left"
-                      >
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#888888] shrink-0" />
-                        <span className="truncate">Uncategorized</span>
-                        {optimisticCategory === 'Uncategorized' && (
-                          <svg className="ml-auto shrink-0" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                        )}
-                      </button>
-                      {userCategories
-                        .filter((c) => c.name !== 'Uncategorized')
-                        .map((cat) => (
-                          <button
-                            key={cat.name}
-                            type="button"
-                            role="option"
-                            aria-selected={optimisticCategory === cat.name}
-                            onClick={(e) => handleCategorySelect(e, cat)}
-                            className="w-full px-3 py-2 text-[12px] text-ink hover:bg-surface transition-colors flex items-center gap-2 text-left"
-                          >
-                            <span
-                              className="w-2.5 h-2.5 rounded-full shrink-0"
-                              style={{ backgroundColor: cat.color }}
-                            />
-                            <span className="truncate">{cat.name}</span>
-                            {optimisticCategory === cat.name && (
-                              <svg className="ml-auto shrink-0" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="20 6 9 17 4 12" />
-                              </svg>
-                            )}
-                          </button>
-                        ))}
-                    </div>
-                  )}
+                    includeUncategorized
+                    onManageClick={onManageClick}
+                    popoverDirection="up"
+                  />
                 </div>
               ) : (
                 <span
@@ -281,7 +190,7 @@ export default function ApplicationCard({
               )}
 
               {/* Status select — same as before, slightly restyled to
-                  match the new category chip height. */}
+                  match the new category input height. */}
               {onStatusChange && (
                 <select
                   value={status}
@@ -289,12 +198,12 @@ export default function ApplicationCard({
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
                   onMouseDown={(e) => e.stopPropagation()}
                   onKeyDown={(e) => e.stopPropagation()}
-                  className="flex-1 text-[12px] px-2.5 py-1 rounded-md border border-hairline-strong bg-white text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer capitalize appearance-none"
+                  className="flex-1 text-[12px] px-3 py-3 rounded-md border border-hairline-strong bg-canvas text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer capitalize appearance-none"
                   style={{
                     backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236a6a6a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E")`,
                     backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right 6px center',
-                    paddingRight: '22px',
+                    backgroundPosition: 'right 8px center',
+                    paddingRight: '24px',
                   }}
                   aria-label="Change status"
                 >

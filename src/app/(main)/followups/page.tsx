@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import ApplicationCard from '@/components/ApplicationCard';
+import ManageCategoriesModal from '@/components/ManageCategoriesModal';
 import Card from '@/components/design/Card';
 import { deleteApplication, getAllApplications, saveApplication, getUserCategories, type EnrichedApplication, type UserCategory } from '@/lib/storage-adapter';
 import { StatusType } from '@/lib/design-system';
@@ -9,6 +10,7 @@ import { StatusType } from '@/lib/design-system';
 export default function FollowupsPage() {
   const [applications, setApplications] = useState<EnrichedApplication[]>([]);
   const [userCategories, setUserCategories] = useState<UserCategory[]>([]);
+  const [showManageCategories, setShowManageCategories] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const handleDelete = async (id: string) => {
@@ -67,20 +69,21 @@ export default function FollowupsPage() {
     }
   };
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [apps, cats] = await Promise.all([getAllApplications(), getUserCategories()]);
-        setApplications(apps);
-        setUserCategories(cats);
-      } catch (error) {
-        console.error('Error fetching applications:', error);
-      } finally {
-        setLoading(false);
-      }
+  const fetchData = useCallback(async () => {
+    try {
+      const [apps, cats] = await Promise.all([getAllApplications(), getUserCategories()]);
+      setApplications(apps);
+      setUserCategories(cats);
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+    } finally {
+      setLoading(false);
     }
-    fetchData();
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const followupApplications = applications.filter((app) => app.needs_followup === true);
 
@@ -129,10 +132,17 @@ export default function FollowupsPage() {
               onStatusChange={handleStatusChange}
               onCategoryChange={handleCategoryChange}
               userCategories={userCategories}
+              onManageClick={() => setShowManageCategories(true)}
             />
           ))}
         </div>
       )}
+
+      <ManageCategoriesModal
+        isOpen={showManageCategories}
+        onClose={() => setShowManageCategories(false)}
+        onCategoriesChanged={fetchData}
+      />
     </div>
   );
 }

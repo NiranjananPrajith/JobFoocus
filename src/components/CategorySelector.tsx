@@ -9,6 +9,13 @@ interface CategorySelectorProps {
   onChange: (category: string) => void;
   includeUncategorized?: boolean;
   onManageClick?: () => void;
+  /**
+   * Where the popover opens relative to the trigger. Default 'down'
+   * (used in forms where there's vertical room below). Use 'up' in
+   * tight contexts like job cards where the popover would otherwise
+   * clip at the bottom of the viewport / card.
+   */
+  popoverDirection?: 'down' | 'up';
 }
 
 export default function CategorySelector({
@@ -16,6 +23,7 @@ export default function CategorySelector({
   onChange,
   includeUncategorized = false,
   onManageClick,
+  popoverDirection = 'down',
 }: CategorySelectorProps) {
   const [categories, setCategories] = useState<UserCategory[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -118,7 +126,9 @@ export default function CategorySelector({
         {isOpen && (
           <div
             ref={dropdownRef}
-            className="absolute z-50 top-full left-0 right-0 mt-1 bg-white rounded-lg border border-hairline-strong shadow-lg overflow-hidden"
+            className={`absolute z-50 left-0 right-0 bg-white rounded-lg border border-hairline-strong shadow-lg overflow-hidden ${
+              popoverDirection === 'up' ? 'bottom-full mb-1' : 'top-full mt-1'
+            }`}
           >
             <div className="max-h-64 overflow-y-auto">
               {includeUncategorized && (

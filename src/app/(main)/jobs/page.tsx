@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ApplicationCard from '@/components/ApplicationCard';
 import Card from '@/components/design/Card';
+import ManageCategoriesModal from '@/components/ManageCategoriesModal';
 import { deleteApplication, getAllApplications, getTrashedApplications, restoreApplication, permanentlyDeleteApplication, saveApplication, getUserCategories, type EnrichedApplication, type UserCategory } from '@/lib/storage-adapter';
 import { StatusType } from '@/lib/design-system';
 
@@ -24,6 +25,7 @@ function JobsContent() {
   const [applications, setApplications] = useState<EnrichedApplication[]>([]);
   const [trashed, setTrashed] = useState<EnrichedApplication[]>([]);
   const [userCategories, setUserCategories] = useState<UserCategory[]>([]);
+  const [showManageCategories, setShowManageCategories] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Filter state (only meaningful when activeTab === 'all')
@@ -108,25 +110,26 @@ function JobsContent() {
     }
   };
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [apps, trash, cats] = await Promise.all([
-          getAllApplications(),
-          getTrashedApplications(),
-          getUserCategories(),
-        ]);
-        setApplications(apps);
-        setTrashed(trash);
-        setUserCategories(cats);
-      } catch (error) {
-        console.error('Error fetching applications:', error);
-      } finally {
-        setLoading(false);
-      }
+  const fetchData = useCallback(async () => {
+    try {
+      const [apps, trash, cats] = await Promise.all([
+        getAllApplications(),
+        getTrashedApplications(),
+        getUserCategories(),
+      ]);
+      setApplications(apps);
+      setTrashed(trash);
+      setUserCategories(cats);
+    } catch (error) {
+      console.error('Error fetching applications:', error);
+    } finally {
+      setLoading(false);
     }
-    fetchData();
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // Reset filters when switching away from All tab
   useEffect(() => {
@@ -332,6 +335,7 @@ function JobsContent() {
               onStatusChange={handleStatusChange}
               onCategoryChange={handleCategoryChange}
               userCategories={userCategories}
+              onManageClick={() => setShowManageCategories(true)}
             />
           ))}
         </div>
@@ -348,6 +352,12 @@ function JobsContent() {
           </p>
         </Card>
       )}
+
+      <ManageCategoriesModal
+        isOpen={showManageCategories}
+        onClose={() => setShowManageCategories(false)}
+        onCategoriesChanged={fetchData}
+      />
     </div>
   );
 }
