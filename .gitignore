@@ -6,9 +6,15 @@ node_modules/
 out/
 
 # Build artifacts
-public/extensions/
+# Note: public/extensions/build/*.zip is intentionally NOT ignored —
+# the /extension-install page links directly to the packaged zip at
+# /extensions/build/jobfoocus-extension.zip, so it must be deployed
+# to Vercel for the install flow to work. The versioned filename
+# (jobfoocus-extension-v{version}.zip) is gitignored to avoid
+# accumulating stale historical builds in the repo.
 public/pdf-worker/
 extension/build/
+public/extensions/build/jobfoocus-extension-v*.zip
 
 # Generated job application documents stored locally (not Next.js API routes)
 # Ignores generated application data at project root level only
