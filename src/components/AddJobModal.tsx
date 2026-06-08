@@ -3,40 +3,22 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import Card from '@/components/design/Card';
 import Button from '@/components/design/Button';
 import CategorySelector from '@/components/CategorySelector';
 import ManageCategoriesModal from '@/components/ManageCategoriesModal';
+import AddJobStepper, { type AddJobStep } from '@/components/AddJobStepper';
 import { isMasterResumeBlank, generateMaskedJobEntryAndDocuments } from '@/lib/ai-generation';
 import { getUserCategories, saveCategory, type UserCategory } from '@/lib/storage-adapter';
 
-type ModalState = 'two_column' | 'paste_jd' | 'blank_resume' | 'processing' | 'category_prompt' | 'done';
-type ProcessingStep = 'analyzing' | 'resume' | 'cover_letter' | 'saving' | 'done';
+type ModalState = 'two_column' | 'paste_jd' | 'blank_resume' | 'processing';
 
 const INSTALL_GUIDE_URL = '/extension-install';
 
-function SpinnerIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
-      <line x1="12" y1="2" x2="12" y2="6" />
-      <line x1="12" y1="18" x2="12" y2="22" />
-      <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
-      <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
-      <line x1="2" y1="12" x2="6" y2="12" />
-      <line x1="18" y1="12" x2="22" y2="12" />
-      <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
-      <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
-}
+// Match the extension pipeline's 700ms pause so the user gets a
+// beat to see the "All done" state before the view swaps.
+const AUTO_REDIRECT_DELAY_MS = 700;
 
 interface AddJobModalProps {
   isOpen: boolean;
@@ -45,18 +27,25 @@ interface AddJobModalProps {
 }
 
 export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModalProps) {
+  const router = useRouter();
   const [state, setState] = useState<ModalState>('two_column');
   const [jdText, setJdText] = useState('');
-  const [processingStep, setProcessingStep] = useState<ProcessingStep>('analyzing');
+  const [processingStep, setProcessingStep] = useState<AddJobStep>('analyzing');
   const [selectedCategory, setSelectedCategory] = useState('Uncategorized');
   const [userCategories, setUserCategories] = useState<UserCategory[]>([]);
   const [mounted, setMounted] = useState(false);
   const [showManageCategories, setShowManageCategories] = useState(false);
   const [showNewCatPopup, setShowNewCatPopup] = useState(false);
 
-  // For tracking AI-assigned category after processing
-  const [assignedCategory, setAssignedCategory] = useState('Uncategorized');
-  const [pendingCategory, setPendingCategory] = useState<string | null>(null);
+  // Set when the AI pipeline finishes — points at the saved-app view
+  // for the new job. The processing state shows the "View job" button
+  // and auto-redirects to this URL after AUTO_REDIRECT_DELAY_MS.
+  const [destination, setDestination] = useState<string | null>(null);
+
+  // Header copy for the processing state. We surface the company /
+  // job title that the AI extracted (or the user-typed header from
+  // paste_jd) so the user can verify the AI pulled the right posting.
+  const [resultHeader, setResultHeader] = useState<{ company: string; jobTitle: string } | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -73,18 +62,22 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
       setState('two_column');
       setJdText('');
       setSelectedCategory('Uncategorized');
+      setDestination(null);
+      setResultHeader(null);
     }
   }, [isOpen]);
 
-  // Auto-close after done (only if skipping category prompt)
+  // When processingStep transitions to 'done', wait the celebration
+  // pause then auto-close the modal AND navigate to the saved-app
+  // view. Same UX as the extension pipeline.
   useEffect(() => {
-    if (state === 'done' && !pendingCategory) {
-      const t = setTimeout(() => {
-        onClose();
-      }, 2500);
-      return () => clearTimeout(t);
-    }
-  }, [state, onClose, pendingCategory]);
+    if (state !== 'processing' || processingStep !== 'done' || !destination) return;
+    const t = setTimeout(() => {
+      onClose();
+      router.push(destination);
+    }, AUTO_REDIRECT_DELAY_MS);
+    return () => clearTimeout(t);
+  }, [state, processingStep, destination, onClose, router]);
 
   // Prevent scroll when modal open
   useEffect(() => {
@@ -111,45 +104,43 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
     if (!jdText.trim()) return;
     setState('processing');
     setProcessingStep('analyzing');
-    setPendingCategory(null);
 
     try {
       const result = await generateMaskedJobEntryAndDocuments(jdText, selectedCategory, (step) => {
         setProcessingStep(step);
       });
 
-      // AI has auto-assigned a category - this comes back in result.category_name
-      const aiAssigned = result.category_name || 'Uncategorized';
-      setAssignedCategory(aiAssigned);
+      // Surface the AI-extracted header on the processing view so the
+      // user can verify the right posting was pulled.
+      setResultHeader({
+        company: result.company || 'This job',
+        jobTitle: result.job_title || '',
+      });
 
-      // If AI assigned "Uncategorized", prompt user to set/confirm category
-      // Otherwise, just go to done
-      if (aiAssigned === 'Uncategorized') {
-        setState('category_prompt');
-      } else {
-        // Auto-accepted the AI assignment, go to done
-        setState('done');
-        console.log('[AddJobModal] Job created successfully, AI assigned:', aiAssigned);
-        onJobAdded?.();
-      }
+      // Build the saved-app URL and let the useEffect above handle
+      // the auto-redirect after the celebration pause. Same shape as
+      // the extension pipeline (Uncategorized stays as a literal key
+      // for the saved-app URL; the storage layer resolves it to the
+      // real category_id via the userCats lookup).
+      const appUrl = `/application?app=${encodeURIComponent(result.category)}/${encodeURIComponent(result.folder)}`;
+      setDestination(appUrl);
+      setProcessingStep('done');
+      onJobAdded?.();
     } catch (err) {
       console.error('[AddJobModal] Failed to process job:', err);
-      setState('done'); // Still go to done to let user retry
+      // Roll back to paste_jd with the JD preserved so the user can
+      // retry without re-typing. (Previously the modal went to a
+      // "done" state with a generic success message, which masked
+      // the failure.)
+      setState('paste_jd');
+      setProcessingStep('analyzing');
     }
   };
 
-  const handleCategoryPromptSkip = () => {
-    setPendingCategory(null);
-    setState('done');
-    console.log('[AddJobModal] Job created with Uncategorized');
-    onJobAdded?.();
-  };
-
-  const handleCategoryPromptSave = async (category: string) => {
-    setPendingCategory(category);
-    setState('done');
-    console.log('[AddJobModal] Job created with user category:', category);
-    onJobAdded?.();
+  const handleViewJob = () => {
+    if (!destination) return;
+    onClose();
+    router.push(destination);
   };
 
   const handleCreateNewCategory = async (newCat: UserCategory) => {
@@ -171,14 +162,14 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
     <div
       className="fixed inset-0 z-[9999] flex items-start justify-center pt-16 px-4"
       style={{ backgroundColor: 'rgba(30, 25, 20, 0.55)', backdropFilter: 'blur(2px)' }}
-      onClick={(e) => { if (e.target === e.currentTarget && state !== 'processing' && state !== 'done' && state !== 'category_prompt') onClose(); }}
+      onClick={(e) => { if (e.target === e.currentTarget && state !== 'processing') onClose(); }}
     >
       <div
         className="bg-canvas rounded-2xl shadow-2xl w-full max-w-2xl relative animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
-        {state !== 'processing' && state !== 'done' && state !== 'category_prompt' && (
+        {state !== 'processing' && (
           <button
             onClick={onClose}
             className="absolute top-4 right-4 w-9 h-9 rounded-lg flex items-center justify-center text-steel hover:bg-stone-100 hover:text-ink transition-colors"
@@ -326,90 +317,26 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
 
         {/* ─── State: Processing ─── */}
         {state === 'processing' && (
-          <div className="p-12 text-center">
-            <div className="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-6 text-primary">
-              <SpinnerIcon />
-            </div>
-            <h2 className="text-[22px] font-semibold text-ink mb-2">
-              {processingStep === 'analyzing' && 'Analyzing Job Description'}
-              {processingStep === 'resume' && 'Generating Resume'}
-              {processingStep === 'cover_letter' && 'Writing Cover Letter'}
-              {processingStep === 'saving' && 'Saving Your Job Entry'}
-            </h2>
-            <p className="text-[14px] text-steel mb-4">
-              {processingStep === 'analyzing' && 'Parsing the job posting to extract company, title, and requirements...'}
-              {processingStep === 'resume' && 'Tailoring your resume to match the job requirements...'}
-              {processingStep === 'cover_letter' && 'Writing a personalized cover letter...'}
-              {processingStep === 'saving' && 'Almost done...'}
-            </p>
-            <div className="flex items-center justify-center gap-2 text-[12px] text-muted">
-              <span className="flex items-center gap-1">
-                <span className={processingStep === 'analyzing' ? 'text-primary' : 'text-chart-gray-300'}>●</span>
-                Analyzing
-              </span>
-              <span className="text-muted">→</span>
-              <span className="flex items-center gap-1">
-                <span className={processingStep === 'resume' ? 'text-primary' : 'text-chart-gray-300'}>●</span>
-                Resume
-              </span>
-              <span className="text-muted">→</span>
-              <span className="flex items-center gap-1">
-                <span className={processingStep === 'cover_letter' ? 'text-primary' : 'text-chart-gray-300'}>●</span>
-                Cover Letter
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* ─── State: Category Prompt ─── */}
-        {state === 'category_prompt' && (
           <div className="p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-                  <line x1="7" y1="7" x2="7.01" y2="7"/>
-                </svg>
-              </div>
-              <h2 className="text-[20px] font-semibold text-ink">Set a Category for This Job</h2>
+            <div className="mb-1 text-[12px] font-semibold uppercase tracking-wider text-primary">
+              Adding to your dashboard
             </div>
-
-            <p className="text-[14px] text-steel mb-6">
-              This job was auto-assigned to &quot;Uncategorized&quot;. Select an existing category or create a new one.
+            <h2 className="text-[22px] md:text-[24px] font-semibold text-ink mb-1">
+              {resultHeader?.company || 'This job'}
+            </h2>
+            {resultHeader?.jobTitle && resultHeader.jobTitle !== resultHeader?.company && (
+              <p className="text-[14px] text-steel mb-4">{resultHeader.jobTitle}</p>
+            )}
+            {(!resultHeader?.jobTitle || resultHeader.jobTitle === resultHeader?.company) && (
+              <div className="mb-4" />
+            )}
+            <p className="text-[14px] text-steel mb-6 leading-relaxed">
+              We&apos;re generating a tailored resume and cover letter from your pasted posting. This usually takes 20–60 seconds.
             </p>
-
-            <div className="mb-6">
-              <CategorySelector
-                value={selectedCategory}
-                onChange={setSelectedCategory}
-                onManageClick={() => setShowManageCategories(true)}
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-3">
-              <Button variant="ghost" onClick={handleCategoryPromptSkip}>
-                Skip for Now
-              </Button>
-              <Button
-                variant="primary"
-                onClick={() => handleCategoryPromptSave(selectedCategory)}
-              >
-                Save & Finish
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* ─── State: Done ─── */}
-        {state === 'done' && (
-          <div className="p-12 text-center">
-            <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-6">
-              <CheckIcon />
-            </div>
-            <h2 className="text-[22px] font-semibold text-ink mb-3">Job Added Successfully!</h2>
-            <p className="text-[14px] text-steel">
-              Your resume and cover letter are being generated. Check the Jobs page to view and print them.
-            </p>
+            <AddJobStepper
+              currentStep={processingStep}
+              onViewJob={destination ? handleViewJob : undefined}
+            />
           </div>
         )}
       </div>
