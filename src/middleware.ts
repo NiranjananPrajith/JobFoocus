@@ -48,6 +48,12 @@ export async function middleware(request: NextRequest) {
   if (!user && !isPublicRoute && !isAuthRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
+    // Forward the full path + query string as `?next=` so deep links from
+    // the browser extension (e.g. /application?title=...&company=...)
+    // can bounce the user back here after sign-in.
+    if (request.nextUrl.pathname !== '/') {
+      url.search = `?next=${encodeURIComponent(request.nextUrl.pathname + request.nextUrl.search)}`
+    }
     return NextResponse.redirect(url)
   }
 

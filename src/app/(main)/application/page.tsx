@@ -1,15 +1,16 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Card from '@/components/design/Card';
 import Button from '@/components/design/Button';
 import Badge from '@/components/design/Badge';
 import CategorySelector from '@/components/CategorySelector';
 import ManageCategoriesModal from '@/components/ManageCategoriesModal';
 import { getDocumentHTML, getAllApplications, getMasterResume, assignJobToCategory } from '@/lib/storage-adapter';
+import { createClient } from '@/lib/supabase/client';
 import { StatusType } from '@/lib/design-system';
-import { generateMaskedDocumentsForExistingJob } from '@/lib/ai-generation';
+import { generateMaskedDocumentsForExistingJob, generateJobEntryAndDocuments } from '@/lib/ai-generation';
 import { maskPII, demaskPII, extractPIIProfile } from '@/lib/pii-utils';
 
 interface Application {
@@ -37,6 +38,7 @@ interface Application {
 const STATUS_OPTIONS: StatusType[] = ['prospect', 'applied', 'phone_screen', 'interview', 'offer', 'rejected'];
 
 function ApplicationContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const appId = searchParams.get('app');
 
@@ -50,6 +52,26 @@ function ApplicationContent() {
   const extPosted = searchParams.get('posted');
   const extWorkType = searchParams.get('workType');
   const extHeuristicMiss = searchParams.get('heuristic') === 'miss';
+
+  // "Extension mode" means the page was opened by the browser extension's
+  // deep-link payload (title/company/jd/url, no `app` param). When that
+  // happens, we run the auth check + auto-process pipeline and only
+  // reveal the editable form after resume + cover letter are ready.
+  const isExtensionMode =
+    !appId &&
+    (!!extTitle || !!extCompany || !!extJd || !!extUrl || extHeuristicMiss || !!extLocation || !!extSalary || !!extPosted || !!extWorkType);
+
+  type PipelineStep = 'analyzing' | 'resume' | 'cover_letter' | 'done';
+  type PipelineMode = 'auth-checking' | 'processing' | 'error' | null;
+
+  const [pipelineMode, setPipelineMode] = useState<PipelineMode>(
+    isExtensionMode ? 'auth-checking' : null
+  );
+  const [pipelineStep, setPipelineStep] = useState<PipelineStep>('analyzing');
+  const [pipelineError, setPipelineError] = useState<string | null>(null);
+  // Bumped on "Try again" to re-run the auth check + pipeline. Lives in
+  // the effect's deps so changing it re-triggers the whole flow.
+  const [pipelineRetryToken, setPipelineRetryToken] = useState(0);
 
   const [application, setApplication] = useState<Application | null>(null);
   const [loading, setLoading] = useState(true);
@@ -107,6 +129,14 @@ function ApplicationContent() {
   // Effect 2: Fetch application profile or seed from Extension URL params
   useEffect(() => {
     async function fetchData() {
+      // The extension auto-process pipeline (Effect 3) handles the
+      // extension-payload case end-to-end. While it's running, this
+      // effect must not also seed the form — that would show the
+      // "Imported from Extension" UI in parallel with the stepper.
+      if (isExtensionMode && pipelineMode !== null) {
+        return;
+      }
+
       // 1. Check if this is an incoming payload from the standalone browser extension
       if (!appId && (extTitle || extCompany || extJd || extUrl || extHeuristicMiss || extLocation || extSalary || extPosted || extWorkType)) {
         setIsNewFromExtension(true);
@@ -205,6 +235,101 @@ function ApplicationContent() {
     }
   }, [notification]);
 
+  // Effect 3: Extension mode — auth check + auto-process pipeline.
+  // Runs once when the page is opened by the browser extension with a
+  // deep-link payload. Two phases:
+  //   1. Auth check. If the user is not signed in, redirect them to
+  //      /login?next=<current URL> (or /signup, same query string).
+  //      The login page shows a contextual banner; the auth callback
+  //      sends them back here once sign-in completes.
+  //   2. Pipeline. Save the workspace, save the JD, generate a tailored
+  //      resume and cover letter against the user's master resume. Show
+  //      a stepper while this runs; do NOT reveal the editable form.
+  //      On success, replace the URL with the saved app so the existing
+  //      app-loading effect takes over with the resume + cover letter
+  //      already attached.
+  useEffect(() => {
+    if (!isExtensionMode) return;
+
+    let cancelled = false;
+
+    async function run() {
+      // 1. Auth check
+      try {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (cancelled) return;
+
+        if (!user) {
+          // Hand the user off to login, then bounce back here.
+          const nextUrl = window.location.pathname + window.location.search;
+          router.replace(`/login?next=${encodeURIComponent(nextUrl)}`);
+          return;
+        }
+      } catch (err) {
+        if (cancelled) return;
+        setPipelineError(
+          err instanceof Error ? err.message : 'Could not check your sign-in status.'
+        );
+        setPipelineMode('error');
+        return;
+      }
+
+      // 2. Master-resume gate
+      try {
+        const master = await getMasterResume();
+        if (cancelled) return;
+        if (!master) {
+          setPipelineError(
+            'To generate a tailored resume and cover letter, we need your master resume. Add it first — then come back and try the extension again.'
+          );
+          setPipelineMode('error');
+          return;
+        }
+      } catch (err) {
+        if (cancelled) return;
+        setPipelineError(err instanceof Error ? err.message : 'Could not load your master resume.');
+        setPipelineMode('error');
+        return;
+      }
+
+      // 3. Pipeline
+      setPipelineMode('processing');
+      setPipelineStep('analyzing');
+
+      try {
+        const result = await generateJobEntryAndDocuments(
+          extJd || '',
+          'Uncategorized',
+          (step) => {
+            if (cancelled) return;
+            setPipelineStep(step);
+          }
+        );
+
+        if (cancelled) return;
+        // Replace the URL so the existing app-loading effect takes over.
+        // We keep the extension params out of the URL after the jump so
+        // the saved-app view doesn't accidentally re-enter extension mode.
+        router.replace(`/application?app=${encodeURIComponent(result.category)}/${encodeURIComponent(result.folder)}`);
+      } catch (err) {
+        if (cancelled) return;
+        console.error('Extension pipeline failed:', err);
+        setPipelineError(err instanceof Error ? err.message : 'Failed to add this job.');
+        setPipelineMode('error');
+      }
+    }
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+    // Run on mount and on retry. We deliberately don't depend on
+    // ext* — re-running on those would re-kick the pipeline for the
+    // same payload and create duplicate workspaces.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pipelineRetryToken]);
+
   const handleSave = async () => {
     if (!application) return;
 
@@ -277,6 +402,150 @@ function ApplicationContent() {
       setError(err instanceof Error ? err.message : 'Failed to update');
     }
   };
+
+  // ----- Extension mode rendering (auth-checking / processing / error) -----
+  // These early-returns intentionally run BEFORE the regular form loads.
+  // The user must not see the editable "job details" view until the
+  // resume and cover letter are both generated.
+  if (pipelineMode === 'auth-checking') {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex items-center gap-3 text-[14px] text-steel">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
+            <line x1="12" y1="2" x2="12" y2="6" />
+            <line x1="12" y1="18" x2="12" y2="22" />
+            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
+            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
+            <line x1="2" y1="12" x2="6" y2="12" />
+            <line x1="18" y1="12" x2="22" y2="12" />
+            <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
+            <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
+          </svg>
+          Checking your account…
+        </div>
+      </div>
+    );
+  }
+
+  if (pipelineMode === 'processing') {
+    const STEPS: { id: PipelineStep; label: string; sub: string }[] = [
+      { id: 'analyzing', label: 'Analyzing job description', sub: 'Extracting company, role, and key requirements' },
+      { id: 'resume', label: 'Creating your resume', sub: 'Tailoring your master resume to this role' },
+      { id: 'cover_letter', label: 'Writing your cover letter', sub: 'Drafting a personalized cover letter' },
+    ];
+    const currentIdx = STEPS.findIndex((s) => s.id === pipelineStep);
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-4">
+        <Card variant="cream" className="max-w-[560px] w-full p-8">
+          <div className="mb-1 text-[12px] font-semibold uppercase tracking-wider text-primary">
+            Adding to your dashboard
+          </div>
+          <h2 className="text-[22px] md:text-[24px] font-semibold text-ink mb-2">
+            {extCompany || extTitle || 'This job'}
+          </h2>
+          {extTitle && extCompany && extTitle !== extCompany && (
+            <p className="text-[14px] text-steel mb-6">{extTitle}</p>
+          )}
+          <p className="text-[14px] text-steel mb-6 leading-relaxed">
+            We&apos;re setting up your workspace, generating a tailored resume, and writing a cover letter. This usually takes 20–60 seconds.
+          </p>
+          <ol className="space-y-4">
+            {STEPS.map((step, idx) => {
+              const isDone = currentIdx > idx || pipelineStep === 'done';
+              const isActive = !isDone && currentIdx === idx;
+              return (
+                <li key={step.id} className="flex items-start gap-3">
+                  <div
+                    className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[13px] font-semibold ${
+                      isDone
+                        ? 'bg-green-500 text-white'
+                        : isActive
+                        ? 'bg-primary text-white'
+                        : 'bg-stone-200 text-steel'
+                    }`}
+                    aria-hidden
+                  >
+                    {isDone ? (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    ) : isActive ? (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
+                        <line x1="12" y1="2" x2="12" y2="6" />
+                        <line x1="12" y1="18" x2="12" y2="22" />
+                        <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
+                        <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
+                        <line x1="2" y1="12" x2="6" y2="12" />
+                        <line x1="18" y1="12" x2="22" y2="12" />
+                        <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
+                        <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
+                      </svg>
+                    ) : (
+                      <span>{idx + 1}</span>
+                    )}
+                  </div>
+                  <div className="flex-1 pt-0.5">
+                    <p className={`text-[14px] font-medium ${isActive || isDone ? 'text-ink' : 'text-steel'}`}>
+                      {step.label}
+                    </p>
+                    <p className="text-[12px] text-steel mt-0.5">{step.sub}</p>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </Card>
+      </div>
+    );
+  }
+
+  if (pipelineMode === 'error' && pipelineError) {
+    const needsMasterResume = pipelineError.toLowerCase().includes('master resume');
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-4">
+        <Card variant="default" className="max-w-[560px] w-full p-8">
+          <div className="flex items-start gap-3">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+              <line x1="12" y1="16" x2="12" y2="11" />
+            </svg>
+            <div className="flex-1">
+              <h2 className="text-[18px] font-semibold text-ink mb-2">
+                {needsMasterResume ? 'Master resume required' : 'Couldn’t add this job'}
+              </h2>
+              <p className="text-[14px] text-steel leading-relaxed mb-6">{pipelineError}</p>
+              <div className="flex flex-wrap items-center gap-3">
+                {needsMasterResume ? (
+                  <a href="/master-resume">
+                    <Button variant="primary">Add master resume</Button>
+                  </a>
+                ) : (
+                  <Button
+                    variant="primary"
+                    onClick={() => {
+                      setPipelineError(null);
+                      setPipelineMode('auth-checking');
+                      // Re-run by remounting the effect via a state bump.
+                      setPipelineRetryToken((n) => n + 1);
+                    }}
+                  >
+                    Try again
+                  </Button>
+                )}
+                <a
+                  href="/dashboard"
+                  className="text-[14px] text-steel hover:text-ink transition-colors"
+                >
+                  Back to dashboard
+                </a>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

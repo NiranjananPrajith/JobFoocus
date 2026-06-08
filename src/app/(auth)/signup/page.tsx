@@ -1,18 +1,51 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Button from '@/components/design/Button'
 
 export default function SignupPage() {
+  return (
+    <Suspense fallback={<SignupFallback />}>
+      <SignupContent />
+    </Suspense>
+  )
+}
+
+function SignupFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#fafafa' }}>
+      <div className="text-[14px] text-steel">Loading…</div>
+    </div>
+  )
+}
+
+function SignupContent() {
+  const searchParams = useSearchParams()
+  const next = searchParams.get('next') || ''
+
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  // Computed after mount because `window` is undefined during SSR.
+  const [callbackUrl, setCallbackUrl] = useState('/auth/callback')
   const router = useRouter()
   const supabase = createClient()
+
+  // The auth callback honors `?next=` and redirects there after the
+  // Supabase code exchange succeeds. We append it to both the magic-link
+  // emailRedirectTo and the OAuth redirectTo so the new user lands
+  // back on the page that sent them here (e.g. the extension-driven
+  // /application?title=... deep link).
+  useEffect(() => {
+    const url = next
+      ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`
+      : `${window.location.origin}/auth/callback`
+    setCallbackUrl(url)
+  }, [next])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -22,7 +55,7 @@ export default function SignupPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: callbackUrl,
       },
     })
 
@@ -42,7 +75,7 @@ export default function SignupPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: callbackUrl,
       },
     })
     if (error) {
@@ -61,6 +94,21 @@ export default function SignupPage() {
           </h1>
           <p className="text-[14px] text-steel mt-1">Start organizing your job search today</p>
         </div>
+
+        {next && (
+          <div className="mb-4 bg-primary/5 border border-primary/20 rounded-lg px-4 py-3 text-[13px] text-ink flex items-start gap-2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5 text-primary">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="16" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12.01" y2="8" />
+            </svg>
+            <span>
+              <strong>You were sent here to add a job to your dashboard.</strong>{' '}
+              After creating your account, you&apos;ll be taken straight back to finish adding the
+              job you just scraped.
+            </span>
+          </div>
+        )}
 
         <div className="bg-white rounded-xl border border-hairline-soft p-6 space-y-4">
           {error && (
@@ -123,7 +171,10 @@ export default function SignupPage() {
 
         <p className="text-center text-[13px] text-steel mt-4">
           Already have an account?{' '}
-          <a href="/login" className="text-primary font-medium hover:underline">
+          <a
+            href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'}
+            className="text-primary font-medium hover:underline"
+          >
             Sign in
           </a>
         </p>
