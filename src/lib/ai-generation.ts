@@ -105,7 +105,7 @@ interface FormattedJD {
   preferred: string[];
 }
 
-async function formatJobDescription(rawJD: string): Promise<FormattedJD> {
+export async function formatJobDescription(rawJD: string): Promise<FormattedJD> {
   console.log('[AI] Step 1: Formatting job description, input length:', rawJD.length);
   const system = 'You are an expert job posting analyst. Parse the provided job posting and return a JSON object with exactly these fields:\n- company: string (the hiring company name, or "Unknown Company" if not found)\n- job_title: string (the exact job title)\n- location: string (city/region or "Not specified")\n- employment_type: string (full-time, part-time, contract, etc.)\n- summary: string (2-3 sentence overview of the role)\n- responsibilities: string[] (array of 4-8 key responsibilities as concise bullet points)\n- requirements: string[] (array of 4-8 minimum requirements as bullet points)\n- preferred: string[] (array of 2-4 nice-to-have qualifications, or empty array if none)\n\nReturn ONLY the JSON object. No markdown, no code blocks, no explanation. The JSON must be parseable with JSON.parse().';
 
@@ -379,7 +379,7 @@ export async function processJobDescription(
 // Job Description HTML wrapper
 // ---------------------------------------------------------------------------
 
-function buildJobDescriptionHTML(jd: FormattedJD, rawJD: string): string {
+export function buildJobDescriptionHTML(jd: FormattedJD, rawJD: string): string {
   const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
   const responsibilitiesHTML = Array.isArray(jd.responsibilities) && jd.responsibilities.length > 0

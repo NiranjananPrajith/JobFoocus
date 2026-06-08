@@ -7,10 +7,23 @@ import Button from '@/components/design/Button';
 import Badge from '@/components/design/Badge';
 import CategorySelector from '@/components/CategorySelector';
 import ManageCategoriesModal from '@/components/ManageCategoriesModal';
-import { getDocumentHTML, getAllApplications, getMasterResume, assignJobToCategory } from '@/lib/storage-adapter';
+import {
+  getDocumentHTML,
+  getAllApplications,
+  getMasterResume,
+  assignJobToCategory,
+  ensureUncategorizedCategory,
+  saveApplication,
+  saveDocumentHTML,
+  updateApplicationDocFlags,
+} from '@/lib/storage-adapter';
 import { createClient } from '@/lib/supabase/client';
 import { StatusType } from '@/lib/design-system';
-import { generateMaskedDocumentsForExistingJob, generateJobEntryAndDocuments } from '@/lib/ai-generation';
+import {
+  generateMaskedDocumentsForExistingJob,
+  formatJobDescription,
+  buildJobDescriptionHTML,
+} from '@/lib/ai-generation';
 import { maskPII, demaskPII, extractPIIProfile } from '@/lib/pii-utils';
 
 interface Application {
@@ -298,20 +311,75 @@ function ApplicationContent() {
       setPipelineStep('analyzing');
 
       try {
-        const result = await generateJobEntryAndDocuments(
-          extJd || '',
+        // 3a. Make sure the user has a real Uncategorized row in
+        // user_categories. The storage layer requires every category used
+        // in saves to have a UUID (applications and documents reference
+        // it as a foreign key). Without this, saveApplication +
+        // saveDocumentHTML would fall through to localStorage for the
+        // metadata, then throw "Category ID not found for category:
+        // Uncategorized" on the first document save.
+        const uncategorized = await ensureUncategorizedCategory();
+        if (cancelled) return;
+        if (!uncategorized) {
+          setPipelineError(
+            'Could not set up the Uncategorized category for your account. Please refresh and try again.'
+          );
+          setPipelineMode('error');
+          return;
+        }
+
+        // 3b. Format the JD via AI (drives the 'analyzing' step).
+        const jobDescription = extJd || '';
+        const formattedJD = await formatJobDescription(jobDescription);
+        if (cancelled) return;
+
+        const folder = 'job-' + Date.now();
+
+        // 3c. Save the application metadata. Company/title come from
+        // the formatted JD so the canonical values come from the JD
+        // itself, not the loose scrape. job_url is preserved from the
+        // extension payload so the "View original posting" link works.
+        await saveApplication('Uncategorized', folder, {
+          company: formattedJD.company || extCompany || 'Unknown Company',
+          job_title: formattedJD.job_title || extTitle || 'Scraped Position',
+          date_applied: '',
+          status: 'prospect',
+          response_date: null,
+          notes: '',
+          contact_name: null,
+          contact_email: null,
+          source: 'Extension Scraper',
+          documents: [],
+          job_url: extUrl || null,
+        });
+        if (cancelled) return;
+
+        // 3d. Save the JD HTML so the saved-app view can render it.
+        const jdHTML = buildJobDescriptionHTML(formattedJD, jobDescription);
+        await saveDocumentHTML('Uncategorized', folder, 'job_description', jdHTML);
+        if (cancelled) return;
+
+        // 3e. Generate resume + cover letter and write the doc flags.
+        // We deliberately do NOT call assignJobToCategory here — the
+        // app should stay in Uncategorized so the user can pick a
+        // category (or leave it) on the saved-app view. This is the
+        // divergence from generateJobEntryAndDocuments, which would
+        // auto-classify via AI and move the app into a user category.
+        await generateMaskedDocumentsForExistingJob(
           'Uncategorized',
+          folder,
+          jobDescription,
           (step) => {
             if (cancelled) return;
             setPipelineStep(step);
           }
         );
-
         if (cancelled) return;
+
         // Replace the URL so the existing app-loading effect takes over.
         // We keep the extension params out of the URL after the jump so
         // the saved-app view doesn't accidentally re-enter extension mode.
-        router.replace(`/application?app=${encodeURIComponent(result.category)}/${encodeURIComponent(result.folder)}`);
+        router.replace(`/application?app=Uncategorized/${encodeURIComponent(folder)}`);
       } catch (err) {
         if (cancelled) return;
         console.error('Extension pipeline failed:', err);
@@ -777,7 +845,28 @@ function ApplicationContent() {
             <div>
               <p className="text-[14px] font-semibold text-amber-900 mb-1">Heuristic check failed</p>
               <p className="text-[13px] text-amber-800 leading-relaxed">
-                This page didn't look like a job posting (no "job" or "career" in the URL or title), so no job description was extracted. Paste the JD into the description field below before saving.
+                This page didn&apos;t look like a job posting (no &quot;job&quot; or &quot;career&quot; in the URL or title), so no job description was extracted. Paste the JD into the description field below before saving.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Uncategorized prompt — shown when the saved app is sitting in the
+          Uncategorized bucket. The extension pipeline intentionally lands
+          here so the user can pick a category (or leave it) on first view.
+          The CategorySelector inside the form below is the action target. */}
+      {application && (application.category_name || application.category || '').toLowerCase() === 'uncategorized' && (
+        <Card variant="default" className="mb-4 md:mb-6 border-primary/30 bg-primary/5">
+          <div className="flex items-start gap-3">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5 text-primary">
+              <path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+              <line x1="7" y1="7" x2="7.01" y2="7" />
+            </svg>
+            <div>
+              <p className="text-[14px] font-semibold text-ink mb-1">Pick a category for this job</p>
+              <p className="text-[13px] text-steel leading-relaxed">
+                It&apos;s currently in <strong>Uncategorized</strong>. Use the Category field in the form below to move it into one of your categories, or leave it here for now. Your resume and cover letter are already generated.
               </p>
             </div>
           </div>

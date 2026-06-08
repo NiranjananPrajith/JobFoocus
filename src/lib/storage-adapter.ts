@@ -73,6 +73,43 @@ export async function getUserCategories(): Promise<UserCategory[]> {
   }
 }
 
+// "Uncategorized" is treated as a system category throughout the app, but
+// the storage layer requires every category used in saves to have a real
+// row in `user_categories` (so it has a UUID for the foreign key on
+// applications / documents). The extension pipeline and other entry
+// points that may want to drop a job into Uncategorized call this first
+// to make sure that row exists. It is idempotent — if the user already
+// has an Uncategorized row, it returns that one.
+export async function ensureUncategorizedCategory(): Promise<UserCategory | null> {
+  const userId = await getUserId();
+  if (!userId) return null;
+
+  const userCats = await getUserCategories();
+  const existing = userCats.find((c) => c.name.toLowerCase() === 'uncategorized');
+  if (existing) return existing;
+
+  try {
+    const created = await apiFetch('/api/db/categories', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'Uncategorized',
+        description: 'Jobs not yet assigned to a category',
+      }),
+    });
+    if (created && created.id) {
+      return transformCategoryFromApi(created);
+    }
+  } catch (err) {
+    // Most common reason: a 409 because the user already has an
+    // Uncategorized row from another tab / race. Fall through and
+    // re-fetch.
+    console.warn('[storage-adapter] ensureUncategorizedCategory create failed, retrying lookup:', err);
+  }
+
+  const after = await getUserCategories();
+  return after.find((c) => c.name.toLowerCase() === 'uncategorized') ?? null;
+}
+
 export async function saveCategory(cat: UserCategory): Promise<{ success: boolean; error?: string }> {
   const userId = await getUserId();
   if (!userId) return { success: false, error: 'Not authenticated' };
