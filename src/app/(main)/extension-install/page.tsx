@@ -17,30 +17,42 @@ function detectBrowser(): Browser {
 
 const STEPS = [
   {
-    title: 'Open the extensions page',
+    title: () => 'Open the extensions page',
     body: (b: Browser) =>
-      b === 'edge'
+      b === 'firefox'
+        ? 'Type about:debugging#/runtime/this-firefox into the address bar and press Enter.'
+        : b === 'edge'
         ? 'Type edge://extensions into the address bar and press Enter.'
         : 'Type chrome://extensions into the address bar and press Enter.',
-    href: (b: Browser) => (b === 'edge' ? 'edge://extensions' : 'chrome://extensions'),
+    href: (b: Browser) =>
+      b === 'firefox'
+        ? 'about:debugging#/runtime/this-firefox'
+        : b === 'edge'
+        ? 'edge://extensions'
+        : 'chrome://extensions',
   },
   {
-    title: 'Enable Developer mode',
-    body: () =>
-      'Toggle the Developer mode switch in the top-right corner of the page.',
+    title: () => 'Enable Developer mode',
+    body: (b: Browser) =>
+      b === 'firefox'
+        ? 'Firefox does not need Developer mode — proceed to the next step.'
+        : 'Toggle the Developer mode switch in the top-right corner of the page.',
   },
   {
-    title: 'Click "Load unpacked"',
-    body: () =>
-      'A file picker opens. Select the extension/ folder from the project directory you downloaded.',
+    title: (b: Browser) =>
+      b === 'firefox' ? 'Click "Load Temporary Add-on…"' : 'Click "Load unpacked"',
+    body: (b: Browser) =>
+      b === 'firefox'
+        ? 'A file picker opens. Select the manifest.json file from the extracted extension folder.'
+        : 'A file picker opens. Select the extracted extension folder (the one containing manifest.json) — not the .zip itself.',
   },
   {
-    title: 'Pin the extension',
+    title: () => 'Pin the extension',
     body: () =>
       'Click the puzzle-piece icon in your browser toolbar, then click the pin icon next to "JobFoocus Scraper".',
   },
   {
-    title: 'Try it on a job posting',
+    title: () => 'Try it on a job posting',
     body: () =>
       'Navigate to any job posting (LinkedIn, Indeed, Greenhouse, etc.) and click the JobFoocus toolbar icon. The dashboard opens with the job title, company, and description pre-filled.',
   },
@@ -102,7 +114,7 @@ export default function ExtensionInstallPage() {
             <p className="text-[14px] text-steel leading-relaxed">
               Detected browser:{' '}
               <span className="font-medium text-ink">{browserLabel[browser]}</span>. Download the
-              packaged extension and skip the manual steps below.
+              packaged extension below, then follow the two-step load instructions for your browser.
             </p>
           </div>
           <button
@@ -123,10 +135,54 @@ export default function ExtensionInstallPage() {
             {downloadError}
           </p>
         )}
-        {browser === 'firefox' || browser === 'safari' ? (
+        <div className="mt-4 rounded-lg bg-white border border-hairline-soft p-4">
+          <p className="text-[13px] text-steel leading-relaxed">
+            <strong className="text-ink">After downloading:</strong> double-click the{' '}
+            <code className="px-1 py-0.5 bg-canvas rounded text-[12px]">.zip</code> to extract it.
+            You'll get a folder containing{' '}
+            <code className="px-1 py-0.5 bg-canvas rounded text-[12px]">manifest.json</code> — that
+            folder is the extension. Chrome/Edge/Brave will{' '}
+            <em>not</em> install the .zip directly, which is the &quot;extension appears corrupted&quot;
+            error you may see if you try.
+          </p>
+          <ol className="mt-3 text-[13px] text-steel leading-relaxed space-y-1 list-decimal pl-5">
+            {browser === 'firefox' ? (
+              <>
+                <li>
+                  Open{' '}
+                  <code className="px-1 py-0.5 bg-canvas rounded text-[12px]">
+                    about:debugging#/runtime/this-firefox
+                  </code>
+                </li>
+                <li>
+                  Click <strong className="text-ink">Load Temporary Add-on…</strong> and select the
+                  extracted{' '}
+                  <code className="px-1 py-0.5 bg-canvas rounded text-[12px]">manifest.json</code>
+                </li>
+              </>
+            ) : (
+              <>
+                <li>
+                  Open{' '}
+                  <code className="px-1 py-0.5 bg-canvas rounded text-[12px]">
+                    {browser === 'edge' ? 'edge://extensions' : 'chrome://extensions'}
+                  </code>
+                </li>
+                <li>
+                  Enable <strong className="text-ink">Developer mode</strong> (top-right toggle)
+                </li>
+                <li>
+                  Click <strong className="text-ink">Load unpacked</strong> and select the extracted
+                  extension folder (not the .zip)
+                </li>
+              </>
+            )}
+          </ol>
+        </div>
+        {browser === 'safari' ? (
           <p className="mt-4 text-[13px] text-steel">
-            <strong>Note:</strong> the extension is currently packaged for Chromium-based browsers
-            (Chrome, Edge, Brave, Arc, Opera). Firefox/Safari ports are on the roadmap.
+            <strong>Note:</strong> Safari does not support MV3 extensions the same way. Consider
+            Chrome, Edge, Brave, or Firefox for the smoothest experience.
           </p>
         ) : null}
       </div>
@@ -140,7 +196,7 @@ export default function ExtensionInstallPage() {
       <ol className="space-y-4 mb-10">
         {STEPS.map((step, idx) => (
           <li
-            key={step.title}
+            key={idx}
             className="rounded-xl border border-hairline-soft bg-white p-5 flex gap-4"
           >
             <div
@@ -150,7 +206,7 @@ export default function ExtensionInstallPage() {
               {idx + 1}
             </div>
             <div className="flex-1">
-              <h3 className="text-[15px] font-semibold text-ink mb-1">{step.title}</h3>
+              <h3 className="text-[15px] font-semibold text-ink mb-1">{step.title(browser)}</h3>
               <p className="text-[14px] text-steel leading-relaxed">{step.body(browser)}</p>
               {step.href && (
                 <a
