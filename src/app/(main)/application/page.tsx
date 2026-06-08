@@ -165,7 +165,7 @@ function ApplicationContent() {
         });
         setHeuristicMiss(extHeuristicMiss && !extJd);
         setStatus('prospect');
-        setSource('Extension Scraper');
+        setSource('JobFoocus Extension');
         setCategory('Uncategorized');
 
         // Generate a provisional storage path context for the browser cache storage adapter
@@ -175,7 +175,7 @@ function ApplicationContent() {
           job_title: extTitle || 'Scraped Position',
           date_applied: '',
           status: 'prospect',
-          source: 'Extension Scraper',
+          source: 'JobFoocus Extension',
           contact_name: '',
           contact_email: '',
           notes: '',
@@ -348,7 +348,7 @@ function ApplicationContent() {
           notes: '',
           contact_name: null,
           contact_email: null,
-          source: 'Extension Scraper',
+          source: 'JobFoocus Extension',
           documents: [],
           job_url: extUrl || null,
         });

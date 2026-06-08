@@ -49,7 +49,7 @@ const STEPS = [
   {
     title: () => 'Pin the extension',
     body: () =>
-      'Click the puzzle-piece icon in your browser toolbar, then click the pin icon next to "JobFoocus Scraper".',
+      'Click the puzzle-piece icon in your browser toolbar, then click the pin icon next to "JobFoocus".',
   },
   {
     title: () => 'Try it on a job posting',
