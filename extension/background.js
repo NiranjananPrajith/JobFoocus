@@ -9,7 +9,7 @@
 // Switch by changing the value of DASHBOARD_URL below.
 // Reload the extension at chrome://extensions after changing.
 // See extension/README.md for full details.
-const DASHBOARD_URL = "http://localhost:3000/application";
+const DASHBOARD_URL = "https://job-foocus.vercel.app/application";
 
 const DASHBOARD_ORIGIN = new URL(DASHBOARD_URL).origin;
 
