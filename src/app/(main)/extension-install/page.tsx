@@ -23,7 +23,7 @@ const STEPS = [
         ? 'Type about:debugging#/runtime/this-firefox into the address bar and press Enter.'
         : b === 'edge'
         ? 'Type edge://extensions into the address bar and press Enter.'
-        : 'Type chrome://extensions into the address bar and press Enter.',
+        : 'Type chrome://extensions into the address bar and press Enter. (For Brave, Arc, Opera, Vivaldi, etc. — replace `chrome` with your browser name: `brave://extensions`, `arc://extensions`, etc. The rest of the steps are identical.)',
     href: (b: Browser) =>
       b === 'firefox'
         ? 'about:debugging#/runtime/this-firefox'
@@ -36,7 +36,7 @@ const STEPS = [
     body: (b: Browser) =>
       b === 'firefox'
         ? 'Firefox does not need Developer mode — proceed to the next step.'
-        : 'Toggle the Developer mode switch in the top-right corner of the page.',
+        : 'Toggle the Developer mode switch in the top-right corner of the page. (On Brave, Arc, Opera, etc. it&apos;s in the same place — the toggle is in every Chromium extensions page.)',
   },
   {
     title: (b: Browser) =>
@@ -167,13 +167,44 @@ export default function ExtensionInstallPage() {
             {downloadError}
           </p>
         )}
+
+        {/* Supported-browsers strip. The Chrome-based path is the same
+            for every Chromium browser, but users on Edge / Brave / Arc
+            / Opera often don't realize their browser is Chromium and
+            that the same zip + chrome://extensions-style page works.
+            Listing them explicitly avoids the &quot;is this for me?&quot;
+            hesitation. */}
+        <div className="mt-4 rounded-lg bg-white border border-hairline-soft p-4">
+          <p className="text-[12px] font-semibold uppercase tracking-wider text-steel mb-2">
+            Supported browsers
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[13px]">
+            <div>
+              <p className="font-medium text-ink mb-1">Chrome-based (Chromium)</p>
+              <p className="text-steel leading-relaxed">
+                Google Chrome, Microsoft Edge, Brave, Arc, Opera, Vivaldi,
+                and any other Chromium-based browser. The install steps
+                below are identical for all of them.
+              </p>
+            </div>
+            <div>
+              <p className="font-medium text-ink mb-1">Firefox</p>
+              <p className="text-steel leading-relaxed">
+                Firefox uses a different install flow (Load Temporary
+                Add-on). The same zip works — the steps below switch
+                automatically based on your detected browser.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="mt-4 rounded-lg bg-white border border-hairline-soft p-4">
           <p className="text-[13px] text-steel leading-relaxed">
             <strong className="text-ink">After downloading:</strong> double-click the{' '}
             <code className="px-1 py-0.5 bg-canvas rounded text-[12px]">.zip</code> to extract it.
             You'll get a folder containing{' '}
             <code className="px-1 py-0.5 bg-canvas rounded text-[12px]">manifest.json</code> — that
-            folder is the extension. Chrome/Edge/Brave will{' '}
+            folder is the extension. Chrome / Edge / Brave will{' '}
             <em>not</em> install the .zip directly, which is the &quot;extension appears corrupted&quot;
             error you may see if you try.
           </p>
@@ -199,6 +230,14 @@ export default function ExtensionInstallPage() {
                   <code className="px-1 py-0.5 bg-canvas rounded text-[12px]">
                     {browser === 'edge' ? 'edge://extensions' : 'chrome://extensions'}
                   </code>
+                  {' '}
+                  <span className="text-steel">
+                    (use{' '}
+                    <code className="px-1 py-0.5 bg-canvas rounded text-[12px]">brave://extensions</code>
+                    {' '}or{' '}
+                    <code className="px-1 py-0.5 bg-canvas rounded text-[12px]">arc://extensions</code>
+                    {' '}etc. for other Chromium browsers — same steps below)
+                  </span>
                 </li>
                 <li>
                   Enable <strong className="text-ink">Developer mode</strong> (top-right toggle)
