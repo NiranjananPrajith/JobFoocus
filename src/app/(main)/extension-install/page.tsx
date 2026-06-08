@@ -95,6 +95,38 @@ export default function ExtensionInstallPage() {
 
   return (
     <div className="max-w-[860px] mx-auto">
+      {/* Beta notice — pinned at the top of the page so it's the first
+          thing every visitor reads. The extension is currently in active
+          testing (v1.1.3), with known rough edges (the auto-process
+          pipeline can fail on sites the scraper doesn't recognize, the
+          AI classification can be wrong, and Firefox temporary add-ons
+          have to be re-loaded each browser restart). Anyone installing
+          it right now is helping us find those issues — not a "ship to
+          a friend and forget" install. */}
+      <div className="mb-8 rounded-xl border-2 border-amber-400 bg-amber-50 p-4 md:p-5">
+        <div className="flex items-start gap-3">
+          <span className="shrink-0 inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-amber-400 text-amber-950 text-[11px] font-bold uppercase tracking-wider">
+            Beta
+          </span>
+          <div className="flex-1">
+            <p className="text-[14px] font-semibold text-amber-950 mb-1">
+              This extension is in beta and is only intended for testing.
+            </p>
+            <p className="text-[13px] text-amber-900 leading-relaxed">
+              You may run into rough edges — the auto-process pipeline can
+              fail on sites the scraper doesn&apos;t recognize, the AI
+              classification can pick the wrong category, and on Firefox the
+              temporary add-on has to be re-loaded each time the browser
+              restarts. If something breaks, please note the site URL and
+              what happened and send it back to us — your reports directly
+              shape the next release. The Chrome Web Store / Firefox
+              Add-ons listings are not yet available, so this zip is the
+              only install path.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Hero */}
       <div className="mb-10">
         <h1 className="text-[32px] md:text-[40px] font-semibold text-ink mb-3">

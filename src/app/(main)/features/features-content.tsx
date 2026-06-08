@@ -2,6 +2,7 @@ import Button from '@/components/design/Button';
 import Card from '@/components/design/Card';
 import HeroBubbleBackground from '@/components/HeroBubbleBackground';
 import AIProcessGraphic from '@/components/AIProcessGraphic';
+import Link from 'next/link';
 const coreFeatures = [
   {
     eyebrow: 'AI Document Generation',
@@ -237,9 +238,13 @@ export default function FeaturesPageContent() {
                 Import any job posting directly into your Job Foocus dashboard with one click. Automatically captures job title, company, and full description.
               </p>
               <div className="flex gap-2">
-                <button className="px-4 py-2 text-[13px] font-medium text-white rounded-md" style={{ backgroundColor: '#fa520f' }}>
+                <Link
+                  href="/extension-install"
+                  className="px-4 py-2 text-[13px] font-medium text-white rounded-md inline-flex items-center"
+                  style={{ backgroundColor: '#fa520f' }}
+                >
                   Add Extension
-                </button>
+                </Link>
                 <button className="px-4 py-2 text-[13px] font-medium text-steel rounded-md border border-hairline-soft bg-white">
                   Learn More
                 </button>
