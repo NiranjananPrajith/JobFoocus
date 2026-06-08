@@ -24,6 +24,50 @@ import {
   formatJobDescription,
   buildJobDescriptionHTML,
 } from '@/lib/ai-generation';
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+// Extract a bare hostname from a URL string for use as the application
+// `source` field. Examples:
+//   "https://www.linkedin.com/jobs/view/..."  -> "linkedin.com"
+//   "https://boards.greenhouse.io/acme/jobs/.." -> "greenhouse.io"
+//   "" / "not a url"                            -> ""
+// We strip a leading "www." so www.linkedin.com and linkedin.com collapse
+// to the same value.
+function extractDomain(url: string): string {
+  if (!url) return '';
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return '';
+  }
+}
+
+// Values that should be treated as "the AI couldn't figure this out" and
+// therefore trigger the manual-fill form. We compare lowercased + trimmed
+// to keep the set small and predictable. The system prompt for
+// formatJobDescription explicitly says company may be "Unknown Company" if
+// not found, so that string is the canonical signal; everything else is
+// defensive.
+const UNKNOWN_VALUES = new Set([
+  '',
+  'unknown',
+  'unknown company',
+  'n/a',
+  'na',
+  'null',
+  'none',
+  'not specified',
+  'not found',
+  '[unknown]',
+  'undefined',
+]);
+function isUnknownValue(v: string | undefined | null): boolean {
+  if (v == null) return true;
+  return UNKNOWN_VALUES.has(String(v).trim().toLowerCase());
+}
 import { maskPII, demaskPII, extractPIIProfile } from '@/lib/pii-utils';
 
 interface Application {
@@ -75,7 +119,28 @@ function ApplicationContent() {
     (!!extTitle || !!extCompany || !!extJd || !!extUrl || extHeuristicMiss || !!extLocation || !!extSalary || !!extPosted || !!extWorkType);
 
   type PipelineStep = 'analyzing' | 'resume' | 'cover_letter' | 'done';
-  type PipelineMode = 'auth-checking' | 'processing' | 'error' | null;
+  type PipelineMode = 'auth-checking' | 'processing' | 'manual-fill' | 'error' | null;
+
+  // Held while the user is filling in the manual-fill form. Captures
+  // everything the AI extracted + the original job description + a
+  // pre-allocated folder name, so the resume handler can pick up where
+  // formatJobDescription left off without re-running it.
+  type ManualFillPayload = {
+    folder: string;
+    jobDescription: string;
+    formattedJD: {
+      company: string;
+      job_title: string;
+      location: string;
+      employment_type: string;
+      summary: string;
+      responsibilities: string[];
+      requirements: string[];
+      preferred: string[];
+    };
+    missingCompany: boolean;
+    missingTitle: boolean;
+  };
 
   const [pipelineMode, setPipelineMode] = useState<PipelineMode>(
     isExtensionMode ? 'auth-checking' : null
@@ -89,6 +154,13 @@ function ApplicationContent() {
   // Bumped on "Try again" to re-run the auth check + pipeline. Lives in
   // the effect's deps so changing it re-triggers the whole flow.
   const [pipelineRetryToken, setPipelineRetryToken] = useState(0);
+  // Manual-fill form state. Populated when the AI returns an empty /
+  // "Unknown Company" / missing job_title. The user fills in the
+  // missing field(s) and the pipeline resumes from `saveApplication`.
+  const [manualFill, setManualFill] = useState<ManualFillPayload | null>(null);
+  const [manualCompany, setManualCompany] = useState('');
+  const [manualTitle, setManualTitle] = useState('');
+  const [manualFillError, setManualFillError] = useState<string | null>(null);
 
   const [application, setApplication] = useState<Application | null>(null);
   const [loading, setLoading] = useState(true);
@@ -169,7 +241,7 @@ function ApplicationContent() {
         });
         setHeuristicMiss(extHeuristicMiss && !extJd);
         setStatus('prospect');
-        setSource('JobFoocus Extension');
+        setSource(extractDomain(extUrl || ''));
         setCategory('Uncategorized');
 
         // Generate a provisional storage path context for the browser cache storage adapter
@@ -179,7 +251,7 @@ function ApplicationContent() {
           job_title: extTitle || 'Scraped Position',
           date_applied: '',
           status: 'prospect',
-          source: 'JobFoocus Extension',
+          source: extractDomain(extUrl || ''),
           contact_name: '',
           contact_email: '',
           notes: '',
@@ -339,20 +411,56 @@ function ApplicationContent() {
 
         const folder = 'job-' + Date.now();
 
-        // 3c. Save the application metadata. Company/title come from
+        // 3c. Required-field gate. The user explicitly does not want
+        // applications saved with an unknown/blank company or job
+        // title — those are the two fields that make a job identifiable
+        // in the dashboard and are needed for resume tailoring too. If
+        // either came back missing (the JD was too sparse, or the AI
+        // wasn't confident), pause the pipeline and ask the user to
+        // type them in. Everything else the AI extracted is preserved
+        // and pre-filled into the manual-fill form below.
+        const missingCompany = isUnknownValue(formattedJD.company);
+        const missingTitle = isUnknownValue(formattedJD.job_title);
+        if (missingCompany || missingTitle) {
+          setManualFill({
+            folder,
+            jobDescription,
+            formattedJD: {
+              company: formattedJD.company || '',
+              job_title: formattedJD.job_title || '',
+              location: formattedJD.location || '',
+              employment_type: formattedJD.employment_type || '',
+              summary: formattedJD.summary || '',
+              responsibilities: formattedJD.responsibilities || [],
+              requirements: formattedJD.requirements || [],
+              preferred: formattedJD.preferred || [],
+            },
+            missingCompany,
+            missingTitle,
+          });
+          // Pre-fill the form with whatever the scrape provided, so the
+          // user only has to type the genuinely missing pieces.
+          setManualCompany(extCompany || formattedJD.company || '');
+          setManualTitle(extTitle || formattedJD.job_title || '');
+          setManualFillError(null);
+          setPipelineMode('manual-fill');
+          return;
+        }
+
+        // 3d. Save the application metadata. Company/title come from
         // the formatted JD so the canonical values come from the JD
         // itself, not the loose scrape. job_url is preserved from the
         // extension payload so the "View original posting" link works.
         await saveApplication('Uncategorized', folder, {
-          company: formattedJD.company || extCompany || 'Unknown Company',
-          job_title: formattedJD.job_title || extTitle || 'Scraped Position',
+          company: formattedJD.company,
+          job_title: formattedJD.job_title,
           date_applied: '',
           status: 'prospect',
           response_date: null,
           notes: '',
           contact_name: null,
           contact_email: null,
-          source: 'JobFoocus Extension',
+          source: extractDomain(extUrl || ''),
           documents: [],
           job_url: extUrl || null,
         });
@@ -416,6 +524,110 @@ function ApplicationContent() {
     // same payload and create duplicate workspaces.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pipelineRetryToken]);
+
+  // Called from the manual-fill form when the user submits the
+  // missing company / job title. Re-uses the stashed formatted JD +
+  // folder from `manualFill` (so we don't re-run formatJobDescription)
+  // and falls through to the same saveApplication → saveDocumentHTML
+  // → generateMaskedDocumentsForExistingJob → router.replace sequence
+  // the auto pipeline uses.
+  const handleManualFillSubmit = async () => {
+    if (!manualFill) return;
+
+    const company = manualCompany.trim();
+    const title = manualTitle.trim();
+    const stillMissing: string[] = [];
+    if (manualFill.missingCompany && !company) stillMissing.push('Company');
+    if (manualFill.missingTitle && !title) stillMissing.push('Job title');
+    if (stillMissing.length) {
+      setManualFillError(
+        `Please enter the ${stillMissing.join(' and ')} before continuing.`
+      );
+      return;
+    }
+
+    let cancelled = false;
+    setManualFillError(null);
+    setPipelineMode('processing');
+    // The analyzing step already ran (that's how we got here). Start
+    // the stepper at 'resume' so the visible progress matches what's
+    // actually about to happen.
+    setPipelineStep('resume');
+
+    try {
+      // Use whichever value the user provided for the missing field,
+      // and fall back to the AI's extraction (or the loose scrape) for
+      // the other one.
+      const finalCompany = manualFill.missingCompany ? company : (manualFill.formattedJD.company || extCompany || '');
+      const finalTitle = manualFill.missingTitle ? title : (manualFill.formattedJD.job_title || extTitle || '');
+
+      const finalFormattedJD = {
+        ...manualFill.formattedJD,
+        company: finalCompany,
+        job_title: finalTitle,
+      };
+
+      await saveApplication('Uncategorized', manualFill.folder, {
+        company: finalCompany,
+        job_title: finalTitle,
+        date_applied: '',
+        status: 'prospect',
+        response_date: null,
+        notes: '',
+        contact_name: null,
+        contact_email: null,
+        source: extractDomain(extUrl || ''),
+        documents: [],
+        job_url: extUrl || null,
+      });
+      if (cancelled) return;
+
+      const jdHTML = buildJobDescriptionHTML(finalFormattedJD, manualFill.jobDescription);
+      await saveDocumentHTML('Uncategorized', manualFill.folder, 'job_description', jdHTML);
+      if (cancelled) return;
+
+      // Same intent as the auto pipeline: the stepper reuses the
+      // existing analyzing→resume→cover_letter→done UI, but the
+      // analyzing step has effectively already happened (we know
+      // the JD format, the user just supplied the missing fields).
+      // We pass an onStep that ignores the redundant 'analyzing'
+      // event so the stepper stays on 'resume' until the AI resumes
+      // generation actually starts.
+      await generateMaskedDocumentsForExistingJob(
+        'Uncategorized',
+        manualFill.folder,
+        manualFill.jobDescription,
+        (step) => {
+          if (cancelled) return;
+          if (step === 'analyzing') return; // already done
+          setPipelineStep(step);
+        }
+      );
+      if (cancelled) return;
+
+      const destination = `/application?app=Uncategorized/${encodeURIComponent(manualFill.folder)}`;
+      setPipelineDestination(destination);
+      // Same 700ms celebration pause as the auto pipeline.
+      await new Promise((r) => setTimeout(r, 700));
+      if (cancelled) return;
+      setPipelineMode(null);
+      setManualFill(null);
+      router.replace(destination);
+    } catch (err) {
+      console.error('Manual-fill resume failed:', err);
+      setPipelineError(err instanceof Error ? err.message : 'Failed to save this job.');
+      setPipelineMode('error');
+    }
+  };
+
+  const handleManualFillCancel = () => {
+    setManualFill(null);
+    setManualCompany('');
+    setManualTitle('');
+    setManualFillError(null);
+    setPipelineMode(null);
+    router.replace('/dashboard');
+  };
 
   const handleSave = async () => {
     if (!application) return;
@@ -510,6 +722,94 @@ function ApplicationContent() {
           </svg>
           Checking your account…
         </div>
+      </div>
+    );
+  }
+
+  if (pipelineMode === 'manual-fill' && manualFill) {
+    const { missingCompany, missingTitle, formattedJD, jobDescription } = manualFill;
+    const missingList: string[] = [];
+    if (missingCompany) missingList.push('company name');
+    if (missingTitle) missingList.push('job title');
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-4">
+        <Card variant="cream" className="max-w-[640px] w-full p-8">
+          <div className="mb-1 text-[12px] font-semibold uppercase tracking-wider text-primary">
+            One more step
+          </div>
+          <h2 className="text-[22px] md:text-[24px] font-semibold text-ink mb-2">
+            We couldn&apos;t find the {missingList.join(' and ')}
+          </h2>
+          <p className="text-[14px] text-steel leading-relaxed mb-6">
+            The job description is a bit sparse, so our AI couldn&apos;t pick up the missing
+            detail{missingList.length > 1 ? 's' : ''}. Fill in the highlighted field{missingList.length > 1 ? 's' : ''} below and
+            we&apos;ll save the application and generate your resume and cover letter.
+          </p>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-[12px] uppercase tracking-wide text-steel mb-2">
+                Company
+                {missingCompany && <span className="ml-1 text-red-600 normal-case">*</span>}
+              </label>
+              <input
+                type="text"
+                value={manualCompany}
+                onChange={(e) => setManualCompany(e.target.value)}
+                placeholder="e.g. Concentrix"
+                disabled={!missingCompany}
+                className="w-full px-4 py-3 rounded-md border border-hairline-strong bg-white text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-11 disabled:bg-canvas disabled:text-steel disabled:cursor-not-allowed"
+              />
+            </div>
+            <div>
+              <label className="block text-[12px] uppercase tracking-wide text-steel mb-2">
+                Job title
+                {missingTitle && <span className="ml-1 text-red-600 normal-case">*</span>}
+              </label>
+              <input
+                type="text"
+                value={manualTitle}
+                onChange={(e) => setManualTitle(e.target.value)}
+                placeholder="e.g. Customer Service / Technical Support Rep"
+                disabled={!missingTitle}
+                className="w-full px-4 py-3 rounded-md border border-hairline-strong bg-white text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-11 disabled:bg-canvas disabled:text-steel disabled:cursor-not-allowed"
+              />
+            </div>
+          </div>
+
+          {jobDescription && (
+            <details className="mt-6">
+              <summary className="text-[13px] text-steel cursor-pointer hover:text-ink">
+                Show job description for context
+              </summary>
+              <pre className="mt-3 text-[12px] text-steel whitespace-pre-wrap max-h-[240px] overflow-y-auto rounded-lg border border-hairline-soft bg-canvas/50 p-3 font-sans">
+                {jobDescription}
+              </pre>
+            </details>
+          )}
+
+          {manualFillError && (
+            <p className="mt-4 text-[13px] text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+              {manualFillError}
+            </p>
+          )}
+
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <Button
+              variant="primary"
+              onClick={handleManualFillSubmit}
+            >
+              Save and generate resume &amp; cover letter
+            </Button>
+            <button
+              type="button"
+              onClick={handleManualFillCancel}
+              className="text-[14px] text-steel hover:text-ink transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </Card>
       </div>
     );
   }
