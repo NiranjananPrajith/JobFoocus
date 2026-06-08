@@ -102,7 +102,20 @@ export default function CategorySelector({
 
   return (
     <>
-      <div className="relative">
+      <div
+        className="relative"
+        // The CategorySelector is sometimes rendered inside a clickable
+        // parent (e.g. an ApplicationCard wrapped in <a href>),
+        // where a click on the input / chevron / popover option would
+        // otherwise bubble to the anchor and trigger navigation. Stop
+        // both click and mousedown at the root so the popover behavior
+        // is identical whether or not there's a wrapping anchor. Safe
+        // in form contexts: the input still gets focus, the chevron
+        // still toggles, options still call onChange — only the
+        // bubbling to ancestors is suppressed.
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
         <input
           ref={inputRef}
           type="text"
