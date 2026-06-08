@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ApplicationCard from '@/components/ApplicationCard';
 import Card from '@/components/design/Card';
-import { deleteApplication, getAllApplications, getTrashedApplications, restoreApplication, permanentlyDeleteApplication, saveApplication, type EnrichedApplication } from '@/lib/storage-adapter';
+import { deleteApplication, getAllApplications, getTrashedApplications, restoreApplication, permanentlyDeleteApplication, saveApplication, getUserCategories, type EnrichedApplication, type UserCategory } from '@/lib/storage-adapter';
 import { StatusType } from '@/lib/design-system';
 
 type Tab = 'all' | 'applied' | 'prospects' | 'trashed';
@@ -23,6 +23,7 @@ function JobsContent() {
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [applications, setApplications] = useState<EnrichedApplication[]>([]);
   const [trashed, setTrashed] = useState<EnrichedApplication[]>([]);
+  const [userCategories, setUserCategories] = useState<UserCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Filter state (only meaningful when activeTab === 'all')
@@ -93,12 +94,31 @@ function JobsContent() {
     }
   };
 
+  const handleCategoryChange = async (id: string, newCategory: string) => {
+    const parts = id.split('/');
+    const oldCategory = parts[0];
+    const folder = parts.slice(1).join('/');
+    try {
+      const { assignJobToCategory } = await import('@/lib/storage-adapter');
+      await assignJobToCategory(oldCategory, folder, newCategory);
+      const apps = await getAllApplications();
+      setApplications(apps);
+    } catch (error) {
+      console.error('Error updating application category:', error);
+    }
+  };
+
   useEffect(() => {
     async function fetchData() {
       try {
-        const [apps, trash] = await Promise.all([getAllApplications(), getTrashedApplications()]);
+        const [apps, trash, cats] = await Promise.all([
+          getAllApplications(),
+          getTrashedApplications(),
+          getUserCategories(),
+        ]);
         setApplications(apps);
         setTrashed(trash);
+        setUserCategories(cats);
       } catch (error) {
         console.error('Error fetching applications:', error);
       } finally {
@@ -310,6 +330,8 @@ function JobsContent() {
               needs_followup={app.needs_followup}
               onDelete={handleDelete}
               onStatusChange={handleStatusChange}
+              onCategoryChange={handleCategoryChange}
+              userCategories={userCategories}
             />
           ))}
         </div>

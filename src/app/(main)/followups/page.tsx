@@ -3,11 +3,12 @@
 import { useEffect, useState } from 'react';
 import ApplicationCard from '@/components/ApplicationCard';
 import Card from '@/components/design/Card';
-import { deleteApplication, getAllApplications, saveApplication, type EnrichedApplication } from '@/lib/storage-adapter';
+import { deleteApplication, getAllApplications, saveApplication, getUserCategories, type EnrichedApplication, type UserCategory } from '@/lib/storage-adapter';
 import { StatusType } from '@/lib/design-system';
 
 export default function FollowupsPage() {
   const [applications, setApplications] = useState<EnrichedApplication[]>([]);
+  const [userCategories, setUserCategories] = useState<UserCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
   const handleDelete = async (id: string) => {
@@ -52,11 +53,26 @@ export default function FollowupsPage() {
     }
   };
 
+  const handleCategoryChange = async (id: string, newCategory: string) => {
+    const parts = id.split('/');
+    const oldCategory = parts[0];
+    const folder = parts.slice(1).join('/');
+    try {
+      const { assignJobToCategory } = await import('@/lib/storage-adapter');
+      await assignJobToCategory(oldCategory, folder, newCategory);
+      const apps = await getAllApplications();
+      setApplications(apps);
+    } catch (error) {
+      console.error('Error updating application category:', error);
+    }
+  };
+
   useEffect(() => {
     async function fetchData() {
       try {
-        const apps = await getAllApplications();
+        const [apps, cats] = await Promise.all([getAllApplications(), getUserCategories()]);
         setApplications(apps);
+        setUserCategories(cats);
       } catch (error) {
         console.error('Error fetching applications:', error);
       } finally {
@@ -111,6 +127,8 @@ export default function FollowupsPage() {
               needs_followup={app.needs_followup}
               onDelete={handleDelete}
               onStatusChange={handleStatusChange}
+              onCategoryChange={handleCategoryChange}
+              userCategories={userCategories}
             />
           ))}
         </div>

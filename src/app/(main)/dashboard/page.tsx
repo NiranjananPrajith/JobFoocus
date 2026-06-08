@@ -6,7 +6,7 @@ import Badge from '@/components/design/Badge';
 import Card from '@/components/design/Card';
 import CategoryStats from '@/components/CategoryStats';
 import DataManagement from '@/components/DataManagement';
-import { deleteApplication, getAllApplications, getCategoryStats, saveApplication, type EnrichedApplication, type CategoryStats as CategoryStatsType } from '@/lib/storage-adapter';
+import { deleteApplication, getAllApplications, getCategoryStats, getUserCategories, saveApplication, type EnrichedApplication, type CategoryStats as CategoryStatsType, type UserCategory } from '@/lib/storage-adapter';
 import { bootstrapFromLocalStorage } from '@/lib/db/bootstrap';
 import { createClient } from '@/lib/supabase/client';
 import { StatusType } from '@/lib/design-system';
@@ -25,6 +25,7 @@ export default function DashboardPage() {
   const [applications, setApplications] = useState<EnrichedApplication[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [categoryStats, setCategoryStats] = useState<CategoryStatsType[]>([]);
+  const [userCategories, setUserCategories] = useState<UserCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
   const computeStats = useCallback((apps: EnrichedApplication[]) => {
@@ -55,8 +56,10 @@ export default function DashboardPage() {
       try {
         const apps = await getAllApplications();
         const catStats = await getCategoryStats(apps);
+        const cats = await getUserCategories();
         setApplications(apps);
         setCategoryStats(catStats);
+        setUserCategories(cats);
         setStats(computeStats(apps));
       } catch (error) {
         console.error('Error fetching applications:', error);
@@ -120,6 +123,23 @@ export default function DashboardPage() {
       await refreshData();
     } catch (error) {
       console.error('Error updating application:', error);
+    }
+  };
+
+  const handleCategoryChange = async (id: string, newCategory: string) => {
+    const parts = id.split('/');
+    const oldCategory = parts[0];
+    const folder = parts.slice(1).join('/');
+    try {
+      // assignJobToCategory is the same helper the form view uses;
+      // it handles the storage-layer reassignment and the
+      // category_id resolution for both the source and destination
+      // categories.
+      const { assignJobToCategory } = await import('@/lib/storage-adapter');
+      await assignJobToCategory(oldCategory, folder, newCategory);
+      await refreshData();
+    } catch (error) {
+      console.error('Error updating category:', error);
     }
   };
 
@@ -273,6 +293,8 @@ export default function DashboardPage() {
                     needs_followup={app.needs_followup}
                     onDelete={handleDelete}
                     onStatusChange={handleStatusChange}
+                    onCategoryChange={handleCategoryChange}
+                    userCategories={userCategories}
                   />
                 ))}
               </div>
