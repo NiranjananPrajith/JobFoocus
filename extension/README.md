@@ -2,11 +2,19 @@
 
 ## How to Install (Unpacked)
 
-1. Open `chrome://extensions` in Chrome (or `edge://extensions` in Edge).
-2. Enable **Developer mode** (toggle in the top-right corner).
-3. Click **Load unpacked**.
-4. Select the `extension/` folder from this project.
-5. Pin the extension to the toolbar (click the puzzle icon, then the pin icon next to JobFoocus).
+The extension targets Chrome / Edge / Brave and Firefox (MV3).
+
+1. **Chrome / Edge / Brave**: open `chrome://extensions` (or `edge://extensions`).
+   **Firefox**: open `about:debugging#/runtime/this-firefox`.
+2. Enable **Developer mode** (Chrome/Edge/Brave: toggle in the top-right corner).
+3. **Chrome / Edge / Brave**: click **Load unpacked** and select the `extension/` folder.
+   **Firefox**: click **Load Temporary Add-on…** and select `extension/manifest.json`.
+4. Pin the extension to the toolbar (click the puzzle icon, then the pin icon next to JobFoocus).
+
+> **Firefox note:** Firefox's MV3 implementation uses `background.scripts` instead
+> of `service_worker`. The manifest declares both fields; Chrome uses the
+> service worker, Firefox uses the scripts array. Either browser loads the same
+> package unchanged.
 
 ## Usage
 
