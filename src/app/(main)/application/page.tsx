@@ -82,6 +82,10 @@ function ApplicationContent() {
   );
   const [pipelineStep, setPipelineStep] = useState<PipelineStep>('analyzing');
   const [pipelineError, setPipelineError] = useState<string | null>(null);
+  // Set right before router.replace on success. The processing UI
+  // exposes a "View job" button that navigates to this URL as a safety
+  // net for the (rare) case where the auto-transition doesn't fire.
+  const [pipelineDestination, setPipelineDestination] = useState<string | null>(null);
   // Bumped on "Try again" to re-run the auth check + pipeline. Lives in
   // the effect's deps so changing it re-triggers the whole flow.
   const [pipelineRetryToken, setPipelineRetryToken] = useState(0);
@@ -376,10 +380,25 @@ function ApplicationContent() {
         );
         if (cancelled) return;
 
-        // Replace the URL so the existing app-loading effect takes over.
-        // We keep the extension params out of the URL after the jump so
-        // the saved-app view doesn't accidentally re-enter extension mode.
-        router.replace(`/application?app=Uncategorized/${encodeURIComponent(folder)}`);
+        // Hand off to the saved-app view. We clear pipelineMode to null
+        // BEFORE the URL change so the render path falls through to the
+        // existing form (otherwise the stepper keeps showing because the
+        // 'processing' early-return still matches). router.replace then
+        // updates the URL, the searchParams hook fires, Effect 2
+        // re-runs with the new appId, and the saved app loads. We
+        // also stash the destination URL so the stepper's "View job"
+        // safety-net button (rendered when pipelineStep === 'done')
+        // can navigate to the same place if the auto-transition
+        // somehow doesn't fire.
+        const destination = `/application?app=Uncategorized/${encodeURIComponent(folder)}`;
+        setPipelineDestination(destination);
+        // Brief pause so the user sees the "done" state (all three
+        // check marks) before the view swaps. Without this, the
+        // transition can feel like the stepper flickered and was gone.
+        await new Promise((r) => setTimeout(r, 700));
+        if (cancelled) return;
+        setPipelineMode(null);
+        router.replace(destination);
       } catch (err) {
         if (cancelled) return;
         console.error('Extension pipeline failed:', err);
@@ -562,6 +581,31 @@ function ApplicationContent() {
               );
             })}
           </ol>
+
+          {/* "View job" button — visible as soon as all three steps are
+              checked. It's the primary action for the user to take if
+              the auto-transition (router.replace after a 700ms pause)
+              doesn't fire for any reason. The button skips the pause
+              and navigates immediately. */}
+          {pipelineStep === 'done' && pipelineDestination && (
+            <div className="mt-6 pt-4 border-t border-hairline-soft flex items-center justify-between gap-3">
+              <p className="text-[13px] text-steel">
+                All done. Taking you to your new job…
+              </p>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setPipelineMode(null);
+                  router.replace(pipelineDestination);
+                }}
+              >
+                View job
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1.5">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </Button>
+            </div>
+          )}
         </Card>
       </div>
     );
