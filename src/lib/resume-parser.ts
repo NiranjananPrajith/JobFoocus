@@ -23,11 +23,26 @@ export interface ParsedResume {
 }
 
 // ---------------------------------------------------------------------------
-// PDF Parsing — uses pdfjs-dist legacy build (no worker needed)
+// PDF Parsing — uses pdfjs-dist legacy build
 // ---------------------------------------------------------------------------
+//
+// pdfjs-dist v5+ requires `GlobalWorkerOptions.workerSrc` to be set before
+// `getDocument()` is called, even when using the legacy build. Without it,
+// the first call throws `No "GlobalWorkerOptions.workerSrc" specified`.
+// We point workerSrc at the bundled worker file via the Next.js `?url`
+// import suffix, which gives us a stable URL to the worker chunk.
+
+let pdfWorkerConfigured = false;
 
 async function parsePDF(file: File): Promise<string> {
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+
+  if (!pdfWorkerConfigured) {
+    const workerUrl = (await import('pdfjs-dist/legacy/build/pdf.worker.mjs?url')).default;
+    pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+    pdfWorkerConfigured = true;
+  }
+
   const data = await file.arrayBuffer();
   const pdf = await pdfjs.getDocument({ data }).promise;
 
