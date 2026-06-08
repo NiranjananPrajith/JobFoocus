@@ -29,8 +29,18 @@ export interface ParsedResume {
 // pdfjs-dist v5+ requires `GlobalWorkerOptions.workerSrc` to be set before
 // `getDocument()` is called, even when using the legacy build. Without it,
 // the first call throws `No "GlobalWorkerOptions.workerSrc" specified`.
-// We point workerSrc at the bundled worker file via the Next.js `?url`
-// import suffix, which gives us a stable URL to the worker chunk.
+//
+// The worker file is copied to public/pdf-worker/pdf.worker.mjs at build
+// time (see scripts/copy-pdf-worker.mjs, wired as a prebuild/predev hook).
+// We reference it via that stable static path rather than Next.js's
+// `?url` import suffix — the suffix can wrap the URL in an object in some
+// bundler configurations, which pdfjs rejects with
+// `Invalid "workerSrc" type`. A plain string path sidesteps that.
+//
+// The path is `/pdf-worker/pdf.worker.mjs` (resolved at runtime against
+// the page origin). It's also picked up by the Next.js static-asset
+// pipeline, so the file is served with the right MIME type and cache
+// headers out of the box.
 
 let pdfWorkerConfigured = false;
 
@@ -38,8 +48,7 @@ async function parsePDF(file: File): Promise<string> {
   const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
 
   if (!pdfWorkerConfigured) {
-    const workerUrl = (await import('pdfjs-dist/legacy/build/pdf.worker.mjs?url')).default;
-    pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+    pdfjs.GlobalWorkerOptions.workerSrc = '/pdf-worker/pdf.worker.mjs';
     pdfWorkerConfigured = true;
   }
 

@@ -7,6 +7,7 @@ out/
 
 # Build artifacts
 public/extensions/
+public/pdf-worker/
 extension/build/
 
 # Generated job application documents stored locally (not Next.js API routes)
