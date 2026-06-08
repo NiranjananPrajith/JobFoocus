@@ -1,11 +1,12 @@
 {
   "manifest_version": 3,
   "name": "JobFoocus Scraper",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "One-click job description extraction for your JobFoocus application dashboard.",
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "contextMenus"
   ],
   "background": {
     "service_worker": "background.js"
@@ -22,5 +23,14 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+J",
+        "mac": "Command+Shift+J"
+      },
+      "description": "Send the current job posting to JobFoocus"
+    }
   }
 }

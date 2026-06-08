@@ -6,6 +6,8 @@ node_modules/
 out/
 
 # Build artifacts
+public/extensions/
+extension/build/
 
 # Generated job application documents stored locally (not Next.js API routes)
 # Ignores generated application data at project root level only

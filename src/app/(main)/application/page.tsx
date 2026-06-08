@@ -30,6 +30,7 @@ interface Application {
   has_resume: boolean;
   has_cover_letter: boolean;
   has_job_description: boolean;
+  job_url?: string | null;
   files: { name: string; size: number; type: string }[];
 }
 
@@ -43,11 +44,25 @@ function ApplicationContent() {
   const extTitle = searchParams.get('title');
   const extCompany = searchParams.get('company');
   const extJd = searchParams.get('jd');
+  const extUrl = searchParams.get('url');
+  const extLocation = searchParams.get('location');
+  const extSalary = searchParams.get('salary');
+  const extPosted = searchParams.get('posted');
+  const extWorkType = searchParams.get('workType');
+  const extHeuristicMiss = searchParams.get('heuristic') === 'miss';
 
   const [application, setApplication] = useState<Application | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isNewFromExtension, setIsNewFromExtension] = useState(false);
+  const [jobUrl, setJobUrl] = useState<string | null>(null);
+  const [heuristicMiss, setHeuristicMiss] = useState(false);
+  const [meta, setMeta] = useState<{ location: string; salary: string; posted: string; workType: string }>({
+    location: '',
+    salary: '',
+    posted: '',
+    workType: '',
+  });
 
   // Form state
   const [company, setCompany] = useState('');
@@ -93,11 +108,19 @@ function ApplicationContent() {
   useEffect(() => {
     async function fetchData() {
       // 1. Check if this is an incoming payload from the standalone browser extension
-      if (!appId && (extTitle || extCompany || extJd)) {
+      if (!appId && (extTitle || extCompany || extJd || extUrl || extHeuristicMiss || extLocation || extSalary || extPosted || extWorkType)) {
         setIsNewFromExtension(true);
         setCompany(extCompany || '');
         setJobTitle(extTitle || '');
         setJobDescContent(extJd || '');
+        setJobUrl(extUrl || null);
+        setMeta({
+          location: extLocation || '',
+          salary: extSalary || '',
+          posted: extPosted || '',
+          workType: extWorkType || '',
+        });
+        setHeuristicMiss(extHeuristicMiss && !extJd);
         setStatus('prospect');
         setSource('Extension Scraper');
         setCategory('Uncategorized');
@@ -122,6 +145,7 @@ function ApplicationContent() {
           has_resume: false,
           has_cover_letter: false,
           has_job_description: !!extJd,
+          job_url: extUrl || null,
           files: []
         });
 
@@ -158,6 +182,9 @@ function ApplicationContent() {
         setContactEmail(found.contact_email || '');
         setSource(found.source || '');
         setCategory(found.category_name || found.category || 'Uncategorized');
+        setJobUrl(found.job_url || null);
+        setMeta({ location: '', salary: '', posted: '', workType: '' });
+        setHeuristicMiss(false);
         setIsNewFromExtension(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load');
@@ -167,7 +194,8 @@ function ApplicationContent() {
     }
 
     fetchData();
-  }, [appId, extTitle, extCompany, extJd]);
+  }, [appId, extTitle, extCompany, extJd, extUrl, extLocation, extSalary, extPosted, extWorkType, extHeuristicMiss]);
+
 
   // Auto-dismiss notification after 3 seconds
   useEffect(() => {
@@ -195,7 +223,7 @@ function ApplicationContent() {
         contact_email: contactEmail || null,
         source,
         documents: [],
-        job_url: null,
+        job_url: jobUrl,
       });
 
       // Update the category if changed
@@ -241,7 +269,7 @@ function ApplicationContent() {
         contact_email: contactEmail || null,
         source,
         documents: [],
-        job_url: null,
+        job_url: jobUrl,
       });
 
       setNotification({ message: 'Marked as applied!', type: 'success' });
@@ -295,6 +323,65 @@ function ApplicationContent() {
             <div>
               <h1 className="text-[28px] md:text-[36px] font-medium text-ink mb-1">{company}</h1>
               <p className="text-[14px] md:text-[18px] text-steel mb-3">{jobTitle}</p>
+              {jobUrl && (
+                <a
+                  href={jobUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[12px] text-primary hover:underline mb-3"
+                >
+                  View original posting
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    <polyline points="15 3 21 3 21 9" />
+                    <line x1="10" y1="14" x2="21" y2="3" />
+                  </svg>
+                </a>
+              )}
+              {/* Metadata chips (extension-sourced only). Shown when at least one
+                  field is non-empty. Helps users spot Quick-Apply targets fast. */}
+              {(meta.location || meta.salary || meta.posted || meta.workType) && (
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {meta.location && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-stone-100 text-steel border border-stone-200">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                      </svg>
+                      {meta.location}
+                    </span>
+                  )}
+                  {meta.salary && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-stone-100 text-steel border border-stone-200">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <line x1="12" y1="1" x2="12" y2="23" />
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                      </svg>
+                      {meta.salary}
+                    </span>
+                  )}
+                  {meta.workType && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-stone-100 text-steel border border-stone-200">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                        <polyline points="9 22 9 12 15 12 15 22" />
+                      </svg>
+                      {meta.workType}
+                    </span>
+                  )}
+                  {meta.posted && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-stone-100 text-steel border border-stone-200">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
+                      </svg>
+                      {meta.posted}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
             {isNewFromExtension && (
               <span className="bg-amber-100 text-amber-800 text-xs font-semibold px-2.5 py-1 rounded border border-amber-200 animate-pulse">
@@ -408,6 +495,25 @@ function ApplicationContent() {
           )}
         </div>
       </Card>
+
+      {/* Heuristic miss warning (extension was triggered on a page the scraper couldn't identify) */}
+      {isNewFromExtension && heuristicMiss && (
+        <Card variant="default" className="mb-4 md:mb-6 border-amber-400 bg-amber-50">
+          <div className="flex items-start gap-3">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B45309" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5">
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              <line x1="12" y1="9" x2="12" y2="13" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <div>
+              <p className="text-[14px] font-semibold text-amber-900 mb-1">Heuristic check failed</p>
+              <p className="text-[13px] text-amber-800 leading-relaxed">
+                This page didn't look like a job posting (no "job" or "career" in the URL or title), so no job description was extracted. Paste the JD into the description field below before saving.
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Error Alert */}
       {error && (

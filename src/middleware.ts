@@ -41,7 +41,8 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/features') ||
     request.nextUrl.pathname.startsWith('/pricing') ||
     request.nextUrl.pathname.startsWith('/privacy-policy') ||
-    request.nextUrl.pathname.startsWith('/terms-of-service')
+    request.nextUrl.pathname.startsWith('/terms-of-service') ||
+    request.nextUrl.pathname.startsWith('/extension-install')
 
   // Unauthenticated — redirect protected routes to login
   if (!user && !isPublicRoute && !isAuthRoute) {
@@ -62,6 +63,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|icon.webp|icon_wide.webp|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|icon.webp|icon_wide.webp|.*\\.(?:svg|png|jpg|jpeg|gif|webp|zip)$).*)',
   ],
 }
