@@ -1,421 +1,376 @@
-# Job Application Automation Project (Next.js Edition)
+# AGENTS.md — JobFoocus developer & AI-agent guide
 
-## System Overview
-This project automates the creation, tailoring, and organization of job applications based on a user-provided Master Resume, Contact Information, and a target Job Description. Master resumes are stored in the `master_resumes` Supabase table and fetched via the storage adapter (`src/lib/storage-adapter.ts`). Generated documents are saved to the `documents` table and served inside the Next.js dashboard, compiled to PDF using the browser's native print framework.
-
-## Category System
-Categories are user-defined. When adding a job, users can:
-- Select an existing category from their custom list
-- Create a new category on-the-fly
-- AI automatically assigns jobs to the best-matching user category
-
-**System Categories:**
-- `Uncategorized` is a reserved system category that cannot be deleted
-- It serves as the fallback when AI cannot determine a category match
-- When a user deletes a category, all jobs in that category move to `Uncategorized`
-
-**Category Limits:**
-- Maximum 100 user-defined categories (silently enforced as anti-exploitation guardrail)
-
-**Category Data Model:**
-```typescript
-interface UserCategory {
-  name: string;           // Category display name
-  description?: string;    // Optional description for AI context
-  color: string;          // Auto-assigned from 8-color palette
-  createdAt: string;      // ISO timestamp
-}
-```
-
-**AI Auto-Classification:**
-- When jobs are created via AI, the system analyzes job title, company, and description
-- Compares against user's category names and descriptions
-- Assigns the best-matching category (permissive - always picks best match even if weak)
-- If no category clearly fits, assigns `Uncategorized`
-
-**Category Management:**
-- Dedicated page at `/categories` for viewing, creating, editing, and deleting categories
-- Accessible via "Manage Categories" link in the profile dropdown menu (above Trash)
-- Deleting a category reassigns all its jobs to `Uncategorized`
-- Editing a category name automatically updates all jobs with that category
-
-## Workflow for New Job Applications
-When the user provides a job description, execute the following steps sequentially:
-
-1. **Select/Create Category**: User picks from existing categories or creates a new one.
-2. **Create Application Record**: Call `POST /api/db/applications` to create the application row. Use the category and a folder key formatted as `YYYY-MM-DD_[Company]_[JobTitle]`.
-3. **Save Job Description**: Save the raw text provided by the user via the storage adapter (`dbSaveDocument` in `src/lib/storage-adapter.ts` → `POST /api/db/documents`) with doctype `job_description`.
-4. **Draft Tailored Resume**: Fetch the master resume via `getMasterResume()` (backed by the `master_resumes` table) and generate a highly tailored `resume.html` optimized for target keywords matching the structural layout below.
-5. **Draft Cover Letter**: Generate a compelling `cover_letter.html` addressing the hiring manager using the structural template below.
-6. **Create Tracking Record**: Save the application tracking data (company, job_title, date_applied, status defaulting to "prospect", source, contact_name, contact_email, notes, response_date) to the `applications` table via the API route.
-
-## Next.js UI Application
-The tracker dashboard and document webview are served natively via the Next.js development environment.
-* **Run Web Application**:
-  ```bash
-  npm run dev
-  # or: pnpm dev / yarn dev
-
-```
-
-* **Local Dev Server**: Run `npm run dev` and open [http://localhost:3000](https://www.google.com/search?q=http://localhost:3000) only for live-reload design testing. **Data is separate** — localhost uses browser `localStorage`, so any data created there will NOT appear in the production extension dashboard and vice versa.
-
-* **Document Viewer Tab Title**: When viewing a document, the browser tab displays the document name in the format `{folder}_Resume` or `{folder}_CoverLetter` (e.g., `2026-05-23_RONA_CustomerServiceAssociate_Resume`).
-
-## Storage & DB Layers
-- **Storage layer**: `src/lib/storage-adapter.ts` — client-side storage that reads/writes localStorage and syncs to Supabase via API routes
-- **Database layer**: `supabase/migrations/` — Postgres schema with Row-Level Security, managed via Supabase migrations
-
-## Document Printing & ATS Optimization Rules
-
-* **Browser Print Engineering**: All documents must incorporate self-contained CSS styles that natively hook into browser print settings via `@page` structures. Use `-webkit-print-color-adjust: exact;` to ensure structural borders and layout dividers print perfectly.
-* **No Layout Floats or Columns**: Text must flow linearly from top to bottom within simple block wrappers (`<div>`, `<section>`). Do not use flex-direction column-reverse, CSS multi-columns, or complex grid matrix systems that trick or break automated parsing spiders.
+This file is the primary context for AI agents (and humans) working on
+the JobFoocus codebase. `CLAUDE.md` is a one-line pointer to this file.
+`README.md` is the operator-facing counterpart — read that for
+deploy / Stripe / env setup questions.
 
 ---
 
-## 📄 ATS Resume Structural Template (`resume.html`)
+## 1. System overview
 
-*When creating `resume.html`, populate this exact HTML template string using data pulled from your base files and embed custom keywords directly into the structural blocks:*
+JobFoocus is a Next.js 14 App Router app that turns a master resume +
+job description into a tailored, ATS-friendly resume + cover letter,
+files them under `YYYY-MM-DD_Company_Title`, and tracks application
+status. There are three paid tiers, daily usage caps, an AI document
+editor, and a Manifest V3 browser extension that scrapes job postings
+and deep-links into the dashboard.
 
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Resume - [INSERT FULL NAME]</title>
-    <style>
-        @page {
-            size: letter;
-            margin: 0.6in;
-        }
-        @media print {
-            body {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-                color: #000000;
-                background: #ffffff;
-            }
-        }
-        body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            color: #222222;
-            line-height: 1.5;
-            font-size: 11pt;
-            margin: 0;
-            padding: 0;
-        }
-        h1 {
-            font-size: 22pt;
-            text-align: center;
-            margin: 0 0 6px 0;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            font-weight: 700;
-        }
-        .contact-info {
-            text-align: center;
-            font-size: 10pt;
-            color: #555555;
-            margin-bottom: 24px;
-            line-height: 1.6;
-        }
-        h2 {
-            font-size: 11pt;
-            border-bottom: 1.5px solid #222222;
-            margin: 24px 0 12px 0;
-            padding-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 700;
-        }
-        .summary {
-            margin-bottom: 20px;
-        }
-        .summary p {
-            margin: 0;
-            text-align: justify;
-            font-size: 10.5pt;
-            line-height: 1.6;
-            color: #333333;
-        }
-        .skills-list {
-            margin: 0 0 20px 0;
-            padding: 0;
-            list-style: none;
-        }
-        .skills-list li {
-            margin-bottom: 6px;
-            font-size: 10.5pt;
-        }
-        .skills-list li strong {
-            color: #111111;
-            font-weight: 600;
-        }
-        .job-entry {
-            margin-bottom: 18px;
-            page-break-inside: avoid;
-        }
-        .job-header {
-            margin-bottom: 8px;
-            display: block;
-            position: relative;
-        }
-        .job-title-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            gap: 12px;
-        }
-        .company-name {
-            font-weight: 700;
-            font-size: 11pt;
-            color: #111111;
-        }
-        .job-date-location {
-            display: block;
-            font-weight: normal;
-            font-style: normal;
-            color: #666666;
-            font-size: 9.5pt;
-            margin-top: 2px;
-        }
-        .job-title {
-            font-style: italic;
-            font-weight: 500;
-            color: #333333;
-            text-align: right;
-            flex-shrink: 0;
-        }
-        .clear {
-            clear: both;
-        }
-        ul.achievements {
-            margin: 0;
-            padding-left: 18px;
-        }
-        ul.achievements li {
-            margin-bottom: 5px;
-            text-align: justify;
-            font-size: 10.5pt;
-            line-height: 1.5;
-        }
-        .edu-entry {
-            margin-bottom: 10px;
-            page-break-inside: avoid;
-            font-size: 10.5pt;
-        }
-        .edu-entry .job-date-location {
-            float: none;
-            display: block;
-            margin-bottom: 2px;
-        }
-        .edu-entry .company-name {
-            font-weight: 600;
-        }
-        .edu-entry .job-title {
-            font-style: normal;
-            color: #444444;
-        }
-    </style>
-</head>
-<body>
-
-    <h1>[INSERT FULL NAME]</h1>
-    <div class="contact-info">
-        [Phone Number] &bull; [Email Address] <br>
-        Availability: [Insert Availability Statement]
-    </div>
-
-    <h2>Professional Summary</h2>
-    <div class="summary">
-        <p>[Insert tailored high-impact 3-sentence summary matching the target category role requirements.]</p>
-    </div>
-
-    <h2>Skills</h2>
-    <ul class="skills-list">
-        <li><strong>[Core Technical/Operational Core]</strong>: [Skill 1], [Skill 2], [Skill 3], [Skill 4]</li>
-        <li><strong>[Tools, Platforms & Systems]</strong>: [Skill 1], [Skill 2], [Skill 3]</li>
-        <li><strong>[Methodologies & Standards]</strong>: [Skill 1], [Skill 2]</li>
-    </ul>
-
-    <h2>Professional Experience</h2>
-
-    <div class="job-entry">
-        <div class="job-header">
-            <div class="job-title-row">
-                <span class="company-name">[Company Name]</span>
-                <span class="job-title">[Tailored Job Title]</span>
-            </div>
-            <span class="job-date-location">[Month YYYY] &ndash; [Month YYYY] | [City, Province]</span>
-        </div>
-        <ul class="achievements">
-            <li>[Tailored achievement bullet incorporating hard action verbs and target JD keywords.]</li>
-            <li>[Metric-driven historical performance bullet pulled directly from the master asset profile.]</li>
-            <li>[Operational consistency, ticketing queue efficiency, or kitchen speed bullet.]</li>
-            <li>[Collaborative or cross-functional duty alignment string item.]</li>
-        </ul>
-    </div>
-
-    <div class="job-entry">
-        <div class="job-header">
-            <div class="job-title-row">
-                <span class="company-name">[Next Company Name]</span>
-                <span class="job-title">[Tailored Job Title]</span>
-            </div>
-            <span class="job-date-location">[Month YYYY] &ndash; [Month YYYY] | [City, Province]</span>
-        </div>
-        <ul class="achievements">
-            <li>[Tailored performance highlight focusing on adaptability, precision, or fast-paced volume execution.]</li>
-            <li>[Standalone capability or cash/drawer audit validation milestone entry.]</li>
-            <li>[Client interaction or workflow safety tracking item.]</li>
-        </ul>
-    </div>
-
-    <h2>Education</h2>
-    <div class="edu-entry">
-        <span class="job-date-location">[Year] &ndash; [Year]</span>
-        <span class="company-name">[Diploma / Degree / Certificate Title]</span> &ndash; <span class="job-title">[Institution Name], [City, Province/Country]</span>
-    </div>
-
-    <h2>Certifications</h2>
-    <div class="cert-entry">
-        [Conditional Certification Line Items]
-    </div>
-
-</body>
-</html>
+### High-level flow
 
 ```
+browser extension                    web app
+─────────────────                    ────────
+content.js  ──┐                  ┌── /application         (pre-fill form)
+              ├── background.js ─┤
+context menu ─┘                  ├── /dashboard           (job list)
+                                 ├── /document            (AI editor + viewer)
+                                 ├── /account             (plan + usage)
+popup ─────────────── click ──────┤
+                                 └── /api/db/*            (CRUD via storage adapter)
+                                              │
+                                              ▼
+                                      Supabase Postgres (RLS)
+                                              ▲
+                                              │
+              /api/usage/*  /api/stripe/*  /api/ai/edit-document
+                                              │
+                                              ▼
+                                MiniMax M2.7  +  Stripe API
+```
+
+### Source of truth for tier → limits
+
+`src/lib/limits.ts` is the single source of truth. **Do not hard-code
+tier numbers anywhere else.** Imported by:
+
+- The client (`AddJobModal`, document editor, `/account`) for UX.
+- The server (`/api/usage/*`, `/api/ai/edit-document` gate) for
+  enforcement.
+
+The Stripe price-id → tier mapping also lives there, so the webhook
+can resolve tier from a row without re-reading env.
 
 ---
 
-## ✉️ ATS Cover Letter Structural Template (`cover_letter.html`)
+## 2. Module map
 
-*When building `cover_letter.html`, use this responsive layout optimized for default printing page dimensions:*
+### 2.1 Data flow: client → server
 
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cover Letter - [INSERT FULL NAME]</title>
-    <style>
-        @page {
-            size: letter;
-            margin: 1.0in;
-        }
-        @media print {
-            body {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-                color: #000000;
-                background: #ffffff;
-            }
-        }
-        body {
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            color: #222222;
-            line-height: 1.5;
-            font-size: 11pt;
-            margin: 0;
-            padding: 0;
-        }
-        .sender-block {
-            margin-bottom: 28px;
-        }
-        .sender-name {
-            font-size: 16pt;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 6px;
-            color: #111111;
-        }
-        .sender-meta {
-            color: #555555;
-            font-size: 10pt;
-            line-height: 1.5;
-        }
-        .date-block {
-            margin-bottom: 22px;
-            font-size: 10.5pt;
-        }
-        .recipient-block {
-            margin-bottom: 28px;
-        }
-        .recipient-block strong {
-            font-size: 11pt;
-            color: #111111;
-        }
-        .subject-block {
-            font-weight: 700;
-            margin-bottom: 24px;
-            text-transform: uppercase;
-            font-size: 10.5pt;
-            letter-spacing: 0.5px;
-            color: #111111;
-        }
-        p {
-            margin: 0 0 16px 0;
-            text-align: justify;
-            font-size: 11pt;
-            line-height: 1.6;
-        }
-        .signature-space {
-            margin-top: 40px;
-            page-break-inside: avoid;
-        }
-        .signature-space strong {
-            font-weight: 600;
-        }
-    </style>
-</head>
-<body>
+**All client→server writes go through `src/lib/storage-adapter.ts`.**
+Never have a `'use client'` component call Supabase directly — the
+storage adapter adds the auth cookie, normalizes errors, and keeps the
+data shape consistent.
 
-    <div class="sender-block">
-        <div class="sender-name">[INSERT FULL NAME]</div>
-        <div class="sender-meta">[Phone Number] | [Email Address]</div>
-    </div>
+The adapter posts to Next.js API routes under `src/app/api/db/`:
 
-    <div class="date-block">
-        [Current Date - Format: Month DD, 2026]
-    </div>
+| Route                              | Backed by table      |
+| ---------------------------------- | -------------------- |
+| `/api/db/applications`             | `applications`       |
+| `/api/db/documents`                | `documents`          |
+| `/api/db/categories`               | `user_categories`    |
+| `/api/db/master-resume`            | `master_resumes`     |
+| `/api/db/settings`                 | `settings`           |
+| `/api/db/export`                   | (read-only dump)     |
+| `/api/db/import`                   | (bulk write)         |
+| `/api/db/core`                     | (cross-table ops)    |
 
-    <div class="recipient-block">
-        Hiring Selection Team<br>
-        <strong>[Target Company Name]</strong><br>
-        [Company Street Address / City, Province]
-    </div>
+Each route does its own `await supabase.auth.getUser()` and 401s on
+missing user. **Do not add a global auth wrapper** — the API exempt in
+`middleware.ts` means these return 401 JSON, not a redirect.
 
-    <div class="subject-block">
-        RE: Application for the position of [Target Job Title]
-    </div>
+### 2.2 The big singleton: `src/lib/storage-adapter.ts`
 
-    <p>Dear Hiring Team at [Target Company Name],</p>
+This is the largest file in the repo. Exports:
 
-    <p>I am writing to express my strong interest in the [Target Job Title] position at [Target Company Name]. Backed by a solid background in [mention 1-2 core competencies tailored to the tier, e.g., Tier 2 hardware/software troubleshooting or high-volume line management], I am fully prepared to step into this role immediately. My open availability across days, nights, and weekends ensures that I can seamlessly support your team's operational schedule from day one.</p>
+- `getApplications()`, `getApplication(category, folder)`,
+  `getApplicationByUuid(uuid)`, `saveApplication(...)`, etc.
+- `getDocuments(category, folder)`, `saveDocumentHTML(...)`.
+- `getUserCategories()`, `saveUserCategory(...)`,
+  `deleteUserCategory(...)` — enforces the 100-category soft cap.
+- `getMasterResume()`, `saveMasterResume(...)`.
+- `getSettings()`, `saveSettings(...)`.
+- Constants: `SYSTEM_CATEGORIES = ['Uncategorized']`,
+  `MAX_USER_CATEGORIES = 100`,
+  `isSystemCategory(name)` (case-insensitive).
+- The system `Uncategorized` row is created lazily by
+  `ensureUncategorizedCategory()` on first use — both the extension
+  pipeline and `AddJobModal` call this.
 
-    <p>Throughout my career, I have focused on driving efficiency and resolving challenges under pressure. During my time at [Primary Past Employer matching the industry], I successfully [insert a core metric or achievement, e.g., maintained top-tier CSAT scores while reducing team escalation rates as a Floorwalker / managed high-intensity Broil and Sauté stations during peak lunch and dinner rush hours with exceptionally low waste rates]. I excel at rapidly analyzing situational needs, navigating fast-paced queue/floor demands, and ensuring total compliance with organizational standards.</p>
+When extending the storage layer, **add the new function to the
+adapter** (don't put Supabase calls in components), then thread it
+through to the matching `/api/db/*` route.
 
-    <p>In addition to my direct industry capabilities, my broader experience has instilled in me an adaptive workflow and elite multitasking skills. Whether independently managing solo overnight storefront operations with 100% data accuracy or resolving technical bugs under tight constraints, I approach challenges with a solutions-oriented mindset. I am eager to apply this proactive work ethic to help [Target Company Name] maintain its high standards of customer service and operational productivity.</p>
+### 2.3 AI: `src/lib/ai-generation.ts`
 
-    <p>Thank you for your time and consideration of my application. I would welcome the opportunity to discuss how my tailored skills and immediate availability can contribute to the continued success of your team. I am available for an interview at your earliest convenience and can be reached directly at [Phone Number] or via email at [Email Address].</p>
+All LLM calls go through `minimaxChat(prompt, system)`:
 
-    <div class="signature-space">
-        Sincerely,<br><br><br>
-        <strong>[INSERT FULL NAME]</strong>
-    </div>
+- **Server-side** (`typeof window === 'undefined'`): calls the
+  MiniMax Anthropic-compatible API directly with the `MINIMAX_API_KEY`
+  env var. Throws if the key is missing.
+- **Client-side**: POSTs to `/api/ai`, which is a thin proxy that does
+  the same call server-side. (CORS avoidance.)
 
-</body>
-</html>
+The model is `'MiniMax-M2.7'`. The prompt is constructed with PII
+masked via `maskPII(html, profile)` from `src/lib/pii-utils.ts`, and
+the response is run through `demaskPII(html, profile)` before being
+returned. The PII profile is a stable JSON blob generated on first
+save of the master resume — see `pii-utils.ts`.
 
-```
+If you add a new AI call site, **always mask PII** and never log the
+prompt body to the server console (it contains resume content).
 
-### 💡 NextJS UI Engineering Pro-Tip:
-Inside your NextJS webview component where you load these dynamically compiled `.html` files, you can wrap them in a standard `<iframe>` or render them directly using a container with `dangerouslySetInnerHTML`. 
+### 2.4 AI editor: `src/app/api/ai/edit-document/route.ts`
 
-To completely automate the conversion inside the dashboard UI without requiring users to press `Ctrl+P`, you can drop a small floating button onto the panel that executes:
-```javascript
-// Triggers the browser print utility targeting exclusively the webview node context
-window.print();
+- Auth required.
+- **Server-side usage gate**: re-checks tier + today's counter before
+  calling the model. Returns 402 with the full limits payload on cap.
+- Returns the full new HTML; the client saves it via
+  `saveDocumentHTML` (which is **not** gated — saving a doc you've
+  already edited isn't an "edit" in the cap sense).
+
+The cap is on AI-driven edits, not on every document write. Other
+write paths (restore-from-trash, bulk import, the AI pipeline that
+*generates* documents) don't increment the counter.
+
+### 2.5 Stripe: `src/lib/stripe.ts` + three routes
+
+`getStripe()` is a lazy singleton that reads `STRIPE_SECRET_KEY` once
+and caches the client. `apiVersion` is pinned to `'2026-05-27.dahlia'`
+with an `as any` cast — see the file's comment for why (the SDK
+doesn't re-export the narrow type from the root namespace).
+
+| Route                                       | Purpose                          |
+| ------------------------------------------- | -------------------------------- |
+| `POST /api/stripe/create-checkout-session`  | Resolve/create customer, build Checkout Session in `mode: 'subscription'`, return `{ url }` |
+| `POST /api/stripe/create-portal-session`    | Look up `stripe_customer_id`, open a Customer Portal session |
+| `POST /api/stripe/webhook`                  | Verify signature against `STRIPE_WEBHOOK_SECRET`, upsert `subscriptions` |
+
+Webhook contract:
+
+- Reads the **raw body** via `request.text()` (not `request.json()`).
+- `export const dynamic = 'force-dynamic'` so Next.js doesn't try to
+  cache or parse the body.
+- Handles: `checkout.session.completed`,
+  `customer.subscription.created/updated/deleted`,
+  `invoice.payment_failed`.
+- Upserts the `subscriptions` row by `user_id` (PK). Idempotency comes
+  from the PK + the natural Stripe subscription ID — replays are safe.
+
+`payment_method_types` is **intentionally omitted** from the checkout
+session. Stripe picks the eligible methods dynamically from the
+Dashboard's payment-method configuration. The platform best-practices
+doc forbids passing this parameter except for Terminal (in-person)
+integrations.
+
+### 2.6 Usage cap enforcement
+
+| File                                  | Role                                          |
+| ------------------------------------- | --------------------------------------------- |
+| `src/lib/limits.ts`                   | `TIER_LIMITS`, `tierFromPriceId`, `tierFromSubscription` |
+| `src/lib/subscription.ts`             | `getSubscription(userId)`, `getEffectiveTier(userId)` |
+| `src/lib/usage.ts`                    | `getOrCreateTodayUsage`, `getTodayUsageReadOnly`, `tryIncrement` (calls the RPC) |
+| `supabase/migrations/005_*.sql`       | `try_increment_usage(user_id, action, cap)` — atomic SQL |
+| `src/app/api/usage/check/route.ts`    | Pre-flight `{ allowed, tier, used, limit }`   |
+| `src/app/api/usage/increment/route.ts`| Atomic bump, 402 on cap                       |
+| `src/components/UpgradePromptModal.tsx` | Shared "you hit the cap" modal              |
+
+**Defense in depth.** The client calls `/api/usage/check` before
+kicking off an expensive action (job add, document edit) and shows
+the upgrade modal if `allowed: false`. After the action succeeds, it
+calls `/api/usage/increment`. The server also gates `/api/ai/edit-document`
+on the cap, so a determined user with curl can't bypass the limit.
+Both gates are required — don't remove the client one because "the
+server has it too" (UX is the whole point of the client check).
+
+**Fail-closed.** If `getEffectiveTier` throws or the DB is unreachable,
+it returns `tier: 'free'`. Never `tier: 'max'`. If we can't determine
+the tier, the user is treated as free.
+
+**`cancel_at_period_end` does not demote.** A user who's canceled but
+still inside the current period keeps their paid limits until the
+webhook fires `customer.subscription.deleted` and the row updates to
+`status: 'canceled'` (which `tierFromSubscription` then resolves to
+`free`).
+
+### 2.7 Browser extension: `extension/`
+
+- `manifest.json` — MV3, declares both `background.service_worker`
+  and `background.scripts` (the latter is for Firefox MV3).
+- `background.js` — service worker. Defines `DASHBOARD_URL` at the
+  top (line 12). Scrape pipeline + message router. Uses
+  `chrome.tabs.query({ url: DASHBOARD_ORIGIN + '/*' })` to find an
+  existing dashboard tab before opening a new one.
+- `content.js` — heuristic job-page check + field extraction. **Do
+  not** add a hard-coded site allowlist; the heuristic in
+  `looksLikeJobPage()` is the only gate.
+- `popup.html` / `popup.js` — popdown UI with "Add Job" button +
+  inline error states.
+- `scripts/build-extension.mjs` — zips `extension/` into
+  `public/extensions/build/`.
+
+**Changing the dashboard URL?** Edit `DASHBOARD_URL` at the top of
+`extension/background.js`, then `npm run build:extension`. The
+`/extension-install` page downloads the rebuilt zip.
+
+### 2.8 Middleware: `src/middleware.ts`
+
+Three things it does:
+
+1. Refreshes the Supabase session cookie on every request (the
+   `getAll` / `setAll` dance).
+2. Redirects unauthenticated users away from protected pages to
+   `/login?next=<original-path>`. The `?next=` round-trip is used by
+   the extension's deep-link flow.
+3. Exempts `/api/*` and a hard-coded public-route list
+   (`/`, `/features`, `/pricing`, `/privacy-policy`,
+   `/terms-of-service`, `/extension-install`).
+
+The `matcher` regex at the bottom is a denylist of static asset
+extensions — those never hit the middleware. When you add a new file
+type (e.g. a new font), update the matcher.
+
+---
+
+## 3. Conventions
+
+### 3.1 TypeScript & style
+
+- **Strict mode** is on (`tsconfig.json`). No `any` unless there's a
+  documented reason (the `apiVersion` cast in `src/lib/stripe.ts` is
+  the canonical example).
+- **No `console.log` in server code paths you don't own** — log
+  prefixes: `[stripe-webhook]`, `[usage]`, `[subscription]`, `[AI]`.
+  Operators grep by these.
+- **Comments are first-class.** The codebase is heavily commented
+  because the *why* is often non-obvious. Match the surrounding
+  density; don't strip comments because the code "looks obvious."
+- **Server-only modules import guard implicitly** by being imported
+  only from server contexts. `src/lib/stripe.ts` and
+  `src/lib/supabase-utils/service.ts` (the service-role client) must
+  never be transitively imported from a `'use client'` file. If you
+  need to expose one of their functions to the client, put the
+  thin-wrapper API route in `src/app/api/`.
+
+### 3.2 Database & RLS
+
+- **User-facing tables use RLS.** Default policy: `auth.uid() = user_id`
+  for SELECT. INSERT/UPDATE/DELETE are deliberately not granted —
+  the server is the only writer (via the service-role key in API
+  routes or in the RPC).
+- **New migration?** Append a `00N_*.sql` to `supabase/migrations/`.
+  Use `create table if not exists`, `drop policy if exists` +
+  `create policy` for idempotency. Add a header comment with the
+  rollback.
+- **Atomic SQL for race-prone increments.** Don't try to express
+  `SET x = x + 1 WHERE x < cap` from JS — wrap it in a `SECURITY
+  DEFINER` RPC. See `try_increment_usage` for the template.
+
+### 3.3 Adding a new endpoint
+
+1. Decide if it needs auth. Most do.
+2. If client-callable: put it under `src/app/api/<area>/<thing>/route.ts`.
+3. Server-side:
+   - `const supabase = await createClient()` (the cookie-bound client,
+     not the service-role one).
+   - `const { data: { user } } = await supabase.auth.getUser();` — 401
+     if missing.
+   - For writes that need to bypass RLS, switch to
+     `createServiceClient()` from `src/lib/supabase-utils/service.ts`.
+4. JSON body parsing: wrap in `try { body = await request.json() } catch
+   { return 400 }`. Don't let an unparseable body crash the route.
+5. Stripe routes: see §2.5 for the webhook raw-body requirement.
+6. **Don't add a `try { ... } catch (e) { return 500 }` that swallows
+   the error message.** Log it with a `[area]` prefix and surface the
+   message in the response so operators can see what went wrong in
+   the Vercel logs.
+
+### 3.4 Adding a new tier (or changing limits)
+
+1. Edit `TIER_LIMITS` in `src/lib/limits.ts`.
+2. Add a matching `STRIPE_PRICE_ID_<NAME>` env var.
+3. Add a case to `tierFromPriceId`.
+4. Update the marketing copy in `src/app/(main)/pricing/page.tsx` and
+   the `TIER_LABEL` / `TIER_PRICE_USD` maps in `limits.ts`.
+5. New migration to add any new schema (probably none for limit
+   changes — limits are constants in code).
+
+---
+
+## 4. Common pitfalls
+
+- **Stripe mode skew.** A test-mode secret key with a live-mode price
+  ID returns 500 from `create-checkout-session` with `No such price`.
+  Verify all four Stripe env vars are from the same mode.
+- **Service-role key in a client bundle.** The string
+  `SUPABASE_SERVICE_ROLE_KEY` must never appear in `.next/static/`.
+  If it does, you imported `createServiceClient` from a `'use client'`
+  file. Search the bundle: `grep -r "SUPABASE_SERVICE_ROLE_KEY" .next/static`.
+- **Webhook signature failures on Vercel.** If you ever wrap the
+  webhook route with a body-parsing middleware, signature verification
+  will fail. The route uses `request.text()` and `dynamic =
+  'force-dynamic'` precisely to keep the body raw.
+- **Tier mismatch on a fresh test user.** A new signup has no
+  `subscriptions` row at all. `getSubscription()` returns `null`,
+  `tierFromSubscription(null)` returns `'free'`. Don't write
+  `if (!subRow) return 500` — the absence of a row is the *Free tier*.
+- **Counter resets at UTC midnight.** Documented on the `/account`
+  page as "Resets in Xh Ym (midnight UTC)". If a user is in a
+  different timezone, the reset can be jarring — but it's consistent
+  across the fleet.
+- **Extension DASHBOARD_URL.** The committed default is
+  `https://job-foocus.vercel.app/application`. If you're running
+  locally, change it to `http://localhost:3000/application` and
+  rebuild the zip, or the extension will deep-link to prod.
+
+---
+
+## 5. Verifying a change
+
+This project uses runtime observation, not unit tests. To verify a
+change:
+
+1. `npm run dev`.
+2. Drive the affected route in a real browser (or `curl` for API
+   routes). Watch `/tmp/dev.log` and the Vercel runtime logs.
+3. For Stripe changes: use the Stripe CLI to forward webhooks
+   (`stripe listen --forward-to localhost:3000/api/stripe/webhook`)
+   and the test-mode dashboard.
+4. For extension changes: rebuild the zip, load the unpacked
+   extension from `extension/`, click around on a few real job
+   boards, watch the popdown for the heuristic-fail inline error.
+
+The Vercel runtime logs are the source of truth for what the
+deployed app actually did. Filter by `[stripe-webhook]`, `[usage]`,
+`[subscription]`, `[AI]` to find specific subsystem traces.
+
+---
+
+## 6. What's not in this repo
+
+- **The Supabase project itself.** The schema lives here as SQL
+  files; the running instance is configured via the three Supabase
+  env vars. Apply migrations in the SQL Editor (or via
+  `supabase db push` if you've linked the project).
+- **The Stripe products.** You create them in the Stripe dashboard;
+  the price IDs are the only thing the app needs.
+- **The deployed extension zip for previous versions.** Only the
+  `jobfoocus-extension.zip` (latest) is committed. The versioned
+  `jobfoocus-extension-v*.zip` files are gitignored to avoid
+  accumulating stale builds.
+- **Customer data.** Don't add fixtures, seed scripts, or test users
+  to the repo. The database is the database; tests are runtime
+  observations against a real env.
+
+---
+
+## 7. Quick reference
+
+- **Tier limits**: `src/lib/limits.ts`
+- **Server-side usage gate**: `src/app/api/ai/edit-document/route.ts`
+- **Webhook raw-body gotcha**: `src/app/api/stripe/webhook/route.ts`
+- **PII masking**: `src/lib/pii-utils.ts`
+- **Auth gate**: `src/middleware.ts`
+- **Build the extension zip**: `npm run build:extension`
+- **Migrations**: `supabase/migrations/00N_*.sql`
+- **The single client→server write API**: `src/lib/storage-adapter.ts`
