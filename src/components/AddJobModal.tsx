@@ -10,7 +10,7 @@ import CategorySelector from '@/components/CategorySelector';
 import ManageCategoriesModal from '@/components/ManageCategoriesModal';
 import AddJobStepper, { type AddJobStep } from '@/components/AddJobStepper';
 import { isMasterResumeBlank, generateMaskedJobEntryAndDocuments } from '@/lib/ai-generation';
-import { getUserCategories, saveCategory, type UserCategory } from '@/lib/storage-adapter';
+import { ensureUncategorizedCategory, getUserCategories, saveCategory, type UserCategory } from '@/lib/storage-adapter';
 
 type ModalState = 'two_column' | 'paste_jd' | 'blank_resume' | 'processing';
 
@@ -112,6 +112,22 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
     setProcessingStep('analyzing');
 
     try {
+      // If the user kept the default Uncategorized selection, make sure
+      // the system row exists BEFORE the pipeline runs. The extension
+      // flow already does this (see runExtensionPipelineCore in
+      // application/page.tsx); the manual flow now matches so the saved
+      // app has a proper category_id FK instead of being stored with
+      // just the category text. This is what makes the real row in
+      // user_categories the single "Uncategorized" the user sees, and
+      // what keeps the CategorySelector from showing the system stub
+      // AND the real row as duplicates.
+      if (selectedCategory === 'Uncategorized') {
+        const uncategorized = await ensureUncategorizedCategory();
+        if (!uncategorized) {
+          throw new Error("Couldn't set up the Uncategorized category. Please refresh and try again.");
+        }
+      }
+
       const result = await generateMaskedJobEntryAndDocuments(jdText, selectedCategory, (step) => {
         setProcessingStep(step);
       });

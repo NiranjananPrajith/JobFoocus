@@ -4,6 +4,16 @@ import { NextResponse } from 'next/server'
 const CATEGORY_COLORS = ['#4a90e2', '#4caf50', '#f5a623', '#9c27b0', '#00bcd4', '#ff5722', '#607d8b', '#e91e63']
 const MAX_USER_CATEGORIES = 100
 
+// Reserved category names. The user cannot POST these — they're
+// auto-managed by the storage layer (see ensureUncategorizedCategory).
+// We enforce the check on the server too, in case the client check is
+// bypassed (older client, direct API call, race during deploy).
+const RESERVED_CATEGORY_NAMES = new Set(['uncategorized'])
+
+function isReservedName(name: string): boolean {
+  return RESERVED_CATEGORY_NAMES.has(name.trim().toLowerCase())
+}
+
 export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -32,6 +42,13 @@ export async function POST(request: Request) {
   }
 
   const nameTrimmed = name.trim()
+
+  if (isReservedName(nameTrimmed)) {
+    return NextResponse.json(
+      { error: `"${nameTrimmed}" is a reserved system category name.` },
+      { status: 400 }
+    )
+  }
 
   const { data: existing } = await supabase
     .from('user_categories')

@@ -33,8 +33,14 @@ export type CategoryKey = string;
 const SYSTEM_CATEGORIES = ['Uncategorized'] as const;
 export const MAX_USER_CATEGORIES = 100;
 
+// Case-insensitive check. If any path ever creates a "uncategorized"
+// row (a future migration, a different client, a race), the system
+// guardrails (block edit, block delete) still apply. Without this,
+// "Uncategorized" and "uncategorized" would be treated as different
+// categories and the user could modify or delete a system row.
 export function isSystemCategory(name: string): boolean {
-  return SYSTEM_CATEGORIES.includes(name as any);
+  const lower = String(name).toLowerCase();
+  return SYSTEM_CATEGORIES.some(c => c.toLowerCase() === lower);
 }
 
 // ---------------------------------------------------------------------------
@@ -118,6 +124,16 @@ export async function saveCategory(cat: UserCategory): Promise<{ success: boolea
     return { success: false, error: 'Category name is required' };
   }
 
+  // "Uncategorized" is a reserved system category. The user cannot
+  // create their own row with this name — the real one is auto-managed
+  // by ensureUncategorizedCategory() the first time a job is saved
+  // without an explicit category. Block it here (defense in depth — the
+  // server also rejects) so the CategorySelector / ManageCategoriesModal
+  // can show a clean, specific error message instead of a generic 409.
+  if (isSystemCategory(cat.name)) {
+    return { success: false, error: '"Uncategorized" is a reserved system category name. Use it for jobs that don\'t fit another category — it\'s already available in the dropdown.' };
+  }
+
   try {
     await apiFetch('/api/db/categories', {
       method: 'POST',
@@ -127,6 +143,9 @@ export async function saveCategory(cat: UserCategory): Promise<{ success: boolea
   } catch (err: any) {
     if (err?.message?.includes('409') || err?.message?.includes('already exists')) {
       return { success: false, error: 'A category with this name already exists' };
+    }
+    if (err?.message?.includes('400') || err?.message?.includes('reserved')) {
+      return { success: false, error: '"Uncategorized" is a reserved system category name.' };
     }
     if (err?.message?.includes('Maximum categories')) {
       return { success: false, error: 'Maximum categories reached' };

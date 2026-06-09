@@ -65,6 +65,18 @@ export default function CategorySelector({
     c.name.toLowerCase().includes(filter.toLowerCase())
   );
 
+  // "Uncategorized" is the system fallback category. We render it as a
+  // non-clickable stub at the top of the dropdown ONLY when there is no
+  // real row for it in `user_categories`. If a real row exists (e.g.
+  // ensureUncategorizedCategory created one on the first add-job save),
+  // it's already in `categories` and the user picks it like any other
+  // category — no need to also show the stub, which would otherwise
+  // look like a duplicate "Uncategorized" entry.
+  const hasUncategorizedRow = categories.some(
+    c => c.name.toLowerCase() === 'uncategorized'
+  );
+  const showSystemUncategorizedStub = includeUncategorized && !hasUncategorizedRow;
+
   const handleSelect = (catName: string) => {
     onChange(catName);
     setIsOpen(false);
@@ -144,7 +156,7 @@ export default function CategorySelector({
             }`}
           >
             <div className="max-h-64 overflow-y-auto">
-              {includeUncategorized && (
+              {showSystemUncategorizedStub && (
                 <div className="px-4 py-2.5 text-[13px] text-steel bg-surface cursor-not-allowed flex items-center gap-2">
                   <span
                     className="w-2.5 h-2.5 rounded-full bg-[#888888] shrink-0"

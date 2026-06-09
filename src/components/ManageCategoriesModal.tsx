@@ -8,6 +8,7 @@ import {
   deleteCategory,
   updateCategory,
   getApplicationsByCategory,
+  isSystemCategory,
   type UserCategory,
 } from '@/lib/storage-adapter';
 
@@ -141,44 +142,56 @@ export default function ManageCategoriesModal({
               </div>
             ) : (
               <div className="space-y-3">
-                {categories.map((cat) => (
-                  <div
-                    key={cat.name}
-                    className="border border-hairline-soft rounded-lg p-4"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3 min-w-0">
-                        <span
-                          className="w-3 h-3 rounded-full mt-1.5 shrink-0"
-                          style={{ backgroundColor: cat.color }}
-                        />
-                        <div className="min-w-0">
-                          <p className="text-[14px] font-medium text-ink truncate">{cat.name}</p>
-                          {cat.description && (
-                            <p className="text-[12px] text-steel mt-0.5 line-clamp-2">{cat.description}</p>
-                          )}
-                          <p className="text-[11px] text-steel mt-1">
-                            {cat.jobCount} job{cat.jobCount !== 1 ? 's' : ''}
-                          </p>
+                {categories.map((cat) => {
+                  const isSystem = isSystemCategory(cat.name);
+                  return (
+                    <div
+                      key={cat.name}
+                      className="border border-hairline-soft rounded-lg p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 min-w-0">
+                          <span
+                            className="w-3 h-3 rounded-full mt-1.5 shrink-0"
+                            style={{ backgroundColor: cat.color }}
+                          />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-[14px] font-medium text-ink truncate">{cat.name}</p>
+                              {isSystem && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-steel shrink-0">
+                                  System
+                                </span>
+                              )}
+                            </div>
+                            {cat.description && (
+                              <p className="text-[12px] text-steel mt-0.5 line-clamp-2">{cat.description}</p>
+                            )}
+                            <p className="text-[11px] text-steel mt-1">
+                              {cat.jobCount} job{cat.jobCount !== 1 ? 's' : ''}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          onClick={() => handleEdit(cat)}
-                          className="px-3 py-1.5 text-[12px] text-steel hover:text-ink hover:bg-surface rounded-md transition-colors"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClick(cat)}
-                          className="px-3 py-1.5 text-[12px] text-red-500 hover:bg-red-50 rounded-md transition-colors"
-                        >
-                          Delete
-                        </button>
+                        {!isSystem && (
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              onClick={() => handleEdit(cat)}
+                              className="px-3 py-1.5 text-[12px] text-steel hover:text-ink hover:bg-surface rounded-md transition-colors"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(cat)}
+                              className="px-3 py-1.5 text-[12px] text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
