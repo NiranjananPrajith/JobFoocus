@@ -32,3 +32,5 @@ tsconfig.tsbuildinfo
 .env
 .env.local
 
+# Claude
+.claude

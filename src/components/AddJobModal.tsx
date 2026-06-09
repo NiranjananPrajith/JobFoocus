@@ -11,6 +11,7 @@ import ManageCategoriesModal from '@/components/ManageCategoriesModal';
 import AddJobStepper, { type AddJobStep } from '@/components/AddJobStepper';
 import { isMasterResumeBlank, generateMaskedJobEntryAndDocuments } from '@/lib/ai-generation';
 import { ensureUncategorizedCategory, getUserCategories, saveCategory, type UserCategory } from '@/lib/storage-adapter';
+import UpgradePromptModal from '@/components/UpgradePromptModal';
 
 type ModalState = 'two_column' | 'paste_jd' | 'blank_resume' | 'processing';
 
@@ -40,6 +41,17 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
   const [mounted, setMounted] = useState(false);
   const [showManageCategories, setShowManageCategories] = useState(false);
   const [showNewCatPopup, setShowNewCatPopup] = useState(false);
+
+  // Daily-limit state. Pre-checked at submit time and on bail. We
+  // capture the snapshot the server returned so the upgrade modal can
+  // show the user the exact numbers they were blocked at.
+  const [limitBlock, setLimitBlock] = useState<{
+    tier: 'free' | 'pro' | 'max';
+    used: number;
+    limit: number;
+    editsUsed: number;
+    editsLimit: number;
+  } | null>(null);
 
   // Set when the AI pipeline finishes — points at the saved-app view
   // for the new job. The processing state shows the "View job" button
@@ -108,6 +120,38 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
   const handleSubmitJD = async () => {
     if (!jdText.trim()) return;
     setPasteError(null);
+
+    // Pre-flight usage check. Defense-in-depth: the server also gates
+    // the save path, but checking client-side lets us bail with a
+    // friendly modal *before* spending AI tokens on a pipeline that
+    // will be rejected. If /api/usage/check fails for any reason
+    // (network, 500), we let the request through — the server gate
+    // will catch the real cap, and we don't want a transient error
+    // to lock the user out.
+    try {
+      const checkRes = await fetch('/api/usage/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'add_job' }),
+      });
+      if (checkRes.ok) {
+        const check = await checkRes.json();
+        if (!check.allowed) {
+          setLimitBlock({
+            tier: check.tier,
+            used: check.jobsUsed,
+            limit: check.jobsLimit,
+            editsUsed: check.editsUsed,
+            editsLimit: check.editsLimit,
+          });
+          return;
+        }
+      }
+    } catch (err) {
+      // Soft fail — the server gate will catch real abuse.
+      console.warn('[AddJobModal] usage pre-check failed, continuing:', err);
+    }
+
     setState('processing');
     setProcessingStep('analyzing');
 
@@ -148,6 +192,17 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
       setDestination(appUrl);
       setProcessingStep('done');
       onJobAdded?.();
+
+      // Bump the daily counter. Fire-and-forget — the user is about
+      // to be redirected to the new app, so we don't need to wait
+      // for the round-trip or surface an error if it fails (the
+      // server-side save is the source of truth; a missed increment
+      // just means tomorrow's count is one lower than reality).
+      void fetch('/api/usage/increment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'add_job' }),
+      }).catch((err) => console.warn('[AddJobModal] usage increment failed:', err));
     } catch (err) {
       console.error('[AddJobModal] Failed to process job:', err);
       // Roll back to paste_jd with the JD preserved so the user can
@@ -400,6 +455,17 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
         isOpen={showManageCategories}
         onClose={() => setShowManageCategories(false)}
         onCategoriesChanged={handleCategoriesChanged}
+      />
+      <UpgradePromptModal
+        isOpen={!!limitBlock}
+        onClose={() => setLimitBlock(null)}
+        blockedAction="add_job"
+        tier={limitBlock?.tier ?? 'free'}
+        used={limitBlock?.used ?? 0}
+        limit={limitBlock?.limit ?? 0}
+        otherUsed={limitBlock?.editsUsed ?? 0}
+        otherLimit={limitBlock?.editsLimit ?? 0}
+        otherLabel="Edits today"
       />
     </>
   );

@@ -1,8 +1,18 @@
 import Card from '@/components/design/Card';
 import Button from '@/components/design/Button';
+import PricingCTAButtons from './PricingCTAButtons';
 
 export const metadata = {
   title: 'Pricing — Job Foocus',
+};
+
+// Plan limits (mirrors src/lib/limits.ts). We re-declare the numbers
+// here so the static page can be SSG'd without importing a server-side
+// module. If the limits change, update both files.
+const PLAN_LIMITS = {
+  free: { jobs: 5,   edits: 25 },
+  pro:  { jobs: 25,  edits: 150 },
+  max:  { jobs: 250, edits: 500 },
 };
 
 const plans = [
@@ -13,7 +23,8 @@ const plans = [
     description: 'Get started with basic job tracking at no cost.',
     highlight: false,
     features: [
-      'Add up to 5 jobs per day',
+      `Add up to ${PLAN_LIMITS.free.jobs} jobs per day`,
+      `Up to ${PLAN_LIMITS.free.edits} document edits per day`,
       'Track unlimited total applications',
       'Generate tailored resumes & cover letters',
       'Basic job categorization',
@@ -21,15 +32,17 @@ const plans = [
     ],
     cta: 'Get Started',
     ctaVariant: 'outline' as const,
+    ctaMode: 'signup' as const,
   },
   {
     name: 'Pro',
     price: '$5',
     period: 'per month',
-    description: 'More jobs, smart follow-up reminders, and faster progress.',
+    description: 'More jobs and edits for an active job search.',
     highlight: true,
     features: [
-      'Add up to 50 jobs per day',
+      `Add up to ${PLAN_LIMITS.pro.jobs} jobs per day`,
+      `Up to ${PLAN_LIMITS.pro.edits} document edits per day`,
       'Everything in Free',
       'Smart follow-up reminders when employers go quiet',
       'Priority AI document generation',
@@ -37,22 +50,30 @@ const plans = [
     ],
     cta: 'Upgrade to Pro',
     ctaVariant: 'primary' as const,
+    ctaMode: 'checkout' as const,
+    ctaTier: 'pro' as const,
   },
   {
     name: 'Max',
-    price: '$10',
+    price: '$12',
     period: 'per month',
-    description: 'Maximum jobs, AI-written follow-up responses ready to send.',
+    description: 'Highest caps for power users and active searchers.',
     highlight: false,
     features: [
-      'Add up to 250 jobs per day',
+      `Add up to ${PLAN_LIMITS.max.jobs} jobs per day`,
+      `Up to ${PLAN_LIMITS.max.edits} document edits per day`,
       'Everything in Pro',
       'Job Foocus Assistant writes follow-up responses for you',
       'Pre-written, ready-to-send follow-up messages',
       'Dedicated priority support',
     ],
+    // Marketing copy: "unlimited" — but the actual cap is 250 / 500 to
+    // prevent abuse. The bullet makes the cap explicit so users
+    // aren't surprised. The subtitle clarifies further.
     cta: 'Get Max',
     ctaVariant: 'dark' as const,
+    ctaMode: 'checkout' as const,
+    ctaTier: 'max' as const,
   },
 ];
 
@@ -135,12 +156,12 @@ export default function PricingPage() {
               </ul>
             </div>
 
-            <Button
-              variant={plan.ctaVariant}
-              className="w-full justify-center mt-auto"
-            >
-              {plan.cta}
-            </Button>
+            <PricingCTAButtons
+              cta={plan.cta}
+              ctaVariant={plan.ctaVariant}
+              mode={plan.ctaMode}
+              tier={plan.ctaTier}
+            />
           </Card>
         ))}
       </div>
@@ -154,7 +175,7 @@ export default function PricingPage() {
           </div>
           <div>
             <p className="text-[28px] font-semibold text-ink mb-1">Secure payments</p>
-            <p className="text-[14px] text-steel">All transactions are encrypted and handled securely.</p>
+            <p className="text-[14px] text-steel">All transactions are encrypted and handled securely by Stripe.</p>
           </div>
           <div>
             <p className="text-[28px] font-semibold text-ink mb-1">Money-back guarantee</p>

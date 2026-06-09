@@ -232,6 +232,17 @@ export default function NavBar() {
                           </svg>
                           Master Resume
                         </a>
+                        <a
+                          href="/account"
+                          className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors"
+                          onClick={() => setProfileOpen(false)}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="2" y="5" width="20" height="14" rx="2"/>
+                            <line x1="2" y1="10" x2="22" y2="10"/>
+                          </svg>
+                          Account &amp; Billing
+                        </a>
                         <button
                           onClick={handleSignOut}
                           className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors"

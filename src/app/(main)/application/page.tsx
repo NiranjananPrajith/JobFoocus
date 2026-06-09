@@ -25,6 +25,7 @@ import {
   buildJobDescriptionHTML,
 } from '@/lib/ai-generation';
 import AddJobStepper from '@/components/AddJobStepper';
+import UpgradePromptModal from '@/components/UpgradePromptModal';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -168,6 +169,16 @@ function ApplicationContent() {
   // textbox and click "Add Job" to retry the pipeline manually.
   const [jdRetryText, setJdRetryText] = useState('');
   const [jdRetryError, setJdRetryError] = useState<string | null>(null);
+
+  // Daily-limit block. Snapshot from the server, shown in the upgrade
+  // modal so the user sees the exact numbers they were blocked at.
+  const [limitBlock, setLimitBlock] = useState<{
+    tier: 'free' | 'pro' | 'max';
+    used: number;
+    limit: number;
+    editsUsed: number;
+    editsLimit: number;
+  } | null>(null);
 
   const [application, setApplication] = useState<Application | null>(null);
   const [loading, setLoading] = useState(true);
@@ -355,13 +366,41 @@ function ApplicationContent() {
     | { kind: 'success'; folder: string }
     | { kind: 'parse-fail'; message: string }
     | { kind: 'manual-fill'; folder: string; formattedJD: ManualFillPayload['formattedJD']; missingCompany: boolean; missingTitle: boolean }
-    | { kind: 'other-fail'; message: string };
+    | { kind: 'other-fail'; message: string }
+    | { kind: 'limit-blocked'; tier: 'free' | 'pro' | 'max'; jobsUsed: number; jobsLimit: number; editsUsed: number; editsLimit: number };
 
   async function runExtensionPipelineCore(
     jdText: string,
     cancelled: { current: boolean }
   ): Promise<PipelineOutcome> {
-    // 3a. Ensure Uncategorized exists.
+    // 3a. Daily-limit pre-check. Same shape as AddJobModal.handleSubmitJD:
+    // bail early with a friendly modal before we burn AI tokens on a
+    // pipeline that will be rejected. Soft-fails on network errors so
+    // the server-side gate remains the source of truth.
+    try {
+      const checkRes = await fetch('/api/usage/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'add_job' }),
+      });
+      if (checkRes.ok) {
+        const check = await checkRes.json();
+        if (!check.allowed) {
+          return {
+            kind: 'limit-blocked',
+            tier: check.tier,
+            jobsUsed: check.jobsUsed,
+            jobsLimit: check.jobsLimit,
+            editsUsed: check.editsUsed,
+            editsLimit: check.editsLimit,
+          };
+        }
+      }
+    } catch (err) {
+      console.warn('[extension pipeline] usage pre-check failed, continuing:', err);
+    }
+
+    // 3b. Ensure Uncategorized exists.
     const uncategorized = await ensureUncategorizedCategory();
     if (cancelled.current) return { kind: 'other-fail', message: 'Cancelled' };
     if (!uncategorized) {
@@ -534,6 +573,19 @@ function ApplicationContent() {
           setPipelineError(outcome.message);
           setPipelineMode('error');
           return;
+        case 'limit-blocked':
+          // Daily cap hit. Surface the upgrade modal with the exact
+          // numbers the server reported. We close out the pipeline
+          // (no stepper, no error state) — the modal IS the response.
+          setLimitBlock({
+            tier: outcome.tier,
+            used: outcome.jobsUsed,
+            limit: outcome.jobsLimit,
+            editsUsed: outcome.editsUsed,
+            editsLimit: outcome.editsLimit,
+          });
+          setPipelineMode(null);
+          return;
         case 'success': {
           // Brief pause so the user sees the "done" state before the
           // view swaps. Without this, the transition can feel like
@@ -544,6 +596,13 @@ function ApplicationContent() {
           if (cancelled) return;
           setPipelineMode(null);
           router.replace(destination);
+          // Bump the daily counter. Fire-and-forget — the navigation
+          // already happened. Same shape as AddJobModal.
+          void fetch('/api/usage/increment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'add_job' }),
+          }).catch((err) => console.warn('[extension pipeline] usage increment failed:', err));
           return;
         }
       }
@@ -1632,6 +1691,18 @@ function ApplicationContent() {
       <ManageCategoriesModal
         isOpen={showManageCategories}
         onClose={() => setShowManageCategories(false)}
+      />
+
+      <UpgradePromptModal
+        isOpen={!!limitBlock}
+        onClose={() => setLimitBlock(null)}
+        blockedAction="add_job"
+        tier={limitBlock?.tier ?? 'free'}
+        used={limitBlock?.used ?? 0}
+        limit={limitBlock?.limit ?? 0}
+        otherUsed={limitBlock?.editsUsed ?? 0}
+        otherLimit={limitBlock?.editsLimit ?? 0}
+        otherLabel="Edits today"
       />
 
       {notification && (

@@ -44,8 +44,12 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/terms-of-service') ||
     request.nextUrl.pathname.startsWith('/extension-install')
 
-  // Unauthenticated — redirect protected routes to login
-  if (!user && !isPublicRoute && !isAuthRoute) {
+  // Unauthenticated — redirect protected routes to login. API routes
+  // are exempt: they return their own 401 JSON, never a redirect.
+  // The Stripe webhook is also exempt — it authenticates via signature,
+  // not session cookies, and a session check there is meaningless.
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api/')
+  if (!user && !isPublicRoute && !isAuthRoute && !isApiRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     // Forward the full path + query string as `?next=` so deep links from

@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { getDocumentHTML, saveDocumentHTML, getMasterResume } from '@/lib/storage-adapter';
+import UpgradePromptModal from '@/components/UpgradePromptModal';
 
 function DocumentContent() {
   const searchParams = useSearchParams();
@@ -14,6 +15,16 @@ function DocumentContent() {
   const [error, setError] = useState<string | null>(null);
   const [editingMessage, setEditingMessage] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+
+  // Daily-limit block for document edits. Same shape as the other
+  // call sites: snapshot from the server, show in the upgrade modal.
+  const [limitBlock, setLimitBlock] = useState<{
+    tier: 'free' | 'pro' | 'max';
+    used: number;
+    limit: number;
+    jobsUsed: number;
+    jobsLimit: number;
+  } | null>(null);
 
   useEffect(() => {
     async function fetchDocument() {
@@ -85,6 +96,33 @@ function DocumentContent() {
   const handleEditSubmit = useCallback(async () => {
     if (!editingMessage.trim() || !appId || !content) return;
 
+    // Pre-flight usage check. Same shape as the other call sites:
+    // soft-fail on network errors so the server-side gate (the
+    // edit-document route itself) is the source of truth for real
+    // cap enforcement.
+    try {
+      const checkRes = await fetch('/api/usage/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'edit_doc' }),
+      });
+      if (checkRes.ok) {
+        const check = await checkRes.json();
+        if (!check.allowed) {
+          setLimitBlock({
+            tier: check.tier,
+            used: check.editsUsed,
+            limit: check.editsLimit,
+            jobsUsed: check.jobsUsed,
+            jobsLimit: check.jobsLimit,
+          });
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('[document editor] usage pre-check failed, continuing:', err);
+    }
+
     setIsEditing(true);
 
     try {
@@ -97,6 +135,21 @@ function DocumentContent() {
           userMessage: editingMessage,
         }),
       });
+
+      if (res.status === 402) {
+        // Server-side gate caught a race or stale client. The body
+        // has the same shape as the pre-check, so we just open the
+        // modal with the server's numbers.
+        const body = await res.json().catch(() => ({}));
+        setLimitBlock({
+          tier: body.tier ?? 'free',
+          used: body.editsLimit ?? 0,
+          limit: body.editsLimit ?? 0,
+          jobsUsed: 0,
+          jobsLimit: body.jobsLimit ?? 0,
+        });
+        return;
+      }
 
       if (!res.ok) {
         const err = await res.json();
@@ -113,6 +166,15 @@ function DocumentContent() {
       // Update the displayed content
       setContent(newFullHTML);
       setEditingMessage('');
+
+      // Bump the daily counter. Fire-and-forget — the save already
+      // succeeded; a missed increment is just a small under-count
+      // tomorrow.
+      void fetch('/api/usage/increment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'edit_doc' }),
+      }).catch((err) => console.warn('[document editor] usage increment failed:', err));
     } catch (err) {
       console.error('Edit failed:', err);
       alert(err instanceof Error ? err.message : 'Failed to edit document. Please try again.');
@@ -344,6 +406,18 @@ function DocumentContent() {
             z-index: 10;
         }
       `}</style>
+
+      <UpgradePromptModal
+        isOpen={!!limitBlock}
+        onClose={() => setLimitBlock(null)}
+        blockedAction="edit_doc"
+        tier={limitBlock?.tier ?? 'free'}
+        used={limitBlock?.used ?? 0}
+        limit={limitBlock?.limit ?? 0}
+        otherUsed={limitBlock?.jobsUsed ?? 0}
+        otherLimit={limitBlock?.jobsLimit ?? 0}
+        otherLabel="Jobs today"
+      />
     </div>
   );
 }
