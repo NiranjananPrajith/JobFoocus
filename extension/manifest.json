@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "JobFoocus",
-  "version": "1.1.3",
+  "version": "1.2.0",
   "description": "One-click job description extraction for your JobFoocus application dashboard.",
   "permissions": [
     "activeTab",
@@ -13,7 +13,8 @@
     "scripts": ["background.js"]
   },
   "action": {
-    "default_title": "Send to JobFoocus",
+    "default_title": "JobFoocus",
+    "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -31,7 +32,7 @@
         "default": "Ctrl+Shift+J",
         "mac": "Command+Shift+J"
       },
-      "description": "Send the current job posting to JobFoocus"
+      "description": "Open the JobFoocus extension popdown"
     }
   }
 }
