@@ -55,6 +55,13 @@ export async function POST(request: Request) {
   // Find or create the Stripe customer for this user. We store the
   // customer ID on the subscriptions row so the webhook can correlate
   // events back to the user.
+  //
+  // The stored ID is treated as untrusted. If the server's Stripe
+  // account has changed since the row was written (e.g., the env was
+  // swapped from live → test, or vice versa), the old ID points at a
+  // customer in a different account and Stripe will return
+  // `resource_missing` when we try to use it. Verify with a cheap
+  // `retrieve` and create a fresh customer if it's gone.
   const service = createServiceClient();
   const { data: subRow } = await service
     .from('subscriptions')
@@ -63,7 +70,28 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   const stripe = getStripe();
-  let customerId = subRow?.stripe_customer_id ?? null;
+  let customerId: string | null = null;
+
+  if (subRow?.stripe_customer_id) {
+    try {
+      const existing = await stripe.customers.retrieve(subRow.stripe_customer_id);
+      // `customers.retrieve` returns a `DeletedCustomer` if the customer
+      // was deleted in Stripe; that shape has `deleted: true` and no id.
+      if (existing && !(existing as any).deleted) {
+        customerId = existing.id;
+      }
+    } catch (err) {
+      // resource_missing = customer doesn't exist in the current
+      // Stripe account. Any other error (network, 5xx) we let bubble —
+      // it's not a "stale ID" problem and the caller wants to know.
+      const code = (err as any)?.raw?.code;
+      if (code !== 'resource_missing') throw err;
+      // Fall through: customerId stays null → we'll create a new one.
+      console.warn(
+        `[stripe] stored customer ${subRow.stripe_customer_id} not found in current account, recreating`
+      );
+    }
+  }
 
   if (!customerId) {
     const customer = await stripe.customers.create({
@@ -72,8 +100,8 @@ export async function POST(request: Request) {
     });
     customerId = customer.id;
 
-    // Seed the subscriptions row with the new customer. The webhook
-    // will fill in subscription_id/price_id/status on
+    // Seed (or refresh) the subscriptions row with the new customer.
+    // The webhook will fill in subscription_id/price_id/status on
     // checkout.session.completed.
     await service.from('subscriptions').upsert(
       {
