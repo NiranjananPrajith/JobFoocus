@@ -97,7 +97,11 @@ export default function FeaturesPageContent() {
       </section>
 
       {/* ── Core Feature 1 — AI Resume Generation ────────────── */}
-      <section className="px-6 pb-20 w-full">
+      {/* pt-20 (md+) / pt-12 (mobile) creates a clear gap below the
+          hero's bottom padding — without an explicit top margin the
+          process graphic reads as flush against the hero on tall
+          canvases. */}
+      <section className="px-6 pt-12 md:pt-20 pb-20 w-full">
         {/* Wide static process graphic — full width */}
         <AIProcessGraphic />
 
