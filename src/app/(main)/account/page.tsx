@@ -17,6 +17,7 @@ import { timeUntilReset } from '@/lib/usage-utils';
 import Card from '@/components/design/Card';
 import AccountManageButton from './AccountManageButton';
 import AccountUpgradeButton from './AccountUpgradeButton';
+import AccountReactivateLink from './AccountReactivateLink';
 
 export const dynamic = 'force-dynamic'; // always show fresh data
 
@@ -124,14 +125,29 @@ export default async function AccountPage() {
               )}
             </div>
             {isPaid && (
-              <p className="text-[13px] text-steel mt-2">
-                {isTrialing
-                  ? 'Trial ends on'
-                  : cancelAtPeriodEnd
-                  ? 'Expires on'
-                  : 'Renews on'}{' '}
-                <span className="text-ink font-medium">{formatDate(periodEnd)}</span>
-              </p>
+              <>
+                <p className="text-[13px] text-steel mt-2">
+                  {isTrialing
+                    ? 'Trial ends on'
+                    : cancelAtPeriodEnd
+                    ? 'Expires on'
+                    : 'Renews on'}{' '}
+                  <span className="text-ink font-medium">{formatDate(periodEnd)}</span>
+                </p>
+                {/*
+                  Only when the subscription is actually scheduled to
+                  cancel. The link POSTs to /api/stripe/reactivate-subscription
+                  which clears the cancel flag in Stripe and mirrors it
+                  into the local DB. We render this on a new line, in
+                  primary color, to draw the eye without competing with
+                  the "Manage Subscription" button next to it.
+                */}
+                {cancelAtPeriodEnd && (
+                  <p className="text-[13px] mt-1.5">
+                    <AccountReactivateLink />
+                  </p>
+                )}
+              </>
             )}
             {!isPaid && (
               <p className="text-[13px] text-steel mt-2">
