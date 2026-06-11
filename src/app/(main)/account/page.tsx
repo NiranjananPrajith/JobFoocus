@@ -67,6 +67,17 @@ export default async function AccountPage() {
   const limits = TIER_LIMITS[tier];
   const usage = await getTodayUsageReadOnly(user.id);
 
+  // Diagnostic: log the post-reconcile state we actually render from.
+  // Combined with the [subscription-reconcile] line above, this lets
+  // us see the full pipeline: what Stripe returned → what got
+  // upserted → what the page is rendering.
+  console.log(
+    `[account] user=${user.id} tier=${tier} ` +
+      `subStatus=${subscription?.status ?? 'null'} ` +
+      `cancelAtPeriodEnd=${subscription?.cancel_at_period_end ?? 'null'} ` +
+      `periodEnd=${subscription?.current_period_end ?? 'null'}`
+  );
+
   const jobsUsed = usage?.jobs_added ?? 0;
   const editsUsed = usage?.edits_made ?? 0;
 

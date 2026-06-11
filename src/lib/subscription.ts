@@ -156,6 +156,17 @@ export async function refreshSubscriptionFromStripe(
     ? new Date(periodEndUnix * 1000).toISOString()
     : null;
 
+  // Diagnostic: log the pre-upsert state so we can see what Stripe
+  // thinks the subscription is. One entry per /account load — fine
+  // to keep in production. Grep for `[subscription-reconcile]` in
+  // the server logs.
+  console.log(
+    `[subscription-reconcile] user=${userId} customer=${customerId} ` +
+      `subId=${sub.id} status=${sub.status} ` +
+      `cancel_at_period_end=${sub.cancel_at_period_end} ` +
+      `current_period_end=${currentPeriodEnd}`
+  );
+
   const { data: updated, error: upsertError } = await supabase
     .from('subscriptions')
     .upsert(
