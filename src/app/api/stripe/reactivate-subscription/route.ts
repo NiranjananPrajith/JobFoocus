@@ -7,10 +7,15 @@
 // What "reactivate" means in Stripe terms: clear whichever flag the
 // original cancel wrote. Stripe now uses the `cancel_at` timestamp
 // for cancellations from the current customer portal; older cancels
-// were written to the `cancel_at_period_end` boolean. Setting BOTH
-// to false/null is the safe, idempotent answer — it works for
-// either cancel style, and is a no-op for subscriptions that are
-// already active.
+// were written to the `cancel_at_period_end` boolean.
+//
+// Important: the Stripe API does NOT allow passing both
+// `cancel_at_period_end` and `cancel_at` in a single update call
+// (returns 400 "Received both ... parameters. Please pass in only
+// one"). So we have to inspect the live subscription and clear only
+// the flag that's actually set. If both are set (rare, but possible
+// after a partial-update race), we clear them in two sequential
+// calls.
 //
 // The webhook (customer.subscription.updated) will eventually
 // mirror the change into the local DB, but we also write the
@@ -66,14 +71,64 @@ export async function POST(_request: Request) {
     );
   }
 
-  // Call Stripe. We clear both cancel flags so the call works
-  // regardless of which flag the original cancel wrote.
+  // Call Stripe. Fetch the live subscription first so we can tell
+  // which cancel flag was set — the API rejects a single update that
+  // sets both `cancel_at_period_end` and `cancel_at` (they're mutually
+  // exclusive in the same request).
   const stripe = getStripe();
+  let liveCancelAtPeriodEnd: boolean;
+  let liveCancelAt: number | null;
   try {
-    await stripe.subscriptions.update(subscription.stripe_subscription_id, {
-      cancel_at_period_end: false,
-      cancel_at: null,
-    });
+    const live = await stripe.subscriptions.retrieve(
+      subscription.stripe_subscription_id
+    );
+    liveCancelAtPeriodEnd = (live.cancel_at_period_end as boolean) ?? false;
+    liveCancelAt =
+      (live as unknown as { cancel_at?: number | null }).cancel_at ?? null;
+  } catch (err) {
+    console.error('[stripe] reactivation retrieve failed:', err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Failed to read subscription' },
+      { status: 500 }
+    );
+  }
+
+  console.log(
+    `[stripe] reactivation inspect: user=${user.id} ` +
+      `sub=${subscription.stripe_subscription_id} ` +
+      `cancel_at_period_end=${liveCancelAtPeriodEnd} cancel_at=${liveCancelAt}`
+  );
+
+  // Build the update(s) so we only touch flags that are actually
+  // set. If neither is set, the subscription is already active —
+  // return success without an API write.
+  try {
+    if (liveCancelAtPeriodEnd && liveCancelAt != null) {
+      // Both set (rare). Clear in two sequential updates — the API
+      // forbids doing it in one call.
+      await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+        cancel_at_period_end: false,
+      });
+      await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+        cancel_at: null,
+      });
+    } else if (liveCancelAtPeriodEnd) {
+      await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+        cancel_at_period_end: false,
+      });
+    } else if (liveCancelAt != null) {
+      await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+        cancel_at: null,
+      });
+    } else {
+      // Nothing to clear — subscription is already active. The link
+      // shouldn't be visible (the page only shows it when
+      // cancel_at_period_end is true in our DB), but treat this as a
+      // no-op success rather than an error.
+      console.log(
+        `[stripe] reactivation no-op (already active): user=${user.id} sub=${subscription.stripe_subscription_id}`
+      );
+    }
   } catch (err) {
     console.error('[stripe] reactivation failed:', err);
     return NextResponse.json(
