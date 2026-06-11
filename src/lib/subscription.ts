@@ -97,6 +97,13 @@ export async function getEffectiveTier(userId: string): Promise<EffectiveTier> {
 export async function refreshSubscriptionFromStripe(
   userId: string
 ): Promise<SubscriptionRow | null> {
+  // First-line diagnostic: if this line never appears in the Vercel
+  // logs, the function itself isn't being called (Vercel cached an
+  // old build of the lib even after a page-side deploy). If it does
+  // appear but the pre-upsert log below doesn't, the function is
+  // returning null or throwing before reaching the Stripe call.
+  console.log(`[subscription-reconcile] entering user=${userId}`);
+
   const supabase = createServiceClient();
 
   // Step 1: look up the user's Stripe customer ID. We could read the
