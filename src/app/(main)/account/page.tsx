@@ -1,8 +1,10 @@
 // /account — subscription + usage dashboard.
 //
 // Server component: reads the user's subscription row and today's
-// usage, then renders a static page. The only interactive bit
-// (the "Manage Subscription" button) is in a small client subcomponent.
+// usage, then renders a static page. The interactive bits (the
+// "Manage Subscription" button and the Autorenew toggle) live in
+// small client subcomponents — the page itself only orchestrates
+// the data fetch + the layout.
 //
 // We use the service-role client here on purpose — the user has
 // their own RLS policy that lets them read these rows, but the
@@ -17,7 +19,7 @@ import { timeUntilReset } from '@/lib/usage-utils';
 import Card from '@/components/design/Card';
 import AccountManageButton from './AccountManageButton';
 import AccountUpgradeButton from './AccountUpgradeButton';
-import AccountReactivateLink from './AccountReactivateLink';
+import AccountAutoRenewToggle from './AccountAutoRenewToggle';
 
 export const dynamic = 'force-dynamic'; // always show fresh data
 
@@ -134,19 +136,6 @@ export default async function AccountPage() {
                     : 'Renews on'}{' '}
                   <span className="text-ink font-medium">{formatDate(periodEnd)}</span>
                 </p>
-                {/*
-                  Only when the subscription is actually scheduled to
-                  cancel. The link POSTs to /api/stripe/reactivate-subscription
-                  which clears the cancel flag in Stripe and mirrors it
-                  into the local DB. We render this on a new line, in
-                  primary color, to draw the eye without competing with
-                  the "Manage Subscription" button next to it.
-                */}
-                {cancelAtPeriodEnd && (
-                  <p className="text-[13px] mt-1.5">
-                    <AccountReactivateLink />
-                  </p>
-                )}
               </>
             )}
             {!isPaid && (
@@ -161,6 +150,33 @@ export default async function AccountPage() {
             <AccountUpgradeButton />
           )}
         </div>
+
+        {/*
+          Autorenew toggle — paid users only. The single control
+          that replaces the prior "Manage in Stripe → cancel" +
+          "Don't cancel my subscription" two-step flow. The
+          `initialEnabled` mirrors `!cancelAtPeriodEnd` so the
+          toggle position is consistent with the date line above
+          on first render; the component then drives its own
+          optimistic state from there.
+        */}
+        {isPaid && (
+          <>
+            {/*
+              Divider line that spans the full width of the card.
+              The Card has p-6 padding, so we negate the left/right
+              margin to make the border reach both edges of the
+              card.
+            */}
+            <div className="border-t border-beige-deep -mx-6" />
+            <div className="pt-4">
+              <AccountAutoRenewToggle
+                initialEnabled={!cancelAtPeriodEnd}
+                initialPeriodEnd={periodEnd}
+              />
+            </div>
+          </>
+        )}
       </Card>
 
       {/* Usage card */}
