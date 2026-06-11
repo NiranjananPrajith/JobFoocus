@@ -2,7 +2,7 @@
 //
 // Server component: reads the user's subscription row and today's
 // usage, then renders a static page. The only interactive bit
-// (the "Manage in Stripe" button) is in a small client subcomponent.
+// (the "Manage Subscription" button) is in a small client subcomponent.
 //
 // We use the service-role client here on purpose — the user has
 // their own RLS policy that lets them read these rows, but the

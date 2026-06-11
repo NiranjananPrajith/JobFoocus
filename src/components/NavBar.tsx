@@ -377,6 +377,13 @@ function BillingPopdown({
   const onManage = async () => {
     setActionPending(true)
     setError(null)
+    // Pre-open a blank tab synchronously inside the click handler so
+    // the browser's popup-blocker doesn't reject us — `window.open`
+    // after an `await` is not guaranteed to keep its user-activation.
+    // We navigate the new tab to the Stripe URL once the API call
+    // returns. If the request fails we close the blank tab so we
+    // don't leave an empty window behind.
+    const newTab = window.open('', '_blank', 'noopener,noreferrer')
     try {
       const res = await fetch('/api/stripe/create-portal-session', {
         method: 'POST',
@@ -386,8 +393,15 @@ function BillingPopdown({
         throw new Error(data?.error || 'Failed to open billing portal')
       }
       setOpen(false)
-      window.location.href = data.url
+      if (newTab) {
+        newTab.location.href = data.url
+      } else {
+        // Popup was blocked — fall back to in-tab navigation so the
+        // user can still reach the portal.
+        window.location.href = data.url
+      }
     } catch (err) {
+      if (newTab) newTab.close()
       setError(err instanceof Error ? err.message : 'Something went wrong')
       setActionPending(false)
     }
