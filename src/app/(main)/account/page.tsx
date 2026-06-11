@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase-utils/server';
 import { getEffectiveTier } from '@/lib/subscription';
 import { getTodayUsageReadOnly } from '@/lib/usage';
 import { TIER_LABEL, TIER_PRICE_USD } from '@/lib/limits';
+import { timeUntilReset } from '@/lib/usage-utils';
 import Card from '@/components/design/Card';
 import AccountManageButton from './AccountManageButton';
 import AccountUpgradeButton from './AccountUpgradeButton';
@@ -26,18 +27,6 @@ function formatDate(iso: string | null): string {
     month: 'long',
     day: 'numeric',
   });
-}
-
-/** "resets in 5h 12m" — until next UTC midnight. */
-function timeUntilReset(now: Date = new Date()): string {
-  const nextMidnightUtc = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0)
-  );
-  const diffMs = nextMidnightUtc.getTime() - now.getTime();
-  const hours = Math.floor(diffMs / (1000 * 60 * 60));
-  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-  if (hours === 0) return `${minutes}m`;
-  return `${hours}h ${minutes}m`;
 }
 
 export default async function AccountPage() {

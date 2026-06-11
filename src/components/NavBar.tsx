@@ -1,17 +1,21 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import AddJobModal from '@/components/AddJobModal'
 import { createClient } from '@/lib/supabase/client'
+import { TIER_LABEL, TIER_PRICE_USD, type Tier } from '@/lib/limits'
+import { timeUntilReset } from '@/lib/usage-utils'
 import type { User } from '@supabase/supabase-js'
 
 export default function NavBar() {
   const pathname = usePathname()
   const [addJobOpen, setAddJobOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [billingOpen, setBillingOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const profileRef = useRef<HTMLDivElement>(null)
+  const billingRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -24,8 +28,15 @@ export default function NavBar() {
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
+      // Close either popdown if the click landed outside it. Both
+      // refs are checked independently — clicking inside the billing
+      // popdown should not also close the profile popdown, but a
+      // click anywhere outside both should close both.
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
         setProfileOpen(false)
+      }
+      if (billingRef.current && !billingRef.current.contains(e.target as Node)) {
+        setBillingOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -115,6 +126,17 @@ export default function NavBar() {
                 >
                   Add Job
                 </button>
+
+                {/* Billing popdown — plan + usage + Upgrade/Manage.
+                    Sits to the left of the profile icon so a paying
+                    user has a one-click path to manage their
+                    subscription. The popdown closes on click outside,
+                    on icon re-click, and on any action inside it. */}
+                <BillingPopdown
+                  open={billingOpen}
+                  setOpen={setBillingOpen}
+                  containerRef={billingRef}
+                />
 
                 {/* Profile dropdown */}
                 <div className="relative" ref={profileRef}>
@@ -232,17 +254,6 @@ export default function NavBar() {
                           </svg>
                           Master Resume
                         </a>
-                        <a
-                          href="/account"
-                          className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors"
-                          onClick={() => setProfileOpen(false)}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="2" y="5" width="20" height="14" rx="2"/>
-                            <line x1="2" y1="10" x2="22" y2="10"/>
-                          </svg>
-                          Account &amp; Billing
-                        </a>
                         <button
                           onClick={handleSignOut}
                           className="flex items-center gap-3 w-full text-left px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors"
@@ -266,5 +277,297 @@ export default function NavBar() {
 
       <AddJobModal isOpen={addJobOpen} onClose={() => setAddJobOpen(false)} onJobAdded={() => window.location.reload()} />
     </>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// BillingPopdown
+// ---------------------------------------------------------------------------
+//
+// Top-right credit-card icon + popdown. Shows the user's current plan,
+// today's usage, and a primary action (Upgrade for free / Manage
+// Subscription for paid) plus a "View full account" link.
+//
+// Data fetch: on open, POST /api/usage/check with a placeholder
+// `action` — the response shape is identical regardless of action
+// (tier, jobsUsed, jobsLimit, editsUsed, editsLimit), so we use
+// `add_job` arbitrarily. The fetch is read-only and the route is
+// already called by AddJobModal and the document editor, so reusing
+// it here avoids a new endpoint.
+//
+// Action button behavior matches the /account page:
+//   - Free tier → `router.push('/pricing')` (AccountUpgradeButton)
+//   - Paid tier → POST /api/stripe/create-portal-session, then
+//     `window.location.href = data.url` (AccountManageButton)
+//
+// Defined at the bottom of the file so the main NavBar component
+// stays focused on layout. The popdown takes its open state from the
+// parent so the parent's click-outside handler can close it via the
+// shared ref.
+
+interface BillingState {
+  tier: Tier | null
+  jobsUsed: number
+  jobsLimit: number
+  editsUsed: number
+  editsLimit: number
+}
+
+function BillingPopdown({
+  open,
+  setOpen,
+  containerRef,
+}: {
+  open: boolean
+  setOpen: (v: boolean) => void
+  containerRef: React.RefObject<HTMLDivElement>
+}) {
+  const router = useRouter()
+  const [state, setState] = useState<BillingState | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [actionPending, setActionPending] = useState(false)
+  // Bump this counter to force the fetch effect to re-run (used by
+  // the "Retry" button on a failed load).
+  const [fetchNonce, setFetchNonce] = useState(0)
+
+  // Fetch on each open (or retry). The route is fast (a single
+  // supabase read), so we don't bother caching across opens — the
+  // data is fresh every time the user looks at it. If the request
+  // fails we surface the error and let the user retry via the
+  // `fetchNonce` button; we do not auto-retry.
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+    fetch('/api/usage/check', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ action: 'add_job' }),
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(data?.error || 'Failed to load billing')
+        if (cancelled) return
+        setState({
+          tier: data.tier as Tier,
+          jobsUsed: data.jobsUsed ?? 0,
+          jobsLimit: data.jobsLimit ?? 0,
+          editsUsed: data.editsUsed ?? 0,
+          editsLimit: data.editsLimit ?? 0,
+        })
+        setLoading(false)
+      })
+      .catch((err) => {
+        if (cancelled) return
+        setError(err instanceof Error ? err.message : 'Failed to load billing')
+        setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [open, fetchNonce])
+
+  const onUpgrade = () => {
+    setOpen(false)
+    router.push('/pricing')
+  }
+
+  const onManage = async () => {
+    setActionPending(true)
+    setError(null)
+    try {
+      const res = await fetch('/api/stripe/create-portal-session', {
+        method: 'POST',
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.url) {
+        throw new Error(data?.error || 'Failed to open billing portal')
+      }
+      setOpen(false)
+      window.location.href = data.url
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+      setActionPending(false)
+    }
+  }
+
+  const isPaid = state != null && state.tier !== 'free'
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-9 h-9 rounded-full flex items-center justify-center border-2 transition-colors"
+        style={{
+          borderColor: open ? '#cc3a05' : '#fa520f',
+          backgroundColor: open ? '#fff8e0' : 'transparent',
+        }}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.borderColor = '#cc3a05'
+          ;(e.currentTarget as HTMLButtonElement).style.backgroundColor = '#fff8e0'
+        }}
+        onMouseLeave={(e) => {
+          if (!open) {
+            ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#fa520f'
+            ;(e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'
+          }
+        }}
+        title="Plan &amp; billing"
+        aria-label="Plan and billing"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="2" y="5" width="20" height="14" rx="2" />
+          <line x1="2" y1="10" x2="22" y2="10" />
+        </svg>
+      </button>
+
+      {open && (
+        // Width: w-72 (288px) is wider than the profile dropdown's
+        // w-56 because we need room for two progress bars + a
+        // full-width button + a secondary text link.
+        <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl border border-hairline-soft shadow-lg z-50 overflow-hidden">
+          {/* Header — current plan */}
+          <div className="px-4 py-3 border-b border-hairline-soft">
+            {loading && (
+              <p className="text-[12px] text-steel">Loading…</p>
+            )}
+            {error && !loading && !state && (
+              <div>
+                <p className="text-[12px] text-red-600">{error}</p>
+                <button
+                  onClick={() => setFetchNonce((n) => n + 1)}
+                  className="text-[12px] text-primary hover:underline mt-1"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+            {state && (
+              <div>
+                <p className="text-[12px] font-semibold uppercase tracking-[0.06em] text-steel mb-1">
+                  Current plan
+                </p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-[18px] font-semibold text-ink leading-none">
+                    {TIER_LABEL[state.tier!]}
+                  </span>
+                  {isPaid && (
+                    <span className="text-[13px] text-steel">
+                      ${TIER_PRICE_USD[state.tier!]}/mo
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Body — usage bars + reset hint */}
+          {state && (
+            <div className="px-4 py-3">
+              <CompactUsageBar
+                label="Jobs added"
+                used={state.jobsUsed}
+                limit={state.jobsLimit}
+              />
+              <div className="h-3" />
+              <CompactUsageBar
+                label="Document edits"
+                used={state.editsUsed}
+                limit={state.editsLimit}
+              />
+              <p className="text-[11px] text-steel mt-3 text-right">
+                Resets in {timeUntilReset()} (midnight UTC)
+              </p>
+            </div>
+          )}
+
+          {/* Footer — primary action + secondary link */}
+          {state && (
+            <div className="px-4 py-3 border-t border-hairline-soft">
+              {isPaid ? (
+                <button
+                  onClick={onManage}
+                  disabled={actionPending}
+                  className="w-full px-4 py-2 rounded-md text-[13px] font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: '#fa520f' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#cc3a05')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fa520f')}
+                >
+                  {actionPending ? 'Opening…' : 'Manage Subscription'}
+                </button>
+              ) : (
+                <button
+                  onClick={onUpgrade}
+                  className="w-full px-4 py-2 rounded-md text-[13px] font-medium text-white transition-colors"
+                  style={{ backgroundColor: '#fa520f' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#cc3a05')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fa520f')}
+                >
+                  Upgrade
+                </button>
+              )}
+              <a
+                href="/account"
+                onClick={() => setOpen(false)}
+                className="block text-center text-[12px] text-primary hover:underline mt-2"
+              >
+                View full account
+              </a>
+              {error && (
+                <p className="text-[11px] text-red-600 mt-2 text-center">{error}</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// CompactUsageBar — a smaller version of the /account page's bar,
+// designed for the 288px popdown. Renders the label, the X/Y number,
+// and a thin progress bar. Color flips to red when at-cap, matching
+// the design on /account so the visual cue is consistent.
+function CompactUsageBar({
+  label,
+  used,
+  limit,
+}: {
+  label: string
+  used: number
+  limit: number
+}) {
+  const pct = limit > 0 ? Math.min(100, (used / limit) * 100) : 0
+  const atCap = used >= limit
+  return (
+    <div>
+      <div className="flex items-baseline justify-between mb-1.5">
+        <span className="text-[12px] font-medium text-ink">{label}</span>
+        <span
+          className={`text-[12px] font-semibold ${
+            atCap ? 'text-primary' : 'text-steel'
+          }`}
+        >
+          {used} / {limit}
+        </span>
+      </div>
+      <div
+        className="h-1.5 rounded-full overflow-hidden"
+        style={{
+          backgroundColor: '#f3efe7',
+          border: '1px solid #e6d5a8',
+        }}
+      >
+        <div
+          className="h-full rounded-full transition-all"
+          style={{
+            width: `${pct}%`,
+            backgroundColor: atCap ? '#dc2626' : '#fa520f',
+          }}
+        />
+      </div>
+    </div>
   )
 }
