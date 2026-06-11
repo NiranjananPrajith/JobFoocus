@@ -10,9 +10,9 @@
 // the cookie store is mid-refresh.
 
 import { createClient } from '@/lib/supabase-utils/server';
-import { getEffectiveTier } from '@/lib/subscription';
+import { getSubscription, refreshSubscriptionFromStripe, type SubscriptionRow } from '@/lib/subscription';
 import { getTodayUsageReadOnly } from '@/lib/usage';
-import { TIER_LABEL, TIER_PRICE_USD } from '@/lib/limits';
+import { tierFromSubscription, TIER_LIMITS, TIER_LABEL, TIER_PRICE_USD } from '@/lib/limits';
 import { timeUntilReset } from '@/lib/usage-utils';
 import Card from '@/components/design/Card';
 import AccountManageButton from './AccountManageButton';
@@ -45,10 +45,27 @@ export default async function AccountPage() {
     );
   }
 
-  const [{ tier, limits, subscription }, usage] = await Promise.all([
-    getEffectiveTier(user.id),
-    getTodayUsageReadOnly(user.id),
-  ]);
+  // Reconcile the subscription with Stripe on every /account load.
+  // The webhook that writes `cancel_at_period_end` is fire-and-forget
+  // — it can be delayed or missed, which leaves the DB showing
+  // "Renews on" for a user who has actually cancelled. Pulling from
+  // Stripe here closes that gap: the page always reflects the truth
+  // and the DB heals itself as a side effect. If the Stripe call
+  // throws (network blip, API down), we fall back to the local row
+  // so the page still renders. We don't use `getEffectiveTier` here
+  // because that function is the enforcement path for the API
+  // routes — adding a Stripe round-trip to it would slow every
+  // /api/usage/* call, not just /account.
+  let subscription: SubscriptionRow | null = null;
+  try {
+    subscription = await refreshSubscriptionFromStripe(user.id);
+  } catch (err) {
+    console.error('[account] subscription reconcile failed, falling back to DB:', err);
+    subscription = await getSubscription(user.id);
+  }
+  const tier = tierFromSubscription(subscription);
+  const limits = TIER_LIMITS[tier];
+  const usage = await getTodayUsageReadOnly(user.id);
 
   const jobsUsed = usage?.jobs_added ?? 0;
   const editsUsed = usage?.edits_made ?? 0;
