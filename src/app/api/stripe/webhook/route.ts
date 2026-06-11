@@ -165,6 +165,18 @@ async function handleSubscriptionUpsert(
   const periodEndUnix = (item as any)?.current_period_end ?? (sub as any).current_period_end;
   const currentPeriodEnd = periodEndUnix ? new Date(periodEndUnix * 1000).toISOString() : null;
 
+  // Stripe's cancel signal lives in two places depending on the API
+  // version: `cancel_at_period_end` (legacy boolean) and `cancel_at`
+  // (timestamp, set by the current customer-portal cancel flow).
+  // We need to read BOTH and persist the OR of them so the page
+  // renders "Expires on" regardless of which flag Stripe wrote the
+  // cancel to. See the same logic in refreshSubscriptionFromStripe
+  // for the matching diagnose.
+  const cancelAtPeriodEnd = sub.cancel_at_period_end as boolean;
+  const cancelAtUnix = (sub as unknown as { cancel_at?: number | null })
+    .cancel_at;
+  const isScheduledToCancel = cancelAtPeriodEnd || cancelAtUnix != null;
+
   const { error } = await service.from('subscriptions').upsert(
     {
       user_id: userId,
@@ -173,7 +185,7 @@ async function handleSubscriptionUpsert(
       stripe_price_id: priceId,
       status: sub.status,
       current_period_end: currentPeriodEnd,
-      cancel_at_period_end: sub.cancel_at_period_end,
+      cancel_at_period_end: isScheduledToCancel,
       updated_at: new Date().toISOString(),
     },
     { onConflict: 'user_id' }

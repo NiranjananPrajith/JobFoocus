@@ -163,6 +163,32 @@ export async function refreshSubscriptionFromStripe(
     ? new Date(periodEndUnix * 1000).toISOString()
     : null;
 
+  // Stripe's cancel signal lives in TWO places depending on API
+  // version and how the cancel was issued. The legacy
+  // `cancel_at_period_end` boolean is what older integrations read;
+  // newer Stripe code paths (and the customer portal's
+  // "cancel at period end" button in current API versions) write
+  // the actual cancel time into the `cancel_at` timestamp field and
+  // leave `cancel_at_period_end` as `false`. We need to read BOTH
+  // and treat either as "the subscription is scheduled to cancel".
+  //
+  // Confirmed live bug: a user cancelled in the dashboard, the
+  // dashboard showed "Scheduled to cancel on Jul 11, 6:44 PM", but
+  // our reconcile was reading `cancel_at_period_end: false` and the
+  // page rendered "Renews on Jul 11" — wrong. The actual cancel was
+  // in `cancel_at`.
+  //
+  // The date we display on /account is `current_period_end`, which
+  // is the right answer for the "cancel at period end" case (the
+  // common one). For a "cancel at a specific future date" use, the
+  // user would want to see `cancel_at` instead — but we don't model
+  // that today and the dashboard already shows it under
+  // "Cancellation details".
+  const cancelAtPeriodEnd = sub.cancel_at_period_end as boolean;
+  const cancelAtUnix = (sub as unknown as { cancel_at?: number | null })
+    .cancel_at;
+  const isScheduledToCancel = cancelAtPeriodEnd || cancelAtUnix != null;
+
   // Diagnostic: log the pre-upsert state so we can see what Stripe
   // thinks the subscription is. One entry per /account load — fine
   // to keep in production. Grep for `[subscription-reconcile]` in
@@ -170,7 +196,9 @@ export async function refreshSubscriptionFromStripe(
   console.log(
     `[subscription-reconcile] user=${userId} customer=${customerId} ` +
       `subId=${sub.id} status=${sub.status} ` +
-      `cancel_at_period_end=${sub.cancel_at_period_end} ` +
+      `cancel_at_period_end=${cancelAtPeriodEnd} ` +
+      `cancel_at=${cancelAtUnix} ` +
+      `isScheduledToCancel=${isScheduledToCancel} ` +
       `current_period_end=${currentPeriodEnd}`
   );
 
@@ -184,7 +212,10 @@ export async function refreshSubscriptionFromStripe(
         stripe_price_id: priceId,
         status: sub.status,
         current_period_end: currentPeriodEnd,
-        cancel_at_period_end: sub.cancel_at_period_end,
+        // Write the combined signal so the page condition
+        // (`cancel_at_period_end ? 'Expires on' : 'Renews on'`)
+        // fires whichever Stripe flag the cancel was set via.
+        cancel_at_period_end: isScheduledToCancel,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'user_id' }
