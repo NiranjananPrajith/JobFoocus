@@ -383,7 +383,19 @@ function BillingPopdown({
     // We navigate the new tab to the Stripe URL once the API call
     // returns. If the request fails we close the blank tab so we
     // don't leave an empty window behind.
-    const newTab = window.open('', '_blank', 'noopener,noreferrer')
+    //
+    // We deliberately do NOT pass `noopener,noreferrer` here. In
+    // Chrome that flag makes `window.open` return a "noopener proxy"
+    // Window reference that the opener cannot navigate — assigning
+    // to `.location.href` on the proxy is a silent no-op, so the
+    // new tab stays on `about:blank`. An earlier version of this
+    // code shipped with those flags and hit exactly that bug: the
+    // popdown opened a blank tab and left it blank, defeating the
+    // whole point of the new-tab UX. We trade the noopener
+    // security benefit (Stripe seeing `window.opener` to our app)
+    // for the navigation actually working. Stripe is a trusted
+    // third party, and they have no reason to navigate our window.
+    const newTab = window.open('', '_blank')
     try {
       const res = await fetch('/api/stripe/create-portal-session', {
         method: 'POST',
