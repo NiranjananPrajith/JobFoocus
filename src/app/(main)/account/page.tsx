@@ -97,7 +97,11 @@ export default async function AccountPage() {
             </div>
             {isPaid && (
               <p className="text-[13px] text-steel mt-2">
-                {isTrialing ? 'Trial' : cancelAtPeriodEnd ? 'Cancels' : 'Renews'}{' '}
+                {isTrialing
+                  ? 'Trial ends on'
+                  : cancelAtPeriodEnd
+                  ? 'Expires on'
+                  : 'Renews on'}{' '}
                 <span className="text-ink font-medium">{formatDate(periodEnd)}</span>
               </p>
             )}
