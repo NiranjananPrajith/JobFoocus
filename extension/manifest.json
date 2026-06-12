@@ -3,14 +3,19 @@
   "name": "JobFoocus",
   "version": "1.2.0",
   "description": "One-click job description extraction for your JobFoocus application dashboard.",
+  "minimum_chrome_version": "88",
+  "browser_specific_settings": {
+    "gecko": {
+      "min_version": "109"
+    }
+  },
   "permissions": [
     "activeTab",
     "scripting",
     "contextMenus"
   ],
   "background": {
-    "service_worker": "background.js",
-    "scripts": ["background.js"]
+    "service_worker": "background.js"
   },
   "action": {
     "default_title": "JobFoocus",
