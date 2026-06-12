@@ -79,41 +79,16 @@ export async function getUserCategories(): Promise<UserCategory[]> {
   }
 }
 
-// "Uncategorized" is treated as a system category throughout the app, but
-// the storage layer requires every category used in saves to have a real
-// row in `user_categories` (so it has a UUID for the foreign key on
-// applications / documents). The extension pipeline and other entry
-// points that may want to drop a job into Uncategorized call this first
-// to make sure that row exists. It is idempotent — if the user already
-// has an Uncategorized row, it returns that one.
+// "Uncategorized" is a system category that is auto-created via a
+// database trigger on user signup (migration 006). This function
+// simply looks it up — no creation logic needed. Returns null if
+// the row somehow doesn't exist (shouldn't happen post-migration).
 export async function ensureUncategorizedCategory(): Promise<UserCategory | null> {
   const userId = await getUserId();
   if (!userId) return null;
 
   const userCats = await getUserCategories();
-  const existing = userCats.find((c) => c.name.toLowerCase() === 'uncategorized');
-  if (existing) return existing;
-
-  try {
-    const created = await apiFetch('/api/db/categories', {
-      method: 'POST',
-      body: JSON.stringify({
-        name: 'Uncategorized',
-        description: 'Jobs not yet assigned to a category',
-      }),
-    });
-    if (created && created.id) {
-      return transformCategoryFromApi(created);
-    }
-  } catch (err) {
-    // Most common reason: a 409 because the user already has an
-    // Uncategorized row from another tab / race. Fall through and
-    // re-fetch.
-    console.warn('[storage-adapter] ensureUncategorizedCategory create failed, retrying lookup:', err);
-  }
-
-  const after = await getUserCategories();
-  return after.find((c) => c.name.toLowerCase() === 'uncategorized') ?? null;
+  return userCats.find((c) => c.name.toLowerCase() === 'uncategorized') ?? null;
 }
 
 export async function saveCategory(cat: UserCategory): Promise<{ success: boolean; error?: string }> {
