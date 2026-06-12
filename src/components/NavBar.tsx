@@ -326,7 +326,6 @@ function BillingPopdown({
   const [state, setState] = useState<BillingState | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [actionPending, setActionPending] = useState(false)
   // Bump this counter to force the fetch effect to re-run (used by
   // the "Retry" button on a failed load).
   const [fetchNonce, setFetchNonce] = useState(0)
@@ -368,56 +367,6 @@ function BillingPopdown({
       cancelled = true
     }
   }, [open, fetchNonce])
-
-  const onUpgrade = () => {
-    setOpen(false)
-    router.push('/pricing')
-  }
-
-  const onManage = async () => {
-    setActionPending(true)
-    setError(null)
-    // Pre-open a blank tab synchronously inside the click handler so
-    // the browser's popup-blocker doesn't reject us — `window.open`
-    // after an `await` is not guaranteed to keep its user-activation.
-    // We navigate the new tab to the Stripe URL once the API call
-    // returns. If the request fails we close the blank tab so we
-    // don't leave an empty window behind.
-    //
-    // We deliberately do NOT pass `noopener,noreferrer` here. In
-    // Chrome that flag makes `window.open` return a "noopener proxy"
-    // Window reference that the opener cannot navigate — assigning
-    // to `.location.href` on the proxy is a silent no-op, so the
-    // new tab stays on `about:blank`. An earlier version of this
-    // code shipped with those flags and hit exactly that bug: the
-    // popdown opened a blank tab and left it blank, defeating the
-    // whole point of the new-tab UX. We trade the noopener
-    // security benefit (Stripe seeing `window.opener` to our app)
-    // for the navigation actually working. Stripe is a trusted
-    // third party, and they have no reason to navigate our window.
-    const newTab = window.open('', '_blank')
-    try {
-      const res = await fetch('/api/stripe/create-portal-session', {
-        method: 'POST',
-      })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok || !data?.url) {
-        throw new Error(data?.error || 'Failed to open billing portal')
-      }
-      setOpen(false)
-      if (newTab) {
-        newTab.location.href = data.url
-      } else {
-        // Popup was blocked — fall back to in-tab navigation so the
-        // user can still reach the portal.
-        window.location.href = data.url
-      }
-    } catch (err) {
-      if (newTab) newTab.close()
-      setError(err instanceof Error ? err.message : 'Something went wrong')
-      setActionPending(false)
-    }
-  }
 
   const isPaid = state != null && state.tier !== 'free'
 
@@ -509,37 +458,18 @@ function BillingPopdown({
             </div>
           )}
 
-          {/* Footer — primary action + secondary link */}
+          {/* Footer — single link to Account page */}
           {state && (
             <div className="px-4 py-3 border-t border-hairline-soft">
-              {isPaid ? (
-                <button
-                  onClick={onManage}
-                  disabled={actionPending}
-                  className="w-full px-4 py-2 rounded-md text-[13px] font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: '#fa520f' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#cc3a05')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fa520f')}
-                >
-                  {actionPending ? 'Opening…' : 'Manage Subscription'}
-                </button>
-              ) : (
-                <button
-                  onClick={onUpgrade}
-                  className="w-full px-4 py-2 rounded-md text-[13px] font-medium text-white transition-colors"
-                  style={{ backgroundColor: '#fa520f' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#cc3a05')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fa520f')}
-                >
-                  Upgrade
-                </button>
-              )}
               <a
                 href="/account"
                 onClick={() => setOpen(false)}
-                className="block text-center text-[12px] text-primary hover:underline mt-2"
+                className="block w-full text-center px-4 py-2 rounded-md text-[13px] font-medium text-white transition-colors"
+                style={{ backgroundColor: '#fa520f' }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#cc3a05')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fa520f')}
               >
-                View full account
+                Account and Billing
               </a>
               {error && (
                 <p className="text-[11px] text-red-600 mt-2 text-center">{error}</p>
