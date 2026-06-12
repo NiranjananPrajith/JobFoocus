@@ -126,28 +126,7 @@
       color: #8a8a8a;
     }
 
-    /* Account / tier section */
-    .account-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .tier-label {
-      font-size: 13px;
-      color: #6a6a6a;
-    }
-    .tier-badge {
-      display: inline-block;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 3px 8px;
-      border-radius: 6px;
-      margin-left: 6px;
-    }
-    .tier-free { background: #f0ece2; color: #7a7160; }
-    .tier-pro { background: #e8f4fd; color: #1a6fb5; }
-    .tier-max { background: #fdf0ea; color: #c2410c; }
-
+    /* Account link */
     .account-link {
       display: flex;
       align-items: center;
@@ -212,14 +191,8 @@
 
   <div class="section-divider"></div>
 
-  <!-- Section 3: Account & Plan -->
+  <!-- Section 3: Account -->
   <div class="section">
-    <div class="account-row">
-      <span class="tier-label">
-        Current plan:
-        <span id="tier-badge" class="tier-badge tier-free">Free</span>
-      </span>
-    </div>
     <button id="nav-account" class="account-link" type="button">
       Account and Billing
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

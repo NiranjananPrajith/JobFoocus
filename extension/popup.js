@@ -16,7 +16,6 @@
   const navDashboard = document.getElementById('nav-dashboard');
   const navJobs = document.getElementById('nav-jobs');
   const navAccount = document.getElementById('nav-account');
-  const tierBadge = document.getElementById('tier-badge');
 
   // --- Helpers ---
   const setStatus = (msg, isError) => {
@@ -82,17 +81,4 @@
   navAccount.addEventListener('click', () => {
     navigateTo('https://jobfoocus.com/account');
   });
-
-  // --- Tier display (read from chrome.storage.local) ---
-  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-    chrome.storage.local.get('jfTier', (data) => {
-      const tier = (data.jfTier || '').toLowerCase();
-      const validTiers = ['free', 'pro', 'max'];
-      if (validTiers.includes(tier)) {
-        tierBadge.textContent = tier.charAt(0).toUpperCase() + tier.slice(1);
-        tierBadge.className = 'tier-badge tier-' + tier;
-      }
-      // If no data stored yet, default "Free" badge remains from HTML.
-    });
-  }
 })();
