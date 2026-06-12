@@ -71,16 +71,16 @@
 
   // --- Section 2: Navigation ---
   navDashboard.addEventListener('click', () => {
-    navigateTo('https://job-foocus.vercel.app/dashboard');
+    navigateTo('https://jobfoocus.com/dashboard');
   });
 
   navJobs.addEventListener('click', () => {
-    navigateTo('https://job-foocus.vercel.app/jobs');
+    navigateTo('https://jobfoocus.com/jobs');
   });
 
   // --- Section 3: Account ---
   navAccount.addEventListener('click', () => {
-    navigateTo('https://job-foocus.vercel.app/account');
+    navigateTo('https://jobfoocus.com/account');
   });
 
   // --- Tier display (read from chrome.storage.local) ---

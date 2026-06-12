@@ -64,7 +64,7 @@
   const SCRAPERS = [
     {
       // LinkedIn job postings
-      match: (h) => h.includes('linkedin.com') && h.includes('linkedin.com'),
+      match: (h) => h.includes('linkedin.com'),
       scrape: () => ({
         title: pickText(['h1.job-title', 'h1.top-card-layout__title', '.job-details-jobs-unified-top-card__job-title', 'h1']),
         company: pickText([
