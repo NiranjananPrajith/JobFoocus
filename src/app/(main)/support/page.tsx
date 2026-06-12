@@ -4,286 +4,511 @@ export const metadata = {
   title: 'Support — Job Foocus',
 };
 
+/* ── Icon helpers ─────────────────────────────────────────────── */
+
+function IconGettingStarted() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  );
+}
+
+function IconWebsite() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="3" width="20" height="14" rx="2" />
+      <line x1="8" y1="21" x2="16" y2="21" />
+      <line x1="12" y1="17" x2="12" y2="21" />
+    </svg>
+  );
+}
+
+function IconExtension() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+      <polyline points="10 17 15 12 10 7" />
+      <line x1="15" y1="12" x2="3" y2="12" />
+    </svg>
+  );
+}
+
+function IconAccount() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-[2px]">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
+/* ── Page ─────────────────────────────────────────────────────── */
+
 export default function SupportPage() {
   return (
-    <div className="max-w-[768px] mx-auto">
-      {/* Hero */}
-      <div className="mb-14">
-        <h1 className="text-[28px] font-semibold text-ink mb-2">How can we help?</h1>
-        <p className="text-[15px] text-steel leading-relaxed">
-          Everything you need to get started with Job Foocus — from installing the extension to landing your next interview.
-        </p>
-      </div>
+    <div className="w-full">
 
-      <div className="space-y-12 text-[15px] text-ink leading-relaxed">
-
-        {/* ── Getting Started ── */}
-        <section>
-          <h2 className="text-[20px] font-semibold text-ink mb-4">Getting Started</h2>
-
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-[16px] font-semibold text-ink mb-2">What is Job Foocus?</h3>
-              <p className="text-[15px] text-steel leading-relaxed">
-                Job Foocus is a job-application workspace that helps you track, tailor, and manage your entire job search in one place. Drop in your master resume, paste a job description (or send one from the browser extension), and Job Foocus generates a tailored resume and cover letter for each job — filed and organized automatically.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-[16px] font-semibold text-ink mb-2">Quick start (3 steps)</h3>
-              <ol className="list-decimal list-inside space-y-2 text-steel">
-                <li><span className="text-ink font-medium">Create a free account</span> at <a href="https://jobfoocus.com" className="text-primary hover:underline">jobfoocus.com</a> — no credit card required</li>
-                <li><span className="text-ink font-medium">Upload your master resume</span> — this is the base resume Job Foocus tailors from</li>
-                <li><span className="text-ink font-medium">Add your first job</span> — paste a job description or use the browser extension to capture it from any job board</li>
-              </ol>
-              <p className="text-steel mt-2">That&apos;s it. Job Foocus handles the rest.</p>
-            </div>
-          </div>
-        </section>
-
-        {/* ── Using the Website ── */}
-        <section>
-          <h2 className="text-[20px] font-semibold text-ink mb-4">Using the Website</h2>
-
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-[16px] font-semibold text-ink mb-2">Adding a job manually</h3>
-              <ol className="list-decimal list-inside space-y-1 text-steel">
-                <li>Go to your <span className="text-ink font-medium">Dashboard</span></li>
-                <li>Click <span className="text-ink font-medium">&quot;Add Job&quot;</span> (top right, or in the navigation bar)</li>
-                <li>Paste the job description, company name, and job title</li>
-                <li>Click <span className="text-ink font-medium">Save</span> — Job Foocus files it under <code className="text-[13px] bg-surface px-1.5 py-0.5 rounded">YYYY-MM-DD_Company_Title</code></li>
-              </ol>
-            </div>
-
-            <div>
-              <h3 className="text-[16px] font-semibold text-ink mb-2">Generating a tailored resume and cover letter</h3>
-              <ol className="list-decimal list-inside space-y-1 text-steel">
-                <li>Open a job from your dashboard</li>
-                <li>Click <span className="text-ink font-medium">&quot;Save and generate resume &amp; cover letter&quot;</span></li>
-                <li>Job Foocus creates a tailored resume and cover letter based on your master resume and the job description</li>
-                <li>Review, edit if needed, and download as PDF</li>
-              </ol>
-            </div>
-
-            <div>
-              <h3 className="text-[16px] font-semibold text-ink mb-2">Using the AI document editor</h3>
-              <ol className="list-decimal list-inside space-y-1 text-steel">
-                <li>Open any generated document</li>
-                <li>Click <span className="text-ink font-medium">&quot;Edit with AI&quot;</span> (floating yellow panel)</li>
-                <li>Type what you want changed — &quot;Make the skills section more relevant to this role&quot; or &quot;Shorten the cover letter to one page&quot;</li>
-                <li>Job Foocus applies the edit and shows you the result</li>
-              </ol>
-            </div>
-
-            <div>
-              <h3 className="text-[16px] font-semibold text-ink mb-2">Organizing with categories</h3>
-              <ol className="list-decimal list-inside space-y-1 text-steel">
-                <li>Go to <span className="text-ink font-medium">Dashboard → Categories</span> (left sidebar)</li>
-                <li>Create custom categories (e.g., &quot;Remote Roles&quot;, &quot;Senior Positions&quot;, &quot;Applied&quot;)</li>
-                <li>Assign jobs to categories as you track them</li>
-                <li>Filter your dashboard by category</li>
-              </ol>
-            </div>
-
-            <div>
-              <h3 className="text-[16px] font-semibold text-ink mb-2">Tracking application status</h3>
-              <p className="text-steel mb-2">Each job has a status you can update as your application progresses:</p>
-              <ul className="list-disc list-inside space-y-1 text-steel">
-                <li><span className="text-ink font-medium">Prospect</span> — Job found, not yet applied</li>
-                <li><span className="text-ink font-medium">Applied</span> — Application submitted</li>
-                <li><span className="text-ink font-medium">Phone Screen</span> — Phone screen scheduled or completed</li>
-                <li><span className="text-ink font-medium">Interview</span> — You have an interview scheduled</li>
-                <li><span className="text-ink font-medium">Offer</span> — You received an offer</li>
-                <li><span className="text-ink font-medium">Rejected</span> — Application was not successful</li>
-              </ul>
-              <p className="text-steel mt-2">Update the status from the job card on your dashboard.</p>
-            </div>
-          </div>
-        </section>
-
-        {/* ── Using the Browser Extension ── */}
-        <section>
-          <h2 className="text-[20px] font-semibold text-ink mb-4">Using the Browser Extension</h2>
-
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-[16px] font-semibold text-ink mb-2">Supported browsers</h3>
-              <p className="text-steel">The Job Foocus extension works on:</p>
-              <ul className="list-disc list-inside space-y-1 text-steel mt-2">
-                <li><span className="text-ink font-medium">Chrome</span> (version 88+)</li>
-                <li><span className="text-ink font-medium">Edge</span> (version 88+)</li>
-                <li><span className="text-ink font-medium">Brave</span></li>
-                <li><span className="text-ink font-medium">Firefox</span> (version 109+)</li>
-              </ul>
-            </div>
-
-            {/* TODO: Uncomment and fill in store links once extension is published
-            <div>
-              <h3 className="text-[16px] font-semibold text-ink mb-2">Installing the extension</h3>
-
-              <h4 className="text-[15px] font-semibold text-ink mb-1">From the Chrome Web Store:</h4>
-              <ol className="list-decimal list-inside space-y-1 text-steel mb-4">
-                <li>Go to the <a href="CHROME_STORE_URL_HERE" className="text-primary hover:underline">Job Foocus Chrome Web Store page</a></li>
-                <li>Click <span className="text-ink font-medium">&quot;Add to Chrome&quot;</span></li>
-                <li>Confirm the permissions</li>
-                <li>Pin the extension to your toolbar (click the puzzle icon → pin)</li>
-              </ol>
-
-              <h4 className="text-[15px] font-semibold text-ink mb-1">From Firefox Add-ons:</h4>
-              <ol className="list-decimal list-inside space-y-1 text-steel">
-                <li>Go to the <a href="FIREFOX_ADDONS_URL_HERE" className="text-primary hover:underline">Job Foocus Firefox Add-ons page</a></li>
-                <li>Click <span className="text-ink font-medium">&quot;Add to Firefox&quot;</span></li>
-                <li>Confirm the permissions</li>
-                <li>Pin the extension to your toolbar</li>
-              </ol>
-            </div>
-            */}
-
-            <div>
-              <h3 className="text-[16px] font-semibold text-ink mb-2">How to capture a job posting</h3>
-              <p className="text-steel mb-2">There are three ways to capture a job:</p>
-
-              <h4 className="text-[15px] font-semibold text-ink mb-1">Method 1: Click the extension icon</h4>
-              <ol className="list-decimal list-inside space-y-1 text-steel mb-4">
-                <li>Navigate to any job posting (LinkedIn, Indeed, Glassdoor, company career page, etc.)</li>
-                <li>Click the <span className="text-ink font-medium">Job Foocus icon</span> in your toolbar</li>
-                <li>Click <span className="text-ink font-medium">&quot;Add Job&quot;</span></li>
-                <li>The extension extracts the job title, company, description, location, and salary</li>
-                <li>Your Job Foocus dashboard opens with the job details pre-filled</li>
-              </ol>
-
-              <h4 className="text-[15px] font-semibold text-ink mb-1">Method 2: Right-click shortcut</h4>
-              <ol className="list-decimal list-inside space-y-1 text-steel mb-4">
-                <li>Navigate to any job posting</li>
-                <li><span className="text-ink font-medium">Right-click</span> anywhere on the page</li>
-                <li>Select <span className="text-ink font-medium">&quot;Send page to Job Foocus&quot;</span></li>
-                <li>The job is captured immediately — no popup needed</li>
-              </ol>
-
-              <h4 className="text-[15px] font-semibold text-ink mb-1">Method 3: Keyboard shortcut</h4>
-              <p className="text-steel">
-                <span className="text-ink font-medium">Windows/Linux:</span> <kbd className="text-[13px] bg-surface px-1.5 py-0.5 rounded font-mono">Ctrl+Shift+J</kbd>
-                <span className="mx-2 text-steel">|</span>
-                <span className="text-ink font-medium">Mac:</span> <kbd className="text-[13px] bg-surface px-1.5 py-0.5 rounded font-mono">Cmd+Shift+J</kbd>
-              </p>
-              <p className="text-steel mt-1">The extension opens instantly and you can click &quot;Add Job&quot; from there.</p>
-            </div>
-
-            <div>
-              <h3 className="text-[16px] font-semibold text-ink mb-2">What the extension reads</h3>
-              <p className="text-steel">
-                The extension <span className="text-ink font-medium">only reads page content when you click &quot;Add Job&quot; or use the right-click shortcut.</span> It never:
-              </p>
-              <ul className="list-disc list-inside space-y-1 text-steel mt-2">
-                <li>Tracks your browsing activity</li>
-                <li>Reads cookies or session data from other websites</li>
-                <li>Collects data passively or in the background</li>
-              </ul>
-              <p className="text-steel mt-2">See our <a href="/privacy-policy" className="text-primary hover:underline">Privacy Policy</a> for full details.</p>
-            </div>
-          </div>
-        </section>
-
-        {/* ── Your Account ── */}
-        <section>
-          <h2 className="text-[20px] font-semibold text-ink mb-4">Your Account</h2>
-
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-[16px] font-semibold text-ink mb-2">Managing your subscription</h3>
-              <ol className="list-decimal list-inside space-y-1 text-steel">
-                <li>Click the <span className="text-ink font-medium">credit card icon</span> in the top-right of the navigation bar</li>
-                <li>From here you can:
-                  <ul className="list-disc list-inside ml-5 mt-1 space-y-1">
-                    <li><span className="text-ink font-medium">Upgrade</span> (free tier) — opens the pricing page</li>
-                    <li><span className="text-ink font-medium">Manage Subscription</span> (paid tiers) — opens the Stripe Customer Portal where you can update payment method, switch plans, or cancel</li>
-                    <li><span className="text-ink font-medium">Account and Billing</span> — opens your account page with usage details</li>
-                  </ul>
-                </li>
-              </ol>
-            </div>
-
-            <div>
-              <h3 className="text-[16px] font-semibold text-ink mb-2">Daily usage limits</h3>
-              <p className="text-steel mb-2">Your tier determines how many jobs and document edits you can make per day:</p>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-[14px]">
-                  <thead>
-                    <tr className="border-b border-hairline-soft">
-                      <th className="py-2 pr-4 font-semibold text-ink">Tier</th>
-                      <th className="py-2 pr-4 font-semibold text-ink">Jobs per day</th>
-                      <th className="py-2 pr-4 font-semibold text-ink">Document edits per day</th>
-                      <th className="py-2 font-semibold text-ink">Price</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-steel">
-                    <tr className="border-b border-hairline-soft">
-                      <td className="py-2 pr-4 font-medium text-ink">Free</td>
-                      <td className="py-2 pr-4">5</td>
-                      <td className="py-2 pr-4">25</td>
-                      <td className="py-2">$0</td>
-                    </tr>
-                    <tr className="border-b border-hairline-soft">
-                      <td className="py-2 pr-4 font-medium text-ink">Pro</td>
-                      <td className="py-2 pr-4">25</td>
-                      <td className="py-2 pr-4">150</td>
-                      <td className="py-2">$5/mo</td>
-                    </tr>
-                    <tr>
-                      <td className="py-2 pr-4 font-medium text-ink">Max</td>
-                      <td className="py-2 pr-4">250</td>
-                      <td className="py-2 pr-4">500</td>
-                      <td className="py-2">$12/mo</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <p className="text-steel mt-2">Limits reset daily at midnight UTC.</p>
-            </div>
-
-            <div>
-              <h3 className="text-[16px] font-semibold text-ink mb-2">Exporting your data</h3>
-              <p className="text-steel">Go to <span className="text-ink font-medium">Account → Export Data</span> to download all your job applications, documents, master resume, and settings as a single JSON file.</p>
-            </div>
-
-            <div>
-              <h3 className="text-[16px] font-semibold text-ink mb-2">Deleting your account</h3>
-              <p className="text-steel">To permanently delete your account and all associated data:</p>
-              <ol className="list-decimal list-inside space-y-1 text-steel mt-2">
-                <li>Go to <span className="text-ink font-medium">Account</span></li>
-                <li>Scroll to the <span className="text-ink font-medium">Data &amp; Privacy</span> section</li>
-                <li>Click <span className="text-ink font-medium">&quot;Delete Account&quot;</span></li>
-                <li>Type <code className="text-[13px] bg-surface px-1.5 py-0.5 rounded">DELETE</code> to confirm</li>
-              </ol>
-              <p className="text-steel mt-2">This action is permanent and cannot be undone. All your resumes, cover letters, and application data will be permanently removed.</p>
-            </div>
-          </div>
-        </section>
-
-        {/* ── FAQ ── */}
-        <FaqSection />
-
-        {/* ── Contact ── */}
-        <section className="border-t border-hairline-soft pt-10">
-          <h2 className="text-[20px] font-semibold text-ink mb-3">Still need help?</h2>
-          <p className="text-steel mb-4">
-            If you have questions, run into issues, or just want to say hello — reach out to us.
+      {/* ── Hero ──────────────────────────────────────────────── */}
+      <section className="relative px-6 py-16 md:py-24">
+        <div className="max-w-[768px] mx-auto">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.10em] text-primary mb-5">
+            Support
           </p>
-          <a
-            href="mailto:support@jobfoocus.com"
-            className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
+          <h1
+            className="text-[40px] md:text-[52px] font-normal text-ink leading-[1.12] mb-5"
+            style={{ fontFamily: 'PP Editorial Old, Times New Roman, serif', letterSpacing: '-0.5px' }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="4" width="20" height="16" rx="2" />
-              <path d="M22 7l-10 6L2 7" />
-            </svg>
-            support@jobfoocus.com
-          </a>
-          <p className="text-[13px] text-steel mt-2">We typically respond within 24 hours on business days.</p>
-        </section>
+            How can we help?
+          </h1>
+          <p className="text-[18px] text-steel leading-[1.60] max-w-[540px]">
+            Everything you need to get started with Job Foocus — from installing the extension to landing your next interview.
+          </p>
+        </div>
+      </section>
 
-      </div>
+      {/* ── Topic Grid ────────────────────────────────────────── */}
+      <section className="px-6 pb-16">
+        <div className="max-w-[768px] mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <a href="#getting-started" className="group flex items-start gap-4 p-5 rounded-xl transition-colors" style={{ backgroundColor: '#fff8e0', border: '1px solid #e6d5a8' }}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: '#fff0c2', border: '1px solid #e6d5a8' }}>
+              <IconGettingStarted />
+            </div>
+            <div>
+              <p className="text-[15px] font-semibold text-ink mb-1 group-hover:text-primary transition-colors">Getting Started</p>
+              <p className="text-[13px] text-steel leading-relaxed">Create an account, upload your resume, and add your first job</p>
+            </div>
+          </a>
+          <a href="#using-the-website" className="group flex items-start gap-4 p-5 rounded-xl transition-colors" style={{ backgroundColor: '#fff8e0', border: '1px solid #e6d5a8' }}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: '#fff0c2', border: '1px solid #e6d5a8' }}>
+              <IconWebsite />
+            </div>
+            <div>
+              <p className="text-[15px] font-semibold text-ink mb-1 group-hover:text-primary transition-colors">Using the Website</p>
+              <p className="text-[13px] text-steel leading-relaxed">Add jobs, generate resumes, and track your applications</p>
+            </div>
+          </a>
+          <a href="#browser-extension" className="group flex items-start gap-4 p-5 rounded-xl transition-colors" style={{ backgroundColor: '#fff8e0', border: '1px solid #e6d5a8' }}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: '#fff0c2', border: '1px solid #e6d5a8' }}>
+              <IconExtension />
+            </div>
+            <div>
+              <p className="text-[15px] font-semibold text-ink mb-1 group-hover:text-primary transition-colors">Browser Extension</p>
+              <p className="text-[13px] text-steel leading-relaxed">Capture jobs from LinkedIn, Indeed, and any job board</p>
+            </div>
+          </a>
+          <a href="#your-account" className="group flex items-start gap-4 p-5 rounded-xl transition-colors" style={{ backgroundColor: '#fff8e0', border: '1px solid #e6d5a8' }}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: '#fff0c2', border: '1px solid #e6d5a8' }}>
+              <IconAccount />
+            </div>
+            <div>
+              <p className="text-[15px] font-semibold text-ink mb-1 group-hover:text-primary transition-colors">Your Account</p>
+              <p className="text-[13px] text-steel leading-relaxed">Manage subscription, usage limits, and data</p>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      {/* ── Quick Start ───────────────────────────────────────── */}
+      <section id="getting-started" className="px-6 pb-16 scroll-mt-20">
+        <div className="max-w-[768px] mx-auto">
+          <div className="mb-8">
+            <span className="inline-block text-[11px] font-semibold uppercase tracking-[0.08em] text-primary mb-3">
+              Quick Start
+            </span>
+            <h2 className="text-[28px] font-semibold text-ink leading-tight">
+              Get up and running in 3 steps
+            </h2>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              {
+                step: '1',
+                title: 'Create a free account',
+                body: (
+                  <>
+                    Sign up at{' '}
+                    <a href="https://jobfoocus.com" className="text-primary hover:underline font-medium">
+                      jobfoocus.com
+                    </a>{' '}
+                    — no credit card required.
+                  </>
+                ),
+              },
+              {
+                step: '2',
+                title: 'Upload your master resume',
+                body: 'This is the base resume Job Foocus tailors from. Add your work experience, education, and skills.',
+              },
+              {
+                step: '3',
+                title: 'Add your first job',
+                body: 'Paste a job description or use the browser extension to capture it from any job board. Job Foocus generates a tailored resume and cover letter automatically.',
+              },
+            ].map((item) => (
+              <div
+                key={item.step}
+                className="flex items-start gap-5 p-5 rounded-xl"
+                style={{ backgroundColor: '#ffffff', border: '1px solid #ededed' }}
+              >
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-[14px] font-semibold"
+                  style={{ backgroundColor: '#fa520f', color: '#ffffff' }}
+                >
+                  {item.step}
+                </div>
+                <div>
+                  <p className="text-[15px] font-semibold text-ink mb-1">{item.title}</p>
+                  <p className="text-[14px] text-steel leading-relaxed">{item.body}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-[14px] text-steel mt-4">That&apos;s it. Job Foocus handles the rest.</p>
+        </div>
+      </section>
+
+      {/* ── Using the Website (cream section) ─────────────────── */}
+      <section id="using-the-website" className="scroll-mt-20" style={{ backgroundColor: '#fff8e0' }}>
+        <div className="px-6 py-16">
+          <div className="max-w-[768px] mx-auto">
+            <div className="mb-8">
+              <span className="inline-block text-[11px] font-semibold uppercase tracking-[0.08em] text-primary mb-3">
+                Using the Website
+              </span>
+              <h2 className="text-[28px] font-semibold text-ink leading-tight">
+                Everything you can do from the dashboard
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                {
+                  title: 'Add a job manually',
+                  items: [
+                    'Go to your Dashboard',
+                    'Click "Add Job"',
+                    'Paste the job description, company, and title',
+                    'Job Foocus files it under YYYY-MM-DD_Company_Title',
+                  ],
+                },
+                {
+                  title: 'Generate tailored documents',
+                  items: [
+                    'Open a job from your dashboard',
+                    'Click "Save and generate resume & cover letter"',
+                    'AI creates a tailored resume and cover letter',
+                    'Review, edit, and download as PDF',
+                  ],
+                },
+                {
+                  title: 'Use the AI document editor',
+                  items: [
+                    'Open any generated document',
+                    'Click "Edit with AI"',
+                    'Type what you want changed',
+                    'Job Foocus applies the edit instantly',
+                  ],
+                },
+                {
+                  title: 'Organize with categories',
+                  items: [
+                    'Go to Dashboard → Categories',
+                    'Create custom categories (e.g., "Remote Roles")',
+                    'Assign jobs to categories',
+                    'Filter your dashboard by category',
+                  ],
+                },
+                {
+                  title: 'Track application status',
+                  items: [
+                    'Prospect — not yet applied',
+                    'Applied — submitted',
+                    'Phone Screen — scheduled',
+                    'Interview / Offer / Rejected',
+                  ],
+                },
+              ].map((card) => (
+                <div
+                  key={card.title}
+                  className="rounded-xl p-5"
+                  style={{ backgroundColor: '#ffffff', border: '1px solid #e6d5a8' }}
+                >
+                  <p className="text-[14px] font-semibold text-ink mb-3">{card.title}</p>
+                  <ul className="space-y-2">
+                    {card.items.map((item) => (
+                      <li key={item} className="flex items-start gap-2.5 text-[13px] text-steel leading-relaxed">
+                        <CheckIcon />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Browser Extension ─────────────────────────────────── */}
+      <section id="browser-extension" className="px-6 py-16 scroll-mt-20">
+        <div className="max-w-[768px] mx-auto">
+          <div className="mb-10">
+            <span className="inline-block text-[11px] font-semibold uppercase tracking-[0.08em] text-primary mb-3">
+              Browser Extension
+            </span>
+            <h2 className="text-[28px] font-semibold text-ink leading-tight mb-4">
+              Capture jobs directly from any job board
+            </h2>
+            <p className="text-[16px] text-steel leading-[1.65] max-w-[540px]">
+              The Job Foocus extension sits in your browser toolbar. When you&apos;re on a job posting, click the icon and the job is captured — title, company, description — in seconds.
+            </p>
+          </div>
+
+          {/* Supported browsers */}
+          <div className="flex flex-wrap gap-2 mb-10">
+            {['Chrome 88+', 'Edge 88+', 'Brave', 'Firefox 109+'].map((browser) => (
+              <span
+                key={browser}
+                className="inline-flex items-center px-3 py-1.5 rounded-full text-[12px] font-semibold text-ink"
+                style={{ backgroundColor: '#fff0c2', border: '1px solid #e6d5a8' }}
+              >
+                {browser}
+              </span>
+            ))}
+          </div>
+
+          {/* Capture methods — 2-column layout */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+            <div>
+              <h3 className="text-[18px] font-semibold text-ink mb-4">Three ways to capture</h3>
+
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-[13px] font-semibold" style={{ backgroundColor: '#fa520f', color: '#ffffff' }}>1</div>
+                  <div>
+                    <p className="text-[14px] font-semibold text-ink mb-1">Click the extension icon</p>
+                    <p className="text-[13px] text-steel leading-relaxed">Navigate to any job posting, click the icon, and click &quot;Add Job&quot;.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-[13px] font-semibold" style={{ backgroundColor: '#fa520f', color: '#ffffff' }}>2</div>
+                  <div>
+                    <p className="text-[14px] font-semibold text-ink mb-1">Right-click shortcut</p>
+                    <p className="text-[13px] text-steel leading-relaxed">Right-click anywhere on the page, select &quot;Send page to Job Foocus&quot;.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-[13px] font-semibold" style={{ backgroundColor: '#fa520f', color: '#ffffff' }}>3</div>
+                  <div>
+                    <p className="text-[14px] font-semibold text-ink mb-1">Keyboard shortcut</p>
+                    <p className="text-[13px] text-steel leading-relaxed">
+                      <kbd className="text-[12px] bg-surface px-1.5 py-0.5 rounded font-mono" style={{ border: '1px solid #ededed' }}>Ctrl+Shift+J</kbd>
+                      <span className="mx-1.5">/</span>
+                      <kbd className="text-[12px] bg-surface px-1.5 py-0.5 rounded font-mono" style={{ border: '1px solid #ededed' }}>Cmd+Shift+J</kbd>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Browser mockup */}
+            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #ededed', boxShadow: 'rgba(0,0,0,0.06) 0px 8px 24px' }}>
+              <div className="bg-surface px-4 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid #ededed' }}>
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#e5e5e5' }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#e5e5e5' }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#e5e5e5' }} />
+                </div>
+                <div className="flex-1 flex justify-center">
+                  <span className="text-[11px] text-steel font-medium">linkedin.com/jobs</span>
+                </div>
+              </div>
+              <div className="p-5 bg-white">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fff8e0', border: '1px solid #e6d5a8' }}>
+                    <img src="/icon.webp" alt="Job Foocus" className="w-8 h-8 rounded object-contain" />
+                  </div>
+                  <div>
+                    <p className="text-[13px] font-semibold text-ink">Senior Frontend Engineer</p>
+                    <p className="text-[11px] text-steel">Acme Corp · San Francisco, CA</p>
+                  </div>
+                </div>
+                <p className="text-[11px] text-steel leading-relaxed mb-3">
+                  We are looking for a Senior Frontend Engineer to join our team and help build the next generation of our product...
+                </p>
+                <button
+                  className="w-full py-2 rounded-md text-[12px] font-medium text-white"
+                  style={{ backgroundColor: '#fa520f' }}
+                >
+                  Add Job
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Privacy note */}
+          <div
+            className="flex items-start gap-4 p-5 rounded-xl"
+            style={{ backgroundColor: '#ffffff', border: '1px solid #ededed' }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+            </svg>
+            <div>
+              <p className="text-[14px] font-semibold text-ink mb-1">Your privacy is protected</p>
+              <p className="text-[13px] text-steel leading-relaxed">
+                The extension <span className="text-ink font-medium">only reads page content when you click &quot;Add Job&quot; or use the right-click shortcut.</span> It never tracks your browsing, reads cookies, or collects data passively. See our{' '}
+                <a href="/privacy-policy" className="text-primary hover:underline">Privacy Policy</a>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Your Account (cream section) ──────────────────────── */}
+      <section id="your-account" className="scroll-mt-20" style={{ backgroundColor: '#fff8e0' }}>
+        <div className="px-6 py-16">
+          <div className="max-w-[768px] mx-auto">
+            <div className="mb-8">
+              <span className="inline-block text-[11px] font-semibold uppercase tracking-[0.08em] text-primary mb-3">
+                Your Account
+              </span>
+              <h2 className="text-[28px] font-semibold text-ink leading-tight">
+                Usage limits and account management
+              </h2>
+            </div>
+
+            {/* Tier cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+              {[
+                { name: 'Free', price: '$0', jobs: '5', edits: '25', featured: false },
+                { name: 'Pro', price: '$5/mo', jobs: '25', edits: '150', featured: true },
+                { name: 'Max', price: '$12/mo', jobs: '250', edits: '500', featured: false },
+              ].map((tier) => (
+                <div
+                  key={tier.name}
+                  className="rounded-xl p-5 relative"
+                  style={{
+                    backgroundColor: tier.featured ? '#ffffff' : '#ffffff',
+                    border: tier.featured ? '2px solid #fa520f' : '1px solid #e6d5a8',
+                  }}
+                >
+                  {tier.featured && (
+                    <span
+                      className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[11px] font-semibold text-white"
+                      style={{ backgroundColor: '#fa520f' }}
+                    >
+                      Most Popular
+                    </span>
+                  )}
+                  <p className="text-[13px] font-semibold uppercase tracking-[0.06em] text-steel mb-2">{tier.name}</p>
+                  <p className="text-[28px] font-semibold text-ink leading-none mb-1">{tier.price}</p>
+                  <div className="mt-3 space-y-1.5">
+                    <p className="text-[13px] text-steel">
+                      <span className="text-ink font-medium">{tier.jobs}</span> jobs/day
+                    </p>
+                    <p className="text-[13px] text-steel">
+                      <span className="text-ink font-medium">{tier.edits}</span> edits/day
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-[13px] text-steel mb-8">Limits reset daily at midnight UTC. Manage your subscription from the credit card icon in the navigation bar.</p>
+
+            {/* Data management */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="rounded-xl p-5" style={{ backgroundColor: '#ffffff', border: '1px solid #e6d5a8' }}>
+                <p className="text-[14px] font-semibold text-ink mb-2">Export your data</p>
+                <p className="text-[13px] text-steel leading-relaxed">
+                  Go to <span className="text-ink font-medium">Account → Export Data</span> to download all your job applications, documents, master resume, and settings as a single JSON file.
+                </p>
+              </div>
+              <div className="rounded-xl p-5" style={{ backgroundColor: '#ffffff', border: '1px solid #e6d5a8' }}>
+                <p className="text-[14px] font-semibold text-ink mb-2">Delete your account</p>
+                <p className="text-[13px] text-steel leading-relaxed">
+                  Go to <span className="text-ink font-medium">Account → Delete Account</span> and type <code className="text-[12px] bg-surface px-1 py-0.5 rounded" style={{ border: '1px solid #ededed' }}>DELETE</code> to confirm. This permanently removes all data.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FAQ ────────────────────────────────────────────────── */}
+      <section className="px-6 py-16">
+        <div className="max-w-[768px] mx-auto">
+          <div className="mb-8">
+            <span className="inline-block text-[11px] font-semibold uppercase tracking-[0.08em] text-primary mb-3">
+              FAQ
+            </span>
+            <h2 className="text-[28px] font-semibold text-ink leading-tight">
+              Frequently asked questions
+            </h2>
+          </div>
+          <FaqSection />
+        </div>
+      </section>
+
+      {/* ── Contact ────────────────────────────────────────────── */}
+      <section className="px-6 pb-16">
+        <div className="max-w-[768px] mx-auto">
+          <div
+            className="rounded-xl p-8 md:p-10 text-center relative overflow-hidden"
+            style={{ backgroundColor: '#fff8e0', border: '1px solid #e6d5a8' }}
+          >
+            {/* Decorative gradient corner */}
+            <div
+              className="absolute top-0 right-0 w-[200px] h-[200px] rounded-full opacity-20 pointer-events-none"
+              style={{
+                background: 'radial-gradient(circle, #fa520f 0%, transparent 70%)',
+                transform: 'translate(40%, -40%)',
+              }}
+            />
+
+            <div className="relative z-10">
+              <h2
+                className="text-[32px] md:text-[36px] font-normal text-ink leading-tight mb-3"
+                style={{ fontFamily: 'PP Editorial Old, Times New Roman, serif', letterSpacing: '-0.5px' }}
+              >
+                Still need help?
+              </h2>
+              <p className="text-[16px] text-steel max-w-[400px] mx-auto leading-relaxed mb-6">
+                If you have questions, run into issues, or just want to say hello — reach out to us.
+              </p>
+              <a
+                href="mailto:support@jobfoocus.com"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-[14px] font-medium text-white transition-colors"
+                style={{ backgroundColor: '#fa520f' }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <path d="M22 7l-10 6L2 7" />
+                </svg>
+                support@jobfoocus.com
+              </a>
+              <p className="text-[12px] text-steel mt-3">We typically respond within 24 hours on business days.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div>
   );
 }
