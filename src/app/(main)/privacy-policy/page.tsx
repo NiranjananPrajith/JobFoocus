@@ -64,14 +64,18 @@ export default function PrivacyPolicyPage() {
         <section>
           <h2 className="text-[18px] font-semibold text-ink mb-3">8. Data Retention</h2>
           <p className="text-[15px] text-steel leading-relaxed">
-            Your data remains in your control at all times. You can delete your application data, master resume, and generated documents at any time through the application interface or by uninstalling the browser extension, which clears locally stored data. We retain anonymized, aggregated usage statistics for service improvement purposes only.
+            Your data remains in your control at all times. You can export all your data (job applications, documents, master resume, and settings) as a JSON file from the Account page. You can also permanently delete your account and all associated data from the Account page at any time. We retain anonymized, aggregated usage statistics for service improvement purposes only.
           </p>
         </section>
 
         <section>
           <h2 className="text-[18px] font-semibold text-ink mb-3">9. Your Rights</h2>
           <p className="text-[15px] text-steel leading-relaxed">
-            You retain full ownership and control of all data you provide to Job Foocus. You may request deletion of your personal data at any time by contacting us. You have the right to access, correct, or delete any personal information stored, and the right to data portability for your application documents.
+            You retain full ownership and control of all data you provide to Job Foocus. You can export your data or permanently delete your account from the Account page. You also have the right to contact us at{' '}
+            <a href="mailto:privacy@jobfoocus.com" className="text-primary hover:underline">
+              privacy@jobfoocus.com
+            </a>{' '}
+            for any data-related requests.
           </p>
         </section>
 

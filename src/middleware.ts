@@ -42,7 +42,8 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/pricing') ||
     request.nextUrl.pathname.startsWith('/privacy-policy') ||
     request.nextUrl.pathname.startsWith('/terms-of-service') ||
-    request.nextUrl.pathname.startsWith('/extension-install')
+    request.nextUrl.pathname.startsWith('/extension-install') ||
+    request.nextUrl.pathname.startsWith('/support')
 
   // Unauthenticated — redirect protected routes to login. API routes
   // are exempt: they return their own 401 JSON, never a redirect.

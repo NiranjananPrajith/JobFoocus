@@ -20,6 +20,8 @@ import Card from '@/components/design/Card';
 import AccountManageButton from './AccountManageButton';
 import AccountUpgradeButton from './AccountUpgradeButton';
 import AccountAutoRenewToggle from './AccountAutoRenewToggle';
+import ExportDataButton from './ExportDataButton';
+import DeleteAccountButton from './DeleteAccountButton';
 
 export const dynamic = 'force-dynamic'; // always show fresh data
 
@@ -199,6 +201,16 @@ export default async function AccountPage() {
           used={editsUsed}
           limit={limits.edits}
         />
+      </Card>
+
+      {/* Data & Privacy card */}
+      <Card variant="default" className="mb-6">
+        <p className="text-[15px] font-semibold text-ink mb-4">Data &amp; Privacy</p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <ExportDataButton />
+          <div className="h-px w-full sm:h-6 sm:w-px bg-hairline-soft" />
+          <DeleteAccountButton />
+        </div>
       </Card>
 
       {/* Plan comparison hint */}
