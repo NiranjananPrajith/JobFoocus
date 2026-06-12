@@ -1,19 +1,24 @@
 // popup.js — runs in the popdown when the user clicks the toolbar icon.
 //
-// UX: the popdown stays open while we kick off the scrape-and-open
-// flow in the background script (so the user gets visual feedback
-// that something is happening), then closes itself. The dashboard
-// tab is opened/created by the background script — see the 'addJob'
-// message handler in background.js.
+// Three sections:
+//   1. "Add Job" — scrapes the current page and opens the dashboard
+//   2. Navigation links — Dashboard and Jobs (reuse existing tab)
+//   3. Account — shows current plan tier + link to /account
 //
-// If the message round-trip or the background scrape fails, we show
-// an inline error banner instead of silently closing.
+// Tier info is read from chrome.storage.local. The web app's /account
+// page writes the tier there on load (see account/page.tsx).
 
 (() => {
+  // --- DOM refs ---
   const btn = document.getElementById('add-job');
   const label = document.getElementById('add-job-label');
   const status = document.getElementById('status');
+  const navDashboard = document.getElementById('nav-dashboard');
+  const navJobs = document.getElementById('nav-jobs');
+  const navAccount = document.getElementById('nav-account');
+  const tierBadge = document.getElementById('tier-badge');
 
+  // --- Helpers ---
   const setStatus = (msg, isError) => {
     if (!msg) {
       status.classList.remove('is-visible', 'is-error');
@@ -25,11 +30,9 @@
     status.classList.toggle('is-error', !!isError);
   };
 
-  // Disable the button the moment the user clicks, so a double-click
-  // doesn't fire the message twice. The popdown closes shortly after.
   const lockButton = () => {
     btn.disabled = true;
-    label.textContent = 'Adding…';
+    label.textContent = 'Adding\u2026';
   };
 
   const showErrorAndStay = (msg) => {
@@ -38,20 +41,20 @@
     setStatus(msg, true);
   };
 
+  const navigateTo = (url) => {
+    chrome.runtime.sendMessage({ type: 'navigate', url });
+    window.close();
+  };
+
+  // --- Section 1: Add Job ---
   btn.addEventListener('click', () => {
     lockButton();
     setStatus(null, false);
 
-    // Fire the message; the background script does the actual scrape
-    // and opens the dashboard tab. We return-true from the listener
-    // there to keep the message channel open, so we get a real ack.
     try {
       chrome.runtime.sendMessage({ type: 'addJob' }, (response) => {
         const err = chrome.runtime.lastError;
         if (err || !response || !response.ok) {
-          // Most common cause: the background script threw, or the
-          // user clicked the popdown on a tab the extension can't
-          // run scripts on (e.g. chrome:// pages, the web store).
           showErrorAndStay(
             err?.message ||
               response?.error ||
@@ -59,12 +62,37 @@
           );
           return;
         }
-        // Success: close the popdown. The dashboard tab will be
-        // focused/created by the background script.
         window.close();
       });
     } catch (e) {
       showErrorAndStay("Couldn't reach the extension. Try again.");
     }
   });
+
+  // --- Section 2: Navigation ---
+  navDashboard.addEventListener('click', () => {
+    navigateTo('https://job-foocus.vercel.app/dashboard');
+  });
+
+  navJobs.addEventListener('click', () => {
+    navigateTo('https://job-foocus.vercel.app/jobs');
+  });
+
+  // --- Section 3: Account ---
+  navAccount.addEventListener('click', () => {
+    navigateTo('https://job-foocus.vercel.app/account');
+  });
+
+  // --- Tier display (read from chrome.storage.local) ---
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+    chrome.storage.local.get('jfTier', (data) => {
+      const tier = (data.jfTier || '').toLowerCase();
+      const validTiers = ['free', 'pro', 'max'];
+      if (validTiers.includes(tier)) {
+        tierBadge.textContent = tier.charAt(0).toUpperCase() + tier.slice(1);
+        tierBadge.className = 'tier-badge tier-' + tier;
+      }
+      // If no data stored yet, default "Free" badge remains from HTML.
+    });
+  }
 })();

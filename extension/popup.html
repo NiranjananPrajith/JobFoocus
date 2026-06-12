@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>JobFoocus</title>
   <style>
-    /* Reset + base */
     *, *::before, *::after { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; }
     body {
@@ -17,6 +16,7 @@
       -webkit-font-smoothing: antialiased;
     }
 
+    /* Header */
     .header {
       display: flex;
       align-items: center;
@@ -43,12 +43,16 @@
       letter-spacing: -0.01em;
     }
 
-    .body {
-      padding: 16px;
+    /* Section wrappers */
+    .section {
+      padding: 14px 16px;
+    }
+    .section-divider {
+      height: 1px;
+      background: rgba(0, 0, 0, 0.06);
     }
 
-    /* The "Add Job" primary button. Matches the rest of the
-       JobFoocus UI: orange (#fa520f) background, white text, rounded. */
+    /* Primary "Add Job" button */
     .add-btn {
       display: flex;
       align-items: center;
@@ -83,8 +87,7 @@
       text-align: center;
     }
 
-    /* Status banner — only shown after a click, briefly, before the
-       popdown closes. Confirms the action is in flight. */
+    /* Status banner — shown after a click action */
     .status {
       display: none;
       margin: 10px 0 0;
@@ -100,15 +103,89 @@
       color: #991b1b;
       border: 1px solid #fecaca;
     }
+
+    /* Navigation links (Dashboard, Jobs) */
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      text-decoration: none;
+      color: #3a3a3a;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 100ms ease;
+      border: 0;
+      background: none;
+      width: 100%;
+      font-family: inherit;
+      text-align: left;
+    }
+    .nav-link:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+    .nav-link:active {
+      background: rgba(0, 0, 0, 0.08);
+    }
+    .nav-link svg {
+      flex-shrink: 0;
+      color: #8a8a8a;
+    }
+
+    /* Account / tier section */
+    .account-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .tier-label {
+      font-size: 13px;
+      color: #6a6a6a;
+    }
+    .tier-badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+      margin-left: 6px;
+    }
+    .tier-free { background: #f0ece2; color: #7a7160; }
+    .tier-pro { background: #e8f4fd; color: #1a6fb5; }
+    .tier-max { background: #fdf0ea; color: #c2410c; }
+
+    .account-link {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #fa520f;
+      text-decoration: none;
+      cursor: pointer;
+      background: none;
+      border: 0;
+      padding: 0;
+      font-family: inherit;
+      margin-top: 10px;
+      transition: opacity 100ms ease;
+    }
+    .account-link:hover { opacity: 0.8; }
+    .account-link:active { opacity: 0.65; }
+    .account-link svg { flex-shrink: 0; }
   </style>
 </head>
 <body>
+  <!-- Header -->
   <div class="header">
     <span class="header-icon" aria-hidden="true">J</span>
     <span class="header-title">JobFoocus</span>
   </div>
 
-  <div class="body">
+  <!-- Section 1: Add Job -->
+  <div class="section">
     <button id="add-job" class="add-btn" type="button" aria-label="Add this page as a job to your JobFoocus dashboard">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <line x1="12" y1="5" x2="12" y2="19" />
@@ -116,10 +193,47 @@
       </svg>
       <span id="add-job-label">Add Job</span>
     </button>
-
     <p class="help">Imports this page as a tracked job in your dashboard.</p>
-
     <div id="status" class="status" role="status" aria-live="polite"></div>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- Section 2: Navigation -->
+  <div class="section">
+    <button id="nav-dashboard" class="nav-link" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="3" width="7" height="7" rx="1" />
+        <rect x="14" y="14" width="7" height="7" rx="1" />
+        <rect x="3" y="14" width="7" height="7" rx="1" />
+      </svg>
+      Dashboard
+    </button>
+    <button id="nav-jobs" class="nav-link" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
+      </svg>
+      Jobs
+    </button>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- Section 3: Account & Plan -->
+  <div class="section">
+    <div class="account-row">
+      <span class="tier-label">
+        Current plan:
+        <span id="tier-badge" class="tier-badge tier-free">Free</span>
+      </span>
+    </div>
+    <button id="nav-account" class="account-link" type="button">
+      Account and Billing
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="9 18 15 12 9 6" />
+      </svg>
+    </button>
   </div>
 
   <script src="popup.js"></script>

@@ -149,21 +149,35 @@ function getActiveTab() {
   });
 }
 
-// ----- entry point 1: popdown "Add Job" button -----
-// The popdown sends an 'addJob' message; we run scrapeAndOpen on the
-// active tab and send back the result so popup.js can show an inline
-// error if something fails. The popdown auto-closes on success.
+// ----- entry point 1: popdown messages -----
+// The popdown sends two types of messages:
+//   - 'addJob'   — scrape the active tab and open the dashboard
+//   - 'navigate' — open/reuse a tab for a given URL (Dashboard, Jobs, Account)
 //
 // We return `true` from the listener to keep the message channel open
 // for the async response (the standard MV3 pattern).
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (!message || message.type !== "addJob") return false;
-  (async () => {
-    const tab = await getActiveTab();
-    const result = await scrapeAndOpen(tab);
-    sendResponse(result);
-  })();
-  return true;
+  if (!message) return false;
+
+  if (message.type === 'addJob') {
+    (async () => {
+      const tab = await getActiveTab();
+      const result = await scrapeAndOpen(tab);
+      sendResponse(result);
+    })();
+    return true;
+  }
+
+  if (message.type === 'navigate') {
+    focusOrCreateDashboardTab(message.url).then(() => {
+      sendResponse({ ok: true });
+    }).catch(() => {
+      sendResponse({ ok: false });
+    });
+    return true;
+  }
+
+  return false;
 });
 
 // ----- entry point 2: keyboard shortcut (Ctrl+Shift+J / Command+Shift+J) -----

@@ -210,6 +210,18 @@ export default async function AccountPage() {
           </a>
         </p>
       </div>
+
+      {/*
+        Cache the user's tier for the browser extension popup.
+        The extension reads chrome.storage.local on popup open to
+        display the current plan name. Safe no-op in non-extension
+        browsers (chrome.storage is undefined).
+      */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `(function(){try{if(typeof chrome!=='undefined'&&chrome.storage&&chrome.storage.local){chrome.storage.local.set({jfTier:'${tier}'})}}catch(e){}})();`,
+        }}
+      />
     </div>
   );
 }
