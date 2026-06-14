@@ -1,10 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import ApplicationCard from '@/components/ApplicationCard';
 import Badge from '@/components/design/Badge';
 import Card from '@/components/design/Card';
-import CategoryStats from '@/components/CategoryStats';
 import ManageCategoriesModal from '@/components/ManageCategoriesModal';
 import DataManagement from '@/components/DataManagement';
 import { deleteApplication, getAllApplications, getCategoryStats, getUserCategories, saveApplication, type EnrichedApplication, type CategoryStats as CategoryStatsType, type UserCategory } from '@/lib/storage-adapter';
@@ -22,6 +21,8 @@ interface Stats {
   response_rate: number;
 }
 
+const TABS = ['prospect', 'applied', 'phone_screen', 'interview', 'offer', 'rejected'] as const;
+
 export default function DashboardPage() {
   const [applications, setApplications] = useState<EnrichedApplication[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -29,6 +30,7 @@ export default function DashboardPage() {
   const [userCategories, setUserCategories] = useState<UserCategory[]>([]);
   const [showManageCategories, setShowManageCategories] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<string>('prospect');
 
   const computeStats = useCallback((apps: EnrichedApplication[]) => {
     const total_jobs = apps.length;
@@ -49,7 +51,7 @@ export default function DashboardPage() {
       setCategoryStats(catStats);
       setStats(computeStats(apps));
     } catch (error) {
-      console.error('Error refreshing applications:', error);
+      console.error('[dashboard] Error refreshing applications:', error);
     }
   }, [computeStats]);
 
@@ -64,7 +66,7 @@ export default function DashboardPage() {
         setUserCategories(cats);
         setStats(computeStats(apps));
       } catch (error) {
-        console.error('Error fetching applications:', error);
+        console.error('[dashboard] Error fetching applications:', error);
       } finally {
         setLoading(false);
       }
@@ -88,7 +90,7 @@ export default function DashboardPage() {
       const dateB = b.response_date || b.date_applied;
       return new Date(dateB).getTime() - new Date(dateA).getTime();
     })
-    .slice(0, 10);
+    .slice(0, 5);
 
   const handleDelete = async (id: string) => {
     const parts = id.split('/');
@@ -98,7 +100,7 @@ export default function DashboardPage() {
       await deleteApplication(category, folder);
       await refreshData();
     } catch (error) {
-      console.error('Error deleting application:', error);
+      console.error('[dashboard] Error deleting application:', error);
     }
   };
 
@@ -124,7 +126,7 @@ export default function DashboardPage() {
       });
       await refreshData();
     } catch (error) {
-      console.error('Error updating application:', error);
+      console.error('[dashboard] Error updating application:', error);
     }
   };
 
@@ -133,184 +135,371 @@ export default function DashboardPage() {
     const oldCategory = parts[0];
     const folder = parts.slice(1).join('/');
     try {
-      // assignJobToCategory is the same helper the form view uses;
-      // it handles the storage-layer reassignment and the
-      // category_id resolution for both the source and destination
-      // categories.
       const { assignJobToCategory } = await import('@/lib/storage-adapter');
       await assignJobToCategory(oldCategory, folder, newCategory);
       await refreshData();
     } catch (error) {
-      console.error('Error updating category:', error);
+      console.error('[dashboard] Error updating category:', error);
     }
   };
+
+  const filteredPipelineApps = applications.filter((app) => app.status === activeTab);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-xl text-steel">Loading...</div>
+        <div className="text-[16px] text-steel">Loading your frontier...</div>
       </div>
     );
   }
 
   return (
-    <div>
-      {/* Page Header */}
-      <div className="mb-6 md:mb-8">
+    <div className="min-h-screen pb-20">
+      {/* ── 1. Editorial Hero ────────────────────────────────── */}
+      <div className="mb-12 mt-4 md:mt-8">
         <h1
-          className="text-[28px] md:text-[36px] font-medium text-ink mb-2"
-          style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+          className="text-[52px] md:text-[64px] leading-[1.10] tracking-[-1px] mb-3"
+          style={{
+            fontFamily: '"PP Editorial Old", "Times New Roman", Georgia, serif',
+            color: 'var(--ink)',
+          }}
         >
-          Dashboard
+          Your Career Frontier.
         </h1>
-        <p className="text-[14px] md:text-[16px] text-steel">
-          Track your job applications and progress
+        <p
+          className="text-[18px] leading-[1.50] max-w-2xl"
+          style={{ color: 'var(--steel)' }}
+        >
+          Track your trajectory, analyze response rates, and orchestrate your next major career maneuver.
         </p>
       </div>
 
-      {/* Stats Bar */}
+      {/* ── 2. Asymmetrical Bento Stats Grid ────────────────── */}
       {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 md:gap-3 mb-6 md:mb-8">
-          {stats.total_jobs > 0 ? (
-            <a href="/jobs">
-              <Card variant="default" className="cursor-pointer hover:border-primary/40 transition-colors">
-                <div className="text-[32px] font-semibold text-ink">{stats.total_jobs}</div>
-                <div className="text-[11px] uppercase tracking-wide text-steel mt-1">Total Jobs</div>
-              </Card>
-            </a>
-          ) : (
-            <Card variant="default">
-              <div className="text-[32px] font-semibold text-ink">{stats.total_jobs}</div>
-              <div className="text-[11px] uppercase tracking-wide text-steel mt-1">Total Jobs</div>
-            </Card>
-          )}
-          {stats.total_applied > 0 ? (
-            <a href="/jobs?tab=applied">
-              <Card variant="default" className="cursor-pointer hover:border-primary/40 transition-colors">
-                <div className="text-[32px] font-semibold text-ink">{stats.total_applied}</div>
-                <div className="text-[11px] uppercase tracking-wide text-steel mt-1">Applied</div>
-              </Card>
-            </a>
-          ) : (
-            <Card variant="default">
-              <div className="text-[32px] font-semibold text-ink">{stats.total_applied}</div>
-              <div className="text-[11px] uppercase tracking-wide text-steel mt-1">Applied</div>
-            </Card>
-          )}
-          {stats.total_prospects > 0 ? (
-            <a href="/jobs?tab=prospects">
-              <Card variant="default" className="cursor-pointer hover:border-primary/40 transition-colors">
-                <div className="text-[32px] font-semibold text-ink">{stats.total_prospects}</div>
-                <div className="text-[11px] uppercase tracking-wide text-steel mt-1">Prospects</div>
-              </Card>
-            </a>
-          ) : (
-            <Card variant="default">
-              <div className="text-[32px] font-semibold text-ink">{stats.total_prospects}</div>
-              <div className="text-[11px] uppercase tracking-wide text-steel mt-1">Prospects</div>
-            </Card>
-          )}
-          <Card variant="default">
-            <div className="text-[32px] font-semibold text-ink">{stats.total_responses}</div>
-            <div className="text-[11px] uppercase tracking-wide text-steel mt-1">Responses</div>
+        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-16">
+          {/* Hero Stat: Response Rate */}
+          <Card
+            variant="elevated"
+            className="md:col-span-2 lg:col-span-2 row-span-2 flex flex-col justify-center border-t-4 border-t-primary"
+          >
+            <div className="text-[11px] uppercase tracking-[1px] font-semibold mb-2" style={{ color: 'var(--steel)' }}>
+              Conversion Rate
+            </div>
+            <div
+              className="text-[64px] md:text-[84px] leading-[1.05] tracking-[-1.5px]"
+              style={{
+                fontFamily: '"PP Editorial Old", "Times New Roman", Georgia, serif',
+                color: 'var(--primary)',
+              }}
+            >
+              {stats.response_rate}%
+            </div>
+            <div className="text-[14px] mt-2" style={{ color: 'var(--steel)' }}>
+              Based on {stats.total_responses} responses from {stats.total_applied} applied jobs.
+            </div>
           </Card>
-          <Card variant="default">
-            <div className="text-[32px] font-semibold text-ink">{stats.total_interviews}</div>
-            <div className="text-[11px] uppercase tracking-wide text-steel mt-1">Interviews</div>
+
+          {/* Total Pipeline */}
+          <Card variant="default" className="lg:col-span-2 flex flex-col justify-between">
+            <div className="text-[11px] uppercase tracking-[1px] font-semibold mb-1" style={{ color: 'var(--steel)' }}>
+              Total Pipeline
+            </div>
+            <div
+              className="text-[42px] leading-[1.10] tracking-[-0.5px]"
+              style={{
+                fontFamily: '"PP Editorial Old", "Times New Roman", Georgia, serif',
+                color: 'var(--ink)',
+              }}
+            >
+              {stats.total_jobs}
+            </div>
           </Card>
-          <Card variant="default">
-            <div className="text-[32px] font-semibold text-ink">{stats.total_offers}</div>
-            <div className="text-[11px] uppercase tracking-wide text-steel mt-1">Offers</div>
+
+          {/* Interviews */}
+          <Card variant="default" className="lg:col-span-1 flex flex-col justify-between">
+            <div className="text-[11px] uppercase tracking-[1px] font-semibold mb-1" style={{ color: 'var(--steel)' }}>
+              Interviews
+            </div>
+            <div
+              className="text-[42px] leading-[1.10]"
+              style={{
+                fontFamily: '"PP Editorial Old", "Times New Roman", Georgia, serif',
+                color: 'var(--ink)',
+              }}
+            >
+              {stats.total_interviews}
+            </div>
           </Card>
-          <Card variant="default">
-            <div className="text-[32px] font-semibold text-primary">{stats.response_rate}%</div>
-            <div className="text-[11px] uppercase tracking-wide text-steel mt-1">Response Rate</div>
+
+          {/* Offers */}
+          <Card variant="default" className="lg:col-span-1 flex flex-col justify-between">
+            <div className="text-[11px] uppercase tracking-[1px] font-semibold mb-1" style={{ color: 'var(--steel)' }}>
+              Offers
+            </div>
+            <div
+              className="text-[42px] leading-[1.10]"
+              style={{
+                fontFamily: '"PP Editorial Old", "Times New Roman", Georgia, serif',
+                color: 'var(--ink)',
+              }}
+            >
+              {stats.total_offers}
+            </div>
           </Card>
+
+          {/* Category Breakdown */}
+          <div className="md:col-span-2 lg:col-span-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {categoryStats.length > 0 ? (
+              categoryStats.map((cat) => (
+                <Card key={cat.category} variant="cream" className="flex flex-col justify-between py-5">
+                  <div
+                    className="text-[11px] uppercase tracking-[1px] font-semibold mb-1 truncate"
+                    style={{ color: 'var(--ink)' }}
+                  >
+                    {cat.category_name}
+                  </div>
+                  <div
+                    className="text-[36px] leading-[1.10]"
+                    style={{
+                      fontFamily: '"PP Editorial Old", "Times New Roman", Georgia, serif',
+                      color: 'var(--ink)',
+                    }}
+                  >
+                    {cat.count}
+                  </div>
+                </Card>
+              ))
+            ) : (
+              <>
+                <Card variant="cream" className="flex flex-col justify-between py-5">
+                  <div className="text-[11px] uppercase tracking-[1px] font-semibold truncate" style={{ color: 'var(--ink)' }}>
+                    Uncategorized
+                  </div>
+                  <div
+                    className="text-[36px] leading-[1.10]"
+                    style={{
+                      fontFamily: '"PP Editorial Old", "Times New Roman", Georgia, serif',
+                      color: 'var(--ink)',
+                    }}
+                  >
+                    {stats.total_jobs}
+                  </div>
+                </Card>
+                <Card variant="cream" className="flex flex-col justify-between py-5 opacity-40">
+                  <div className="text-[11px] uppercase tracking-[1px] font-semibold truncate" style={{ color: 'var(--ink)' }}>
+                    &nbsp;
+                  </div>
+                  <div className="text-[36px] leading-[1.10]" style={{ color: 'var(--ink)' }}>—</div>
+                </Card>
+                <Card variant="cream" className="flex flex-col justify-between py-5 opacity-40">
+                  <div className="text-[11px] uppercase tracking-[1px] font-semibold truncate" style={{ color: 'var(--ink)' }}>
+                    &nbsp;
+                  </div>
+                  <div className="text-[36px] leading-[1.10]" style={{ color: 'var(--ink)' }}>—</div>
+                </Card>
+              </>
+            )}
+          </div>
         </div>
       )}
 
-      {/* Category Stats */}
-      {categoryStats.length > 0 && (
-        <div className="mb-6 md:mb-8">
-          <h2 className="text-[12px] font-bold uppercase tracking-[0.05em] text-steel mb-4">By Category</h2>
-          <CategoryStats stats={categoryStats} />
-        </div>
-      )}
-
-      {/* Recent Activity */}
+      {/* ── 3. Magazine-Style Ledger (Recent Activity) ──────── */}
       {recentApplications.length > 0 && (
-        <div className="mb-6 md:mb-8">
-          <h2 className="text-[12px] font-bold uppercase tracking-[0.05em] text-steel mb-4">Recent Activity</h2>
-          <div className="space-y-2">
-            {recentApplications.map((app, idx) => (
-              <a
-                key={idx}
-                href={`/application?app=${encodeURIComponent(app.category + '/' + app.folder)}`}
-                className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-white border border-hairline-soft hover:border-primary hover:shadow-sm transition-colors"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-ink truncate">{app.company}</p>
-                  <p className="text-[12px] text-steel truncate">{app.job_title}</p>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <Badge status={app.status as any} />
-                  <span className="text-[11px] text-steel font-mono hidden md:block">
-                    {app.response_date || app.date_applied}
-                  </span>
-                </div>
-              </a>
+        <div className="mb-16">
+          <h2
+            className="text-[18px] font-medium mb-6 pb-2"
+            style={{
+              color: 'var(--ink)',
+              borderBottom: '1px solid var(--hairline-soft)',
+            }}
+          >
+            Recent Activity
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b" style={{ borderColor: 'var(--hairline-strong)' }}>
+                  <th className="py-3 pr-4 text-[11px] font-semibold uppercase tracking-[1px]" style={{ color: 'var(--steel)' }}>
+                    Company
+                  </th>
+                  <th className="py-3 pr-4 text-[11px] font-semibold uppercase tracking-[1px] hidden sm:table-cell" style={{ color: 'var(--steel)' }}>
+                    Job Title
+                  </th>
+                  <th className="py-3 pr-4 text-[11px] font-semibold uppercase tracking-[1px]" style={{ color: 'var(--steel)' }}>
+                    Status
+                  </th>
+                  <th className="py-3 text-[11px] font-semibold uppercase tracking-[1px] text-right hidden md:table-cell" style={{ color: 'var(--steel)' }}>
+                    Date
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentApplications.map((app, idx) => (
+                  <tr
+                    key={idx}
+                    className="border-b transition-colors"
+                    style={{
+                      borderColor: 'var(--hairline-soft)',
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--surface)'
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'
+                    }}
+                  >
+                    <td className="py-4 pr-4">
+                      <a
+                        href={`/application?app=${encodeURIComponent(app.category + '/' + app.folder)}`}
+                        className="text-[14px] font-medium transition-colors"
+                        style={{ color: 'var(--ink)' }}
+                      >
+                        {app.company}
+                      </a>
+                    </td>
+                    <td className="py-4 pr-4 text-[14px] hidden sm:table-cell" style={{ color: 'var(--steel)' }}>
+                      {app.job_title}
+                    </td>
+                    <td className="py-4 pr-4">
+                      <Badge status={app.status as any} />
+                    </td>
+                    <td className="py-4 text-[13px] text-right hidden md:table-cell" style={{ color: 'var(--steel)' }}>
+                      {app.response_date || app.date_applied}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* ── 4. Segmented Pipeline Tabs ──────────────────────── */}
+      <div className="mb-16">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-0 border-b" style={{ borderColor: 'var(--hairline-soft)' }}>
+          <h2 className="text-[18px] font-medium" style={{ color: 'var(--ink)' }}>
+            Active Pipeline
+          </h2>
+
+          {/* Mistral-style segmented tabs */}
+          <div className="flex overflow-x-auto hide-scrollbar gap-2">
+            {TABS.map((status) => {
+              const count = applications.filter(a => a.status === status).length;
+              const isActive = activeTab === status;
+              return (
+                <button
+                  key={status}
+                  onClick={() => setActiveTab(status)}
+                  className="whitespace-nowrap px-4 py-2 text-[14px] font-medium transition-all border-b-2 -mb-[1px]"
+                  style={{
+                    borderColor: isActive ? 'var(--primary)' : 'transparent',
+                    color: isActive ? 'var(--primary)' : 'var(--steel)',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) (e.currentTarget as HTMLElement).style.color = 'var(--ink)'
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) (e.currentTarget as HTMLElement).style.color = 'var(--steel)'
+                  }}
+                >
+                  {status.replace('_', ' ')} <span className="text-[12px] opacity-70 ml-1">({count})</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Tab content */}
+        {filteredPipelineApps.length === 0 ? (
+          <div
+            className="text-center py-16 rounded-lg"
+            style={{
+              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--hairline-soft)',
+            }}
+          >
+            <p className="text-[14px]" style={{ color: 'var(--steel)' }}>
+              No applications currently in{' '}
+              <span className="font-semibold" style={{ color: 'var(--ink)' }}>
+                {activeTab.replace('_', ' ')}
+              </span>{' '}
+              status.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredPipelineApps.map((app) => (
+              <ApplicationCard
+                key={`${app.category}/${app.folder}`}
+                id={`${app.category}/${app.folder}`}
+                company={app.company}
+                job_title={app.job_title}
+                category={app.category}
+                category_name={app.category_name}
+                category_color={app.category_color}
+                status={app.status as StatusType}
+                date_applied={app.date_applied}
+                needs_followup={app.needs_followup}
+                onDelete={handleDelete}
+                onStatusChange={handleStatusChange}
+                onCategoryChange={handleCategoryChange}
+                userCategories={userCategories}
+                onManageClick={() => setShowManageCategories(true)}
+              />
             ))}
           </div>
-          <div className="mt-3 text-center">
-            <a href="/jobs" className="text-[13px] text-primary font-medium hover:underline">
-              View all jobs →
-            </a>
-          </div>
-        </div>
-      )}
-
-      {/* Grouped Applications by Status */}
-      <div className="space-y-8">
-        {['prospect', 'applied', 'phone_screen', 'interview', 'offer', 'rejected'].map((status) => {
-          const filteredApps = applications.filter((app) => app.status === status);
-          if (filteredApps.length === 0) return null;
-
-          return (
-            <div key={status}>
-              <h2 className="text-[12px] font-bold uppercase tracking-[0.05em] text-steel mb-4 capitalize">
-                {status.replace('_', ' ')} ({filteredApps.length})
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredApps.map((app) => (
-                  <ApplicationCard
-                    key={`${app.category}/${app.folder}`}
-                    id={`${app.category}/${app.folder}`}
-                    company={app.company}
-                    job_title={app.job_title}
-                    category={app.category}
-                    category_name={app.category_name}
-                    category_color={app.category_color}
-                    status={app.status as StatusType}
-                    date_applied={app.date_applied}
-                    needs_followup={app.needs_followup}
-                    onDelete={handleDelete}
-                    onStatusChange={handleStatusChange}
-                    onCategoryChange={handleCategoryChange}
-                    userCategories={userCategories}
-                    onManageClick={() => setShowManageCategories(true)}
-                  />
-                ))}
-              </div>
-            </div>
-          );
-        })}
+        )}
       </div>
 
-      {/* Data Management */}
-      <Card variant="elevated" className="p-6 mt-12">
+      {/* ── 5. Closing CTA ──────────────────────────────────── */}
+      <Card variant="cream" className="flex flex-col items-center text-center py-12 px-4 mb-8">
+        <h2
+          className="text-[36px] leading-[1.15] tracking-[-0.5px] mb-4"
+          style={{
+            fontFamily: '"PP Editorial Old", "Times New Roman", Georgia, serif',
+            color: 'var(--ink)',
+          }}
+        >
+          The next chapter of your career is yours.
+        </h2>
+        <p
+          className="text-[16px] mb-8 max-w-lg"
+          style={{ color: 'var(--charcoal)' }}
+        >
+          Keep the momentum going. Expand your frontier by adding your next prospective role.
+        </p>
+        <div className="flex gap-4">
+          <a
+            href="/application"
+            className="inline-flex items-center px-5 py-2.5 text-[14px] font-medium rounded-md text-white transition-colors"
+            style={{ backgroundColor: 'var(--ink)' }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--ink-tint)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--ink)')}
+          >
+            Add New Job
+          </a>
+          <a
+            href="/jobs"
+            className="inline-flex items-center px-5 py-2.5 text-[14px] font-medium rounded-md transition-colors"
+            style={{
+              color: 'var(--ink)',
+              border: '1px solid var(--hairline-strong)',
+              backgroundColor: 'transparent',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--surface)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+          >
+            View All History
+          </a>
+        </div>
+      </Card>
+
+      {/* ── 6. Data Management ──────────────────────────────── */}
+      <Card variant="elevated" className="p-6">
         <DataManagement />
       </Card>
 
+      {/* Manage Categories Modal */}
       <ManageCategoriesModal
         isOpen={showManageCategories}
         onClose={() => setShowManageCategories(false)}
