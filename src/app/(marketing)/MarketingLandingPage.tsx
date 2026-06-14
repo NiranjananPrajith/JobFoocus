@@ -83,9 +83,7 @@ export default function MarketingLandingPage() {
               <ThemeToggle />
             </div>
             <a
-              href={CHROME_STORE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/signup"
               className="hidden md:inline-flex px-4 py-2 text-[14px] rounded-md font-medium text-white transition-colors duration-150"
               style={{
                 backgroundColor: 'var(--primary)',
@@ -98,7 +96,7 @@ export default function MarketingLandingPage() {
                 (e.currentTarget.style.backgroundColor = 'var(--primary)')
               }
             >
-              Add Extension — It&apos;s Free
+              Get Started — It&apos;s Free
             </a>
 
             {/* Hamburger — mobile only */}
@@ -172,13 +170,11 @@ export default function MarketingLandingPage() {
                     </a>
                     <div className="border-t border-hairline-soft my-1" />
                     <a
-                      href={CHROME_STORE_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href="/signup"
                       onClick={() => setNavOpen(false)}
                       className="block px-4 py-2.5 text-[13px] text-primary font-medium hover:bg-surface transition-colors"
                     >
-                      Add Extension →
+                      Get Started →
                     </a>
                     <div className="border-t border-hairline-soft my-1" />
                     <div className="flex items-center justify-between px-4 py-2.5">
@@ -216,7 +212,7 @@ export default function MarketingLandingPage() {
           <div className="lg:col-span-6 xl:col-span-5 max-w-xl">
             {/* Eyebrow - Changed from orange to high-contrast sunset gold */}
             <span className="inline-block text-[11px] font-bold uppercase tracking-[1.5px] text-[#ffd06a] mb-4">
-              Now Available on Chrome &amp; Firefox
+              Now Live &bull; Explore Your Free Workspace
             </span>
 
             <h1
@@ -228,30 +224,32 @@ export default function MarketingLandingPage() {
 
             {/* Body Text - Swapped stone for high-contrast light zinc */}
             <p className="text-[17px] sm:text-[18px] text-zinc-300 leading-[1.50] mb-8 font-sans">
-              Spreadsheets belong in finance, not your career. Job Foocus is the elegant browser extension that clips listings, drafts cover letters, and tracks your trajectory in one click.
+              Spreadsheets belong in finance, not your career. Create your private dashboard in 30 seconds to instantly track applications, sync across devices, and draft custom cover letters.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4">
-              <a
-                href={CHROME_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button variant="primary" className="text-[15px] px-8 py-3.5 flex items-center justify-center gap-2">
-                  <span>Add Extension</span>
-                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                </Button>
-              </a>
-              <a href="#features">
-                <Button
-                  variant="secondary"
-                  className="text-[15px] px-8 py-3.5 !text-white !border-white/20 hover:!border-white/40 hover:!bg-white/5 flex items-center justify-center transition-all"
-                >
-                  See how it works
-                </Button>
-              </a>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <a href="/signup">
+                  <Button variant="primary" className="text-[15px] px-8 py-3.5 flex items-center justify-center gap-2">
+                    <span>Get Started</span>
+                    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                  </Button>
+                </a>
+                <a href="#features">
+                  <Button
+                    variant="secondary"
+                    className="text-[15px] px-8 py-3.5 !text-white !border-white/20 hover:!border-white/40 hover:!bg-white/5 flex items-center justify-center transition-all"
+                  >
+                    See how it works
+                  </Button>
+                </a>
+              </div>
+              {/* Friction-reducing micro-copy */}
+              <span className="text-[12px] text-stone font-sans pl-1">
+                ⚡ Sets up your custom dashboard instantly. No credit card required.
+              </span>
             </div>
           </div>
 
@@ -380,392 +378,122 @@ export default function MarketingLandingPage() {
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Features Grid — 3-up */}
+      {/* Core Workflow (Pivoted to "Setup Account, then add utility") */}
       {/* ------------------------------------------------------------------ */}
-      <section className="py-20 md:py-24 px-4 md:px-6" id="features">
-        <div className="max-w-[1280px] mx-auto">
-          <div className="mb-14">
-            <h2
-              className="text-[36px] md:text-[48px] lg:text-[52px] text-ink leading-[1.15] tracking-[-0.5px]"
-              style={{
-                fontFamily:
-                  '"PP Editorial Old", "Times New Roman", Georgia, serif',
-              }}
-            >
-              Everything you need in one tab.
-            </h2>
-          </div>
+      <section id="features" className="py-24 px-6 max-w-[1280px] mx-auto">
+        <div className="mb-16">
+          <h2
+            className="text-[42px] md:text-[52px] text-ink leading-[1.15] tracking-[-0.5px]"
+            style={{ fontFamily: '"PP Editorial Old", "Times New Roman", Georgia, serif' }}
+          >
+            Get set up in three simple steps.
+          </h2>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Card 1 */}
-            <Card
-              variant="elevated"
-              className="p-8 hover:-translate-y-1 transition-transform duration-300 flex flex-col items-start"
-            >
-              <div
-                className="w-12 h-12 rounded-md flex items-center justify-center mb-6"
-                style={{
-                  backgroundColor: 'var(--cream)',
-                  border: '1px solid var(--beige-deep)',
-                  color: 'var(--primary)',
-                }}
-              >
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                </svg>
-              </div>
-              <h3
-                className="text-[20px] md:text-[22px] font-medium text-ink mb-3"
-                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-              >
-                Save Jobs Instantly
-              </h3>
-              <p
-                className="text-[15px] md:text-[16px] text-steel leading-[1.55]"
-                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-              >
-                Click the extension while viewing any job post. We automatically
-                pull the title, company, and details into your tracker.
-              </p>
-            </Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <Card variant="elevated" className="p-8 hover:-translate-y-1 transition-transform duration-300">
+            <div className="w-12 h-12 rounded-md bg-cream border border-beige-deep flex items-center justify-center mb-6 text-primary">
+              <span className="font-bold text-[18px]">1</span>
+            </div>
+            <h3 className="text-[22px] font-medium text-ink mb-3">Create Your Account</h3>
+            <p className="text-[16px] text-steel leading-[1.55]">
+              Instantly generate a private workspace. Fill in your baseline profile to lock in your job hunting headquarters.
+            </p>
+          </Card>
 
-            {/* Card 2 */}
-            <Card
-              variant="elevated"
-              className="p-8 hover:-translate-y-1 transition-transform duration-300 flex flex-col items-start"
-            >
-              <div
-                className="w-12 h-12 rounded-md flex items-center justify-center mb-6"
-                style={{
-                  backgroundColor: 'var(--cream)',
-                  border: '1px solid var(--beige-deep)',
-                  color: 'var(--primary)',
-                }}
-              >
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                  <polyline points="10 9 9 9 8 9" />
-                </svg>
-              </div>
-              <h3
-                className="text-[20px] md:text-[22px] font-medium text-ink mb-3"
-                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-              >
-                Tailored Cover Letters
-              </h3>
-              <p
-                className="text-[15px] md:text-[16px] text-steel leading-[1.55]"
-                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-              >
-                Stop writing from scratch. The extension uses your master resume
-                to instantly draft a cover letter matching the job&apos;s exact
-                needs.
-              </p>
-            </Card>
+          <Card variant="elevated" className="p-8 hover:-translate-y-1 transition-transform duration-300">
+            <div className="w-12 h-12 rounded-md bg-cream border border-beige-deep flex items-center justify-center mb-6 text-primary">
+              <span className="font-bold text-[18px]">2</span>
+            </div>
+            <h3 className="text-[22px] font-medium text-ink mb-3">Install Companion Tool</h3>
+            <p className="text-[16px] text-steel leading-[1.55]">
+              Download our lightweight, free browser extension to clip any job post and sync it directly to your dashboard in one click.
+            </p>
+          </Card>
 
-            {/* Card 3 */}
-            <Card
-              variant="elevated"
-              className="p-8 hover:-translate-y-1 transition-transform duration-300 flex flex-col items-start"
-            >
-              <div
-                className="w-12 h-12 rounded-md flex items-center justify-center mb-6"
-                style={{
-                  backgroundColor: 'var(--cream)',
-                  border: '1px solid var(--beige-deep)',
-                  color: 'var(--primary)',
-                }}
-              >
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect
-                    x="3"
-                    y="3"
-                    width="18"
-                    height="18"
-                    rx="2"
-                    ry="2"
-                  />
-                  <line x1="3" y1="9" x2="21" y2="9" />
-                  <line x1="9" y1="21" x2="9" y2="9" />
-                </svg>
-              </div>
-              <h3
-                className="text-[20px] md:text-[22px] font-medium text-ink mb-3"
-                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-              >
-                Visual Pipeline
-              </h3>
-              <p
-                className="text-[15px] md:text-[16px] text-steel leading-[1.55]"
-                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-              >
-                Never lose track of a follow-up. View your entire application
-                history on a beautiful, distraction-free dashboard.
-              </p>
-            </Card>
-          </div>
+          <Card variant="elevated" className="p-8 hover:-translate-y-1 transition-transform duration-300">
+            <div className="w-12 h-12 rounded-md bg-cream border border-beige-deep flex items-center justify-center mb-6 text-primary">
+              <span className="font-bold text-[18px]">3</span>
+            </div>
+            <h3 className="text-[22px] font-medium text-ink mb-3">Track &amp; Target</h3>
+            <p className="text-[16px] text-steel leading-[1.55]">
+              Let our platform automatically map requirements to your resume, generate optimized cover letters, and track interview loops.
+            </p>
+          </Card>
         </div>
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* UI Dashboard Mockup — replaces IDE code block */}
+      {/* Product UI Proof */}
       {/* ------------------------------------------------------------------ */}
-      <section className="py-20 md:py-24 px-4 md:px-6 bg-surface">
+      <section className="py-24 px-6 bg-surface">
         <div className="max-w-[1280px] mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <h2
-                className="text-[36px] md:text-[48px] lg:text-[52px] text-ink leading-[1.15] tracking-[-0.5px] mb-6"
-                style={{
-                  fontFamily:
-                    '"PP Editorial Old", "Times New Roman", Georgia, serif',
-                }}
+                className="text-[42px] md:text-[52px] text-ink leading-[1.15] tracking-[-0.5px] mb-6"
+                style={{ fontFamily: '"PP Editorial Old", "Times New Roman", Georgia, serif' }}
               >
                 Clarity at a glance.
               </h2>
-              <p
-                className="text-[16px] md:text-[18px] text-steel leading-[1.50] mb-6"
-                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-              >
-                Say goodbye to chaotic spreadsheets. Your dashboard automatically
-                tracks response rates, flags applications that need follow-ups,
-                and keeps your entire career journey in focus.
+              <p className="text-[18px] text-steel leading-[1.50] mb-6">
+                Say goodbye to chaotic spreadsheets. Your custom dashboard automatically tracks response rates, flags applications that need follow-ups, and keeps your entire career journey in focus.
               </p>
             </div>
 
-            {/* App UI Mockup */}
+            {/* Consumer-Friendly App UI Mockup */}
             <div className="relative w-full h-[400px] flex items-center justify-center">
+
               {/* Background decorative card */}
-              <div
-                className="absolute right-0 top-4 w-3/4 rounded-xl shadow-lg p-6 scale-95 origin-top-right"
-                style={{
-                  backgroundColor: 'var(--canvas)',
-                  border: '1px solid var(--hairline-strong)',
-                  opacity: 0.6,
-                }}
-              >
-                <div
-                  className="h-4 w-1/3 rounded mb-4"
-                  style={{ backgroundColor: 'var(--hairline-soft)' }}
-                />
-                <div
-                  className="h-3 w-1/4 rounded"
-                  style={{ backgroundColor: 'var(--hairline-soft)' }}
-                />
+              <div className="absolute right-0 top-4 w-3/4 bg-white border border-hairline-strong rounded-xl shadow-lg p-6 opacity-60 scale-95 origin-top-right">
+                <div className="h-4 w-1/3 bg-hairline-soft rounded mb-4" />
+                <div className="h-3 w-1/4 bg-hairline-soft rounded" />
               </div>
 
               {/* Foreground active card */}
-              <div
-                className="relative z-10 w-[85%] rounded-xl shadow-xl p-6"
-                style={{
-                  backgroundColor: 'var(--canvas)',
-                  border: '1px solid var(--hairline-soft)',
-                }}
-              >
+              <div className="relative z-10 w-[85%] bg-white border border-hairline-soft rounded-xl shadow-xl p-6">
                 <div className="flex justify-between items-start mb-6">
                   <div>
-                    <h4
-                      className="text-[18px] font-semibold text-ink"
-                      style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-                    >
-                      Frontend Engineer
-                    </h4>
-                    <p
-                      className="text-[15px] mt-1"
-                      style={{
-                        color: 'var(--steel)',
-                        fontFamily: 'Inter, system-ui, sans-serif',
-                      }}
-                    >
-                      Mistral AI &bull; Paris, France
-                    </p>
+                    <h4 className="text-[18px] font-semibold text-ink">Senior UX Designer</h4>
+                    <p className="text-[15px] text-steel mt-1">Google &bull; Bengaluru, IN</p>
                   </div>
                   <Badge status="interview" />
                 </div>
 
                 <div className="flex gap-2 mb-6">
-                  <span
-                    className="px-3 py-1 rounded-full text-[12px] font-medium"
-                    style={{
-                      backgroundColor: '#eff6ff',
-                      color: '#2563eb',
-                      fontFamily: 'Inter, system-ui, sans-serif',
-                    }}
-                  >
-                    Tech Support
-                  </span>
-                  <span
-                    className="px-3 py-1 rounded-full text-[12px] font-medium"
-                    style={{
-                      backgroundColor: 'var(--surface)',
-                      color: 'var(--steel)',
-                      fontFamily: 'Inter, system-ui, sans-serif',
-                    }}
-                  >
-                    Applied 2d ago
-                  </span>
+                  <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[12px] font-medium">Tech Support</span>
+                  <span className="bg-surface text-steel px-3 py-1 rounded-full text-[12px] font-medium">Applied 2d ago</span>
                 </div>
 
-                <div
-                  className="flex gap-3 pt-4"
-                  style={{ borderTop: '1px solid var(--hairline-soft)' }}
-                >
-                  <a
-                    href={CHROME_STORE_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 inline-flex items-center justify-center py-2 text-[13px] font-medium rounded-md transition-colors duration-150"
-                    style={{
-                      color: 'var(--ink)',
-                      border: '1px solid var(--hairline-strong)',
-                      fontFamily: 'Inter, system-ui, sans-serif',
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor =
-                        'var(--surface)')
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor = 'transparent')
-                    }
-                  >
-                    View Cover Letter
-                  </a>
-                  <a
-                    href={CHROME_STORE_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 inline-flex items-center justify-center py-2 text-[13px] font-medium rounded-md text-white transition-colors duration-150"
-                    style={{
-                      backgroundColor: 'var(--primary)',
-                      fontFamily: 'Inter, system-ui, sans-serif',
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor =
-                        'var(--primary-deep)')
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor =
-                        'var(--primary)')
-                    }
-                  >
-                    Update Status
-                  </a>
+                <div className="flex gap-3 pt-4 border-t border-hairline-soft">
+                  <Button variant="secondary" className="flex-1 py-2 text-[13px]">View Cover Letter</Button>
+                  <Button variant="primary" className="flex-1 py-2 text-[13px]">Update Status</Button>
                 </div>
               </div>
+
             </div>
           </div>
         </div>
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Privacy Banner */}
+      {/* Privacy First Cream Banner - Adjusted to Support Dynamic Sync */}
       {/* ------------------------------------------------------------------ */}
-      <section className="py-20 md:py-24 px-4 md:px-6" id="privacy">
-        <div className="max-w-[1280px] mx-auto">
-          <Card
-            variant="cream"
-            className="p-10 md:p-16 text-center border-2 border-beige-deep shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
+      <section id="privacy" className="py-24 px-6 max-w-[1280px] mx-auto">
+        <Card variant="cream" className="p-12 md:p-16 text-center border-2 border-beige-deep shadow-sm">
+          <div className="w-16 h-16 mx-auto bg-white rounded-full flex items-center justify-center mb-6 shadow-sm border border-beige-deep">
+            <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+          </div>
+          <h2
+            className="text-[42px] md:text-[52px] text-ink leading-[1.15] tracking-[-0.5px] mb-6"
+            style={{ fontFamily: '"PP Editorial Old", "Times New Roman", Georgia, serif' }}
           >
-            <div
-              className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-6"
-              style={{
-                backgroundColor: 'var(--canvas)',
-                border: '1px solid var(--beige-deep)',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-              }}
-            >
-              <svg
-                width="28"
-                height="28"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ color: 'var(--primary)' }}
-              >
-                <rect
-                  x="3"
-                  y="11"
-                  width="18"
-                  height="11"
-                  rx="2"
-                  ry="2"
-                />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-            </div>
-            <h2
-              className="text-[34px] md:text-[44px] lg:text-[52px] text-ink leading-[1.15] tracking-[-0.5px] mb-6"
-              style={{
-                fontFamily:
-                  '"PP Editorial Old", "Times New Roman", Georgia, serif',
-              }}
-            >
-              Your data stays on your machine.
-            </h2>
-            <p
-              className="text-[16px] md:text-[18px] leading-[1.50] max-w-2xl mx-auto mb-8"
-              style={{
-                color: 'var(--charcoal)',
-                fontFamily: 'Inter, system-ui, sans-serif',
-              }}
-            >
-              We believe your career data is private. Job Foocus operates
-              entirely within your browser. No required accounts, no hidden
-              cloud databases, and zero tracking.
-            </p>
-            <Link
-              href="/privacy-policy"
-              className="inline-flex items-center justify-center px-6 py-3 text-[14px] font-medium rounded-md transition-colors duration-150"
-              style={{
-                color: 'var(--on-cream)',
-                border: '1px solid var(--beige-deep)',
-                fontFamily: 'Inter, system-ui, sans-serif',
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.backgroundColor =
-                  'var(--cream-deeper)')
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.backgroundColor = 'transparent')
-              }
-            >
-              Read our Privacy Promise
-            </Link>
-          </Card>
-        </div>
+            Private account structure. Secure storage.
+          </h2>
+          <p className="text-[18px] text-charcoal leading-[1.50] max-w-2xl mx-auto mb-8">
+            We believe your career data is yours. Job Foocus operates using private authentication and secure, custom-linked cloud sync options (including Google Drive, OneDrive, or Dropbox). No third-party data tracking, ever.
+          </p>
+        </Card>
       </section>
 
       {/* ------------------------------------------------------------------ */}
@@ -871,7 +599,7 @@ export default function MarketingLandingPage() {
               className="text-[14px] text-steel leading-relaxed max-w-xs"
               style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
             >
-              The elegant, private extension for professionals who want to own
+              The elegant, private platform for professionals who want to own
               their job search.
             </p>
           </div>
@@ -890,6 +618,24 @@ export default function MarketingLandingPage() {
             <ul className="space-y-2 text-[14px]">
               <li>
                 <a
+                  href="/signup"
+                  className="transition-colors hover:underline"
+                  style={{
+                    color: 'var(--steel)',
+                    fontFamily: 'Inter, system-ui, sans-serif',
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.color = 'var(--primary)')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color = 'var(--steel)')
+                  }
+                >
+                  Create Account
+                </a>
+              </li>
+              <li>
+                <a
                   href={CHROME_STORE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -905,25 +651,7 @@ export default function MarketingLandingPage() {
                     (e.currentTarget.style.color = 'var(--steel)')
                   }
                 >
-                  Add Extension
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#features"
-                  className="transition-colors hover:underline"
-                  style={{
-                    color: 'var(--steel)',
-                    fontFamily: 'Inter, system-ui, sans-serif',
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.color = 'var(--primary)')
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.color = 'var(--steel)')
-                  }
-                >
-                  How it works
+                  Add Companion Extension
                 </a>
               </li>
               <li>
