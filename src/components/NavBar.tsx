@@ -93,10 +93,15 @@ export default function NavBar() {
                 )}
                 <a
                   href="/login"
-                  className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors"
-                  style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+                  className="px-4 py-2 text-[14px] rounded-md font-medium text-white transition-colors duration-150"
+                  style={{
+                    backgroundColor: 'var(--primary)',
+                    fontFamily: 'Inter, system-ui, sans-serif',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary-deep)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary)')}
                 >
-                  Log in
+                  Get Started
                 </a>
                 <ThemeToggle />
               </>

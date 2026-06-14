@@ -20,24 +20,24 @@ export default function ThemeToggle({ className = '' }: { className?: string }) 
       onClick={toggleTheme}
       className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-colors ${className}`}
       style={{
-        borderColor: isDark ? '#cc3a05' : '#fa520f',
+        borderColor: isDark ? 'var(--primary-deep)' : 'var(--primary)',
         backgroundColor: isDark ? 'var(--cream)' : 'transparent',
       }}
       onMouseEnter={(e) => {
         const el = e.currentTarget as HTMLButtonElement
-        el.style.borderColor = '#cc3a05'
+        el.style.borderColor = 'var(--primary-deep)'
         el.style.backgroundColor = 'var(--cream)'
       }}
       onMouseLeave={(e) => {
         const el = e.currentTarget as HTMLButtonElement
-        el.style.borderColor = isDark ? '#cc3a05' : '#fa520f'
+        el.style.borderColor = isDark ? 'var(--primary-deep)' : 'var(--primary)'
         el.style.backgroundColor = isDark ? 'var(--cream)' : 'transparent'
       }}
       title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       aria-label="Toggle theme"
     >
       {isDark ? (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="5" />
           <line x1="12" y1="1" x2="12" y2="3" />
           <line x1="12" y1="21" x2="12" y2="23" />
@@ -49,7 +49,7 @@ export default function ThemeToggle({ className = '' }: { className?: string }) 
           <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
         </svg>
       ) : (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
         </svg>
       )}
