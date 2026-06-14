@@ -196,7 +196,7 @@ export default function MarketingLandingPage() {
       </header>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Optimized High-Contrast Hero Section */}
+      {/* Optimized Hero Section with Static Vector Contrasts */}
       {/* ------------------------------------------------------------------ */}
       <section className="relative w-full overflow-hidden bg-[#0c0d0b] pt-16 pb-24 lg:pt-24 lg:pb-36 px-6 border-b border-white/5">
 
@@ -212,7 +212,7 @@ export default function MarketingLandingPage() {
 
         <div className="relative z-10 max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
 
-          {/* Left Column: High-Legibility Typography (6 Cols) */}
+          {/* Left Column: Scannable Copy Column (6 Cols) */}
           <div className="lg:col-span-6 xl:col-span-5 max-w-xl">
             {/* Eyebrow - Changed from orange to high-contrast sunset gold */}
             <span className="inline-block text-[11px] font-bold uppercase tracking-[1.5px] text-[#ffd06a] mb-4">
@@ -232,23 +232,30 @@ export default function MarketingLandingPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button variant="primary" className="text-[15px] px-8 py-3.5 flex items-center justify-center gap-2">
-                <span>Add Extension</span>
-                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              </Button>
-              {/* Secondary Button - Adjusted for high-contrast white boundaries */}
-              <Button
-                variant="secondary"
-                className="text-[15px] px-8 py-3.5 !text-white !border-white/20 hover:!border-white/40 hover:!bg-white/5 flex items-center justify-center transition-all"
+              <a
+                href={CHROME_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                See how it works
-              </Button>
+                <Button variant="primary" className="text-[15px] px-8 py-3.5 flex items-center justify-center gap-2">
+                  <span>Add Extension</span>
+                  <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </svg>
+                </Button>
+              </a>
+              <a href="#features">
+                <Button
+                  variant="secondary"
+                  className="text-[15px] px-8 py-3.5 !text-white !border-white/20 hover:!border-white/40 hover:!bg-white/5 flex items-center justify-center transition-all"
+                >
+                  See how it works
+                </Button>
+              </a>
             </div>
           </div>
 
-          {/* Right Column: High-Fidelity App UI Visual Hook (6 Cols) */}
+          {/* Right Column: Dynamic Mockup with hardcoded styles to prevent Dark Mode bleeding (6 Cols) */}
           <div className="lg:col-span-6 xl:col-span-7 relative w-full flex justify-center">
 
             {/* Outer Simulated Browser Window */}
@@ -261,8 +268,9 @@ export default function MarketingLandingPage() {
                   <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
                   <div className="w-3 h-3 rounded-full bg-green-500/80" />
                 </div>
+                {/* Address bar optimized for Naukri.com reference */}
                 <div className="bg-white/5 rounded px-6 py-0.5 text-[10px] text-zinc-400 font-mono select-none">
-                  stripe.com/careers/designer
+                  naukri.com/job/google-ux-designer
                 </div>
                 <div className="w-12" />
               </div>
@@ -286,47 +294,60 @@ export default function MarketingLandingPage() {
                   </div>
                 </div>
 
-                {/* Overlapping Glassmorphic Extension UI Panel */}
+                {/* Overlapping Extension UI Panel - Styles hardcoded to ignore theme toggles */}
                 <div
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%] w-[90%] sm:w-[380px] bg-cream border border-beige-deep rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] p-6"
-                  style={{ background: '#fff8e0', color: '#1f1f1f' }}
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%] w-[90%] sm:w-[380px] rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] p-6"
+                  style={{ background: '#fff8e0', color: '#1f1f1f', border: '1px solid #e6d5a8' }}
                 >
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-sm bg-primary text-white flex items-center justify-center font-bold text-[10px]">
+                      <div
+                        className="w-5 h-5 rounded-sm flex items-center justify-center font-bold text-[10px]"
+                        style={{ backgroundColor: '#fa520f', color: '#ffffff' }}
+                      >
                         F
                       </div>
-                      <span className="text-[12px] font-bold uppercase tracking-[1px] text-ink font-sans">
+                      <span className="text-[12px] font-bold uppercase tracking-[1px] font-sans" style={{ color: '#1f1f1f' }}>
                         Job Foocus
                       </span>
                     </div>
-                    <Badge status="prospect" className="!bg-[#e5e5e5] !text-[#4a4a4a] text-[11px]" />
+                    <span
+                      className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                      style={{ backgroundColor: '#fff0c2', color: '#1f1f1f' }}
+                    >
+                      Prospect
+                    </span>
                   </div>
 
                   <div className="space-y-4">
-                    {/* Extraction Status Row */}
-                    <div className="p-3 bg-white border border-beige-deep rounded-lg flex items-center justify-between">
+                    {/* Extraction Status Row with Google Reference */}
+                    <div className="p-3 rounded-lg flex items-center justify-between" style={{ backgroundColor: '#ffffff', border: '1px solid #e6d5a8' }}>
                       <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center text-green-600" style={{ backgroundColor: '#f0fdf4' }}>
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
                         </div>
                         <div>
-                          <p className="text-[13px] font-semibold text-ink">Senior Product Designer</p>
-                          <p className="text-[11px] text-steel">Stripe &bull; Remote, US</p>
+                          <p className="text-[13px] font-semibold" style={{ color: '#1f1f1f' }}>Senior UX Designer</p>
+                          <p className="text-[11px]" style={{ color: '#6a6a6a' }}>Google &bull; Bengaluru, IN</p>
                         </div>
                       </div>
-                      <span className="text-[11px] font-semibold text-primary">Clipped</span>
+                      <span className="text-[11px] font-semibold" style={{ color: '#fa520f' }}>Clipped</span>
                     </div>
 
                     {/* Tailored Cover Letter Generation Box */}
-                    <div className="bg-white border border-beige-deep rounded-lg p-3">
+                    <div className="rounded-lg p-3" style={{ backgroundColor: '#ffffff', border: '1px solid #e6d5a8' }}>
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-[12px] font-semibold text-steel">Custom Cover Letter</p>
-                        <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded font-semibold uppercase">Draft Ready</span>
+                        <p className="text-[12px] font-semibold" style={{ color: '#6a6a6a' }}>Custom Cover Letter</p>
+                        <span
+                          className="text-[10px] px-2 py-0.5 rounded font-semibold uppercase"
+                          style={{ backgroundColor: 'rgba(250,82,15,0.1)', color: '#fa520f' }}
+                        >
+                          Draft Ready
+                        </span>
                       </div>
                       <div className="space-y-1.5 opacity-70">
-                        <div className="h-1.5 w-full bg-steel/20 rounded" />
-                        <div className="h-1.5 w-[90%] bg-steel/20 rounded" />
+                        <div className="h-1.5 w-full rounded" style={{ backgroundColor: 'rgba(106,106,106,0.2)' }} />
+                        <div className="h-1.5 w-[90%] rounded" style={{ backgroundColor: 'rgba(106,106,106,0.2)' }} />
                       </div>
                     </div>
                   </div>
@@ -341,25 +362,19 @@ export default function MarketingLandingPage() {
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Logo Wall (Social Proof) */}
+      {/* Logo Wall (Optimized for Global & Indian Job Portals) */}
       {/* ------------------------------------------------------------------ */}
-      <section className="py-12 border-b border-hairline-soft px-4 md:px-6">
+      <section className="py-12 border-b border-hairline-soft bg-canvas px-6">
         <div className="max-w-[1280px] mx-auto flex flex-col md:flex-row items-center justify-between gap-8 opacity-60 grayscale">
-          <p
-            className="text-[13px] text-steel font-semibold uppercase tracking-[1px]"
-            style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-          >
+          <p className="text-[14px] text-steel font-semibold uppercase tracking-[1px]">
             Works seamlessly with
           </p>
-          <div
-            className="flex flex-wrap items-center gap-8 md:gap-12 font-bold text-[18px] md:text-[22px]"
-            style={{ color: 'var(--stone)' }}
-          >
-            {['LinkedIn', 'Indeed', 'Greenhouse', 'Workday', 'Lever'].map(
-              (name) => (
-                <span key={name}>{name}</span>
-              ),
-            )}
+          <div className="flex flex-wrap items-center gap-8 md:gap-12 font-bold text-[20px] md:text-[24px] text-stone">
+            <span>Naukri.com</span>
+            <span>LinkedIn</span>
+            <span>Indeed</span>
+            <span>Google Careers</span>
+            <span>Workday</span>
           </div>
         </div>
       </section>
