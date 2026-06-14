@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Card from '@/components/design/Card'
 import Badge from '@/components/design/Badge'
 import SunsetStripeBand from '@/components/design/sunset-stripe-band'
+import ThemeToggle from '@/components/ThemeToggle'
 
 const CHROME_STORE_URL =
   'https://chromewebstore.google.com/detail/dddmilcbgjmfidicpahglaflfjfcnjl'
@@ -75,8 +76,11 @@ export default function MarketingLandingPage() {
             </a>
           </nav>
 
-          {/* CTA + hamburger */}
-          <div className="flex items-center gap-3">
+          {/* Desktop right: toggle + CTA + hamburger */}
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="hidden md:block">
+              <ThemeToggle />
+            </div>
             <a
               href={CHROME_STORE_URL}
               target="_blank"
@@ -175,6 +179,13 @@ export default function MarketingLandingPage() {
                     >
                       Add Extension →
                     </a>
+                    <div className="border-t border-hairline-soft my-1" />
+                    <div className="flex items-center justify-between px-4 py-2.5">
+                      <span className="text-[13px] text-ink" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                        Theme
+                      </span>
+                      <ThemeToggle />
+                    </div>
                   </div>
                 </div>
               )}
