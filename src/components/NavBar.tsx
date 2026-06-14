@@ -98,18 +98,6 @@ export default function NavBar() {
                 >
                   Log in
                 </a>
-                <a
-                  href="/signup"
-                  className="px-4 py-2 text-[14px] font-medium text-white rounded-md transition-colors"
-                  style={{
-                    backgroundColor: 'var(--primary)',
-                    fontFamily: 'Inter, system-ui, sans-serif',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary-deep)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary)')}
-                >
-                  Sign up
-                </a>
                 <ThemeToggle />
               </>
             )}
