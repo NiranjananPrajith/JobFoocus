@@ -2,7 +2,7 @@ import React from 'react';
 import SunsetStripeBand from '@/components/design/sunset-stripe-band';
 
 const footerLinks = {
-  'Product': ['Features', 'Pricing'],
+  'Product': ['Features', 'Extension', 'Pricing'],
   'Legal': ['Privacy Policy', 'Terms of Service'],
 };
 
@@ -40,13 +40,13 @@ export default function Footer() {
                 className="text-[12px] font-semibold uppercase tracking-[0.05em] text-ink mb-4"
                 style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
               >
-                Why JobFoocus
+                Product
               </h4>
               <ul className="space-y-2">
                 {footerLinks['Product'].map((link) => (
                   <li key={link}>
                     <a
-                      href={link === 'Pricing' ? '/pricing' : link === 'Features' ? '/features' : '#'}
+                      href={link === 'Pricing' ? '/pricing' : link === 'Features' ? '/features' : link === 'Extension' ? '/extension-install' : '#'}
                       className="text-[14px] text-primary hover:underline"
                       style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
                     >

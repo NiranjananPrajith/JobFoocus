@@ -101,7 +101,7 @@ export default function NavBar() {
                   )}
                   {pathname !== '/extension-install' && (
                     <a href="/extension-install" className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                      Downloads
+                      Extension
                     </a>
                   )}
                 </div>
@@ -156,7 +156,7 @@ export default function NavBar() {
                           Pricing
                         </a>
                         <a href="/extension-install" onClick={() => setNavMenuOpen(false)} className="block px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors">
-                          Downloads
+                          Extension
                         </a>
                       </div>
                     </div>
