@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTheme } from '@/lib/theme-context'
 
-export default function ThemeToggle() {
+export default function ThemeToggle({ className = '' }: { className?: string }) {
   const { theme, toggleTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
@@ -18,7 +18,7 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="w-9 h-9 rounded-full flex items-center justify-center border-2 transition-colors"
+      className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-colors ${className}`}
       style={{
         borderColor: isDark ? '#cc3a05' : '#fa520f',
         backgroundColor: isDark ? 'var(--cream)' : 'transparent',
