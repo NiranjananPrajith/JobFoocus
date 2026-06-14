@@ -6,6 +6,7 @@ import Card from '@/components/design/Card'
 import Badge from '@/components/design/Badge'
 import SunsetStripeBand from '@/components/design/sunset-stripe-band'
 import ThemeToggle from '@/components/ThemeToggle'
+import Button from '@/components/design/Button'
 
 const CHROME_STORE_URL =
   'https://chromewebstore.google.com/detail/dddmilcbgjmfidicpahglaflfjfcnjl'
@@ -195,281 +196,147 @@ export default function MarketingLandingPage() {
       </header>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Hero — two-column with browser mockup */}
+      {/* Optimized High-Contrast Hero Section */}
       {/* ------------------------------------------------------------------ */}
-      <section className="relative w-full overflow-hidden bg-ink pt-16 pb-24 lg:pt-24 lg:pb-36 px-4 md:px-6">
+      <section className="relative w-full overflow-hidden bg-[#0c0d0b] pt-16 pb-24 lg:pt-24 lg:pb-36 px-6 border-b border-white/5">
+
+        {/* Localized Sunset Glow - Positioned exclusively behind the right-side mockup */}
         <div
-          className="absolute inset-0 opacity-40 mix-blend-screen pointer-events-none"
+          className="absolute right-0 top-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-30 mix-blend-screen pointer-events-none hidden lg:block"
           style={{
-            background:
-              'linear-gradient(135deg, var(--sunshine-700) 0%, var(--sunshine-900) 40%, var(--primary) 100%)',
-            filter: 'blur(100px)',
-            transform: 'scale(1.2)',
+            background: 'radial-gradient(circle, rgba(250,82,15,0.7) 0%, rgba(255,161,16,0.3) 50%, rgba(0,0,0,0) 70%)',
+            filter: 'blur(80px)',
           }}
           aria-hidden="true"
         />
 
         <div className="relative z-10 max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
 
-          {/* Left — editorial hook (5 cols) */}
+          {/* Left Column: High-Legibility Typography (6 Cols) */}
           <div className="lg:col-span-6 xl:col-span-5 max-w-xl">
-            <span
-              className="inline-block text-[11px] font-bold uppercase tracking-[1.5px] text-primary mb-4"
-              style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-            >
+            {/* Eyebrow - Changed from orange to high-contrast sunset gold */}
+            <span className="inline-block text-[11px] font-bold uppercase tracking-[1.5px] text-[#ffd06a] mb-4">
               Now Available on Chrome &amp; Firefox
             </span>
 
             <h1
               className="text-[52px] sm:text-[64px] lg:text-[76px] text-white leading-[1.05] tracking-[-1.5px] mb-6"
-              style={{
-                fontFamily:
-                  '"PP Editorial Old", "Times New Roman", Georgia, serif',
-              }}
+              style={{ fontFamily: '"PP Editorial Old", "Times New Roman", Georgia, serif' }}
             >
-              Your job hunt.
-              <br />
-              Beautifully organized.
+              Your job hunt.<br />Beautifully organized.
             </h1>
 
-            <p
-              className="text-[17px] sm:text-[18px] text-stone leading-[1.50] mb-8"
-              style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-            >
-              Spreadsheets belong in finance, not your career. Job Foocus is the
-              elegant browser extension that clips listings, drafts cover
-              letters, and tracks your trajectory in one click.
+            {/* Body Text - Swapped stone for high-contrast light zinc */}
+            <p className="text-[17px] sm:text-[18px] text-zinc-300 leading-[1.50] mb-8 font-sans">
+              Spreadsheets belong in finance, not your career. Job Foocus is the elegant browser extension that clips listings, drafts cover letters, and tracks your trajectory in one click.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <a
-                href={CHROME_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 text-[15px] font-medium rounded-md text-white transition-colors duration-150"
-                style={{
-                  backgroundColor: 'var(--primary)',
-                  fontFamily: 'Inter, system-ui, sans-serif',
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.backgroundColor =
-                    'var(--primary-deep)')
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.backgroundColor = 'var(--primary)')
-                }
-              >
+              <Button variant="primary" className="text-[15px] px-8 py-3.5 flex items-center justify-center gap-2">
                 <span>Add Extension</span>
-                <svg
-                  width="16"
-                  height="16"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  viewBox="0 0 24 24"
-                >
+                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                   <path d="M5 12h14M12 5l7 7-7 7" />
                 </svg>
-              </a>
-              <a
-                href="#features"
-                className="inline-flex items-center justify-center px-8 py-3.5 text-[15px] font-medium rounded-md transition-colors duration-150"
-                style={{
-                  color: 'var(--on-dark)',
-                  border: '1px solid var(--stone)',
-                  fontFamily: 'Inter, system-ui, sans-serif',
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.backgroundColor =
-                    'rgba(255,255,255,0.1)')
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.backgroundColor = 'transparent')
-                }
+              </Button>
+              {/* Secondary Button - Adjusted for high-contrast white boundaries */}
+              <Button
+                variant="secondary"
+                className="text-[15px] px-8 py-3.5 !text-white !border-white/20 hover:!border-white/40 hover:!bg-white/5 flex items-center justify-center transition-all"
               >
                 See how it works
-              </a>
+              </Button>
             </div>
           </div>
 
-          {/* Right — browser window mockup (7 cols) */}
+          {/* Right Column: High-Fidelity App UI Visual Hook (6 Cols) */}
           <div className="lg:col-span-6 xl:col-span-7 relative w-full flex justify-center">
-            <div className="relative w-full max-w-[580px] aspect-[1.4] overflow-hidden rounded-xl border border-white/10 shadow-2xl backdrop-blur-md"
-              style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
-            >
-              {/* Browser chrome */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-white/10"
-                style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
-              >
+
+            {/* Outer Simulated Browser Window */}
+            <div className="relative w-full max-w-[580px] aspect-[1.4] bg-white/5 border border-white/10 rounded-xl overflow-hidden backdrop-blur-md shadow-2xl">
+
+              {/* Browser Controls */}
+              <div className="flex items-center px-4 py-3 border-b border-white/10 bg-white/5 justify-between">
                 <div className="flex space-x-2">
                   <div className="w-3 h-3 rounded-full bg-red-500/80" />
                   <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
                   <div className="w-3 h-3 rounded-full bg-green-500/80" />
                 </div>
-                <div className="rounded px-6 py-0.5 text-[10px] text-stone select-none"
-                  style={{ backgroundColor: 'rgba(255,255,255,0.05)', fontFamily: 'JetBrains Mono, ui-monospace, monospace' }}
-                >
+                <div className="bg-white/5 rounded px-6 py-0.5 text-[10px] text-zinc-400 font-mono select-none">
                   stripe.com/careers/designer
                 </div>
                 <div className="w-12" />
               </div>
 
-              {/* Content area */}
+              {/* Simulated Content inside Browser */}
               <div className="p-6 h-full flex flex-col justify-between">
-                {/* Fake job board background */}
+
+                {/* Fake Job Board Post Background */}
                 <div className="opacity-45" style={{ filter: 'blur(0.3px)' }}>
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <div className="h-6 w-32 rounded mb-2"
-                        style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
-                      />
-                      <div className="h-4 w-48 rounded"
-                        style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
-                      />
+                      <div className="h-6 w-32 bg-white/20 rounded mb-2" />
+                      <div className="h-4 w-48 bg-white/10 rounded" />
                     </div>
-                    <div className="h-10 w-24 rounded-md"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
-                    />
+                    <div className="h-10 w-24 bg-white/10 rounded-md" />
                   </div>
                   <div className="space-y-3">
-                    <div className="h-3 w-full rounded"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
-                    />
-                    <div className="h-3 w-[90%] rounded"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
-                    />
-                    <div className="h-3 w-[95%] rounded"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
-                    />
+                    <div className="h-3 w-full bg-white/10 rounded" />
+                    <div className="h-3 w-[90%] bg-white/10 rounded" />
+                    <div className="h-3 w-[95%] bg-white/10 rounded" />
                   </div>
                 </div>
 
-                {/* Overlapping extension panel */}
+                {/* Overlapping Glassmorphic Extension UI Panel */}
                 <div
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%] w-[90%] sm:w-[380px] rounded-xl p-6 border"
-                  style={{
-                    backgroundColor: 'var(--cream)',
-                    borderColor: 'var(--beige-deep)',
-                    color: 'var(--ink)',
-                    boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
-                  }}
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%] w-[90%] sm:w-[380px] bg-cream border border-beige-deep rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] p-6"
+                  style={{ background: '#fff8e0', color: '#1f1f1f' }}
                 >
-                  {/* Panel header */}
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-2">
-                      <div
-                        className="w-5 h-5 rounded-sm flex items-center justify-center font-bold text-[10px] text-white"
-                        style={{ backgroundColor: 'var(--primary)' }}
-                      >
+                      <div className="w-5 h-5 rounded-sm bg-primary text-white flex items-center justify-center font-bold text-[10px]">
                         F
                       </div>
-                      <span
-                        className="text-[12px] font-bold uppercase tracking-[1px]"
-                        style={{
-                          color: 'var(--ink)',
-                          fontFamily: 'Inter, system-ui, sans-serif',
-                        }}
-                      >
+                      <span className="text-[12px] font-bold uppercase tracking-[1px] text-ink font-sans">
                         Job Foocus
                       </span>
                     </div>
-                    <Badge
-                      status="prospect"
-                      className="!bg-[#e5e5e5] !text-[#4a4a4a] text-[11px]"
-                    />
+                    <Badge status="prospect" className="!bg-[#e5e5e5] !text-[#4a4a4a] text-[11px]" />
                   </div>
 
-                  {/* Body */}
                   <div className="space-y-4">
-                    {/* Extraction row */}
-                    <div
-                      className="p-3 rounded-lg flex items-center justify-between"
-                      style={{
-                        backgroundColor: 'var(--canvas)',
-                        border: '1px solid var(--beige-deep)',
-                      }}
-                    >
+                    {/* Extraction Status Row */}
+                    <div className="p-3 bg-white border border-beige-deep rounded-lg flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                          <svg
-                            width="12"
-                            height="12"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                          >
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
                         </div>
                         <div>
-                          <p
-                            className="text-[13px] font-semibold"
-                            style={{
-                              color: 'var(--ink)',
-                              fontFamily: 'Inter, system-ui, sans-serif',
-                            }}
-                          >
-                            Senior Product Designer
-                          </p>
-                          <p
-                            className="text-[11px]"
-                            style={{
-                              color: 'var(--steel)',
-                              fontFamily: 'Inter, system-ui, sans-serif',
-                            }}
-                          >
-                            Stripe &bull; Remote, US
-                          </p>
+                          <p className="text-[13px] font-semibold text-ink">Senior Product Designer</p>
+                          <p className="text-[11px] text-steel">Stripe &bull; Remote, US</p>
                         </div>
                       </div>
-                      <span
-                        className="text-[11px] font-semibold"
-                        style={{
-                          color: 'var(--primary)',
-                          fontFamily: 'Inter, system-ui, sans-serif',
-                        }}
-                      >
-                        Clipped
-                      </span>
+                      <span className="text-[11px] font-semibold text-primary">Clipped</span>
                     </div>
 
-                    {/* Cover letter row */}
-                    <div
-                      className="p-3 rounded-lg"
-                      style={{
-                        backgroundColor: 'var(--canvas)',
-                        border: '1px solid var(--beige-deep)',
-                      }}
-                    >
+                    {/* Tailored Cover Letter Generation Box */}
+                    <div className="bg-white border border-beige-deep rounded-lg p-3">
                       <div className="flex items-center justify-between mb-2">
-                        <p
-                          className="text-[12px] font-semibold"
-                          style={{
-                            color: 'var(--steel)',
-                            fontFamily: 'Inter, system-ui, sans-serif',
-                          }}
-                        >
-                          Custom Cover Letter
-                        </p>
-                        <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-primary/10 text-primary">
-                          Draft Ready
-                        </span>
+                        <p className="text-[12px] font-semibold text-steel">Custom Cover Letter</p>
+                        <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded font-semibold uppercase">Draft Ready</span>
                       </div>
                       <div className="space-y-1.5 opacity-70">
-                        <div className="h-1.5 w-full rounded"
-                          style={{ backgroundColor: 'var(--steel)', opacity: 0.2 }}
-                        />
-                        <div className="h-1.5 w-[90%] rounded"
-                          style={{ backgroundColor: 'var(--steel)', opacity: 0.2 }}
-                        />
+                        <div className="h-1.5 w-full bg-steel/20 rounded" />
+                        <div className="h-1.5 w-[90%] bg-steel/20 rounded" />
                       </div>
                     </div>
                   </div>
                 </div>
+
               </div>
             </div>
+
           </div>
+
         </div>
       </section>
 
