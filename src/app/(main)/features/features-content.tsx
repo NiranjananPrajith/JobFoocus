@@ -9,7 +9,7 @@ const coreFeatures = [
     headline: 'Tailored resumes that speak to every job',
     body: "Most申请人 use the same resume everywhere. Job Foocus reads the job description and rewrites your experience to match exactly what employers are looking for — keyword-matched, structure-optimized, ATS-ready.",
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
         <path d="M12 2L2 7l10 5 10-5-10-5z" />
         <path d="M2 17l10 5 10-5" />
         <path d="M2 12l10 5 10-5" />
@@ -21,7 +21,7 @@ const coreFeatures = [
     headline: 'Never let a silent employer slip through the net',
     body: "You've applied. You're waiting. Most people wait two weeks, give up, and never follow up. Job Foocus watches your applications and reminds you to follow up when there's been no response — so you stay top of mind without thinking about it.",
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
         <path d="M13.73 21a2 2 0 0 1-3.46 0" />
       </svg>
@@ -32,7 +32,7 @@ const coreFeatures = [
     headline: 'Add jobs in under 10 seconds',
     body: 'Browse any job posting online, click the Job Foocus extension, and the job is captured — title, company, description — and filed in the right category. No copy-pasting. No manual entry. Your job search moves as fast as you do.',
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
         <line x1="12" y1="8" x2="12" y2="16" />
         <line x1="8" y1="12" x2="16" y2="12" />
@@ -124,7 +124,7 @@ export default function FeaturesPageContent() {
               <ul className="space-y-3">
                 {['Tailored resume generated in under 3 minutes', 'Keyword-matched to the job posting', 'ATS-optimized structure and formatting', 'Cover letter written to the specific company'].map((item) => (
                   <li key={item} className="flex items-center gap-3 text-[14px] text-ink">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                     {item}
@@ -139,7 +139,7 @@ export default function FeaturesPageContent() {
       {/* ── Core Feature 2 — Follow-Up Reminders (dark bg band) ── */}
       <section
         className="px-6 py-20 w-full rounded-xl"
-        style={{ backgroundColor: '#fff8e0' }}
+        style={{ backgroundColor: 'var(--cream)' }}
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Notification mockup */}
@@ -147,7 +147,7 @@ export default function FeaturesPageContent() {
             <div className="bg-white rounded-xl border border-beige-deep p-5 max-w-[360px] mx-auto shadow-[rgba(0,0,0,0.06)_0px_6px_20px]">
               <div className="flex items-start gap-3 mb-4">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: '#fa520f' }}>
+                  style={{ backgroundColor: 'var(--primary)' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
@@ -163,7 +163,7 @@ export default function FeaturesPageContent() {
                 <p>Dear Hiring Team, I wanted to follow up on my application for the Customer Support Associate role...</p>
               </div>
               <div className="flex gap-2 mt-3">
-                <button className="flex-1 text-[12px] font-medium text-white py-2 rounded-md" style={{ backgroundColor: '#fa520f' }}>Edit & Send</button>
+                <button className="flex-1 text-[12px] font-medium text-white py-2 rounded-md" style={{ backgroundColor: 'var(--primary)' }}>Edit & Send</button>
                 <button className="flex-1 text-[12px] font-medium text-steel py-2 rounded-md border border-hairline-soft bg-white">Remind Later</button>
               </div>
             </div>
@@ -182,7 +182,7 @@ export default function FeaturesPageContent() {
             <ul className="space-y-3">
               {['Automatic reminder triggered after 10 days with no response', 'Pre-written follow-up message ready to review and send', 'Tracks applied, interview, offer, and rejected states', 'Never miss a window to stay top of mind'].map((item) => (
                 <li key={item} className="flex items-center gap-3 text-[14px] text-ink">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                   {item}
@@ -209,7 +209,7 @@ export default function FeaturesPageContent() {
             <ul className="space-y-3">
               {['Works on LinkedIn, Indeed, Glassdoor, and any posting page', 'Captures full job description with one click', 'Works on Chrome and Firefox'].map((item) => (
                 <li key={item} className="flex items-center gap-3 text-[14px] text-ink">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                   {item}
@@ -221,7 +221,7 @@ export default function FeaturesPageContent() {
           {/* Extension mockup */}
           <div className="bg-white rounded-xl border border-hairline-soft shadow-[rgba(0,0,0,0.06)_0px_8px_24px] overflow-hidden">
             <div className="bg-surface px-4 py-3 border-b border-hairline-soft flex items-center gap-2">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6a6a6a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--steel)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
                 <line x1="2" y1="12" x2="22" y2="12" />
                 <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
@@ -230,7 +230,7 @@ export default function FeaturesPageContent() {
             </div>
             <div className="p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fff8e0', border: '1px solid #e6d5a8' }}>
+                <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--cream)', border: '1px solid var(--beige-deep)' }}>
                   <img src="/icon.webp" alt="Job Foocus" className="w-10 h-10 rounded-lg object-contain" />
                 </div>
                 <div>
@@ -245,7 +245,7 @@ export default function FeaturesPageContent() {
                 <Link
                   href="/extension-install"
                   className="px-4 py-2 text-[13px] font-medium text-white rounded-md inline-flex items-center"
-                  style={{ backgroundColor: '#fa520f' }}
+                  style={{ backgroundColor: 'var(--primary)' }}
                 >
                   Add Extension
                 </Link>
@@ -278,9 +278,9 @@ export default function FeaturesPageContent() {
             <Card key={feature.title} variant="cream" className="p-6">
               <div
                 className="w-10 h-10 rounded-md flex items-center justify-center mb-4"
-                style={{ backgroundColor: '#fff0c2', border: '1px solid #e6d5a8' }}
+                style={{ backgroundColor: 'var(--cream-deeper)', border: '1px solid var(--beige-deep)' }}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </div>
@@ -299,13 +299,13 @@ export default function FeaturesPageContent() {
       <section className="px-6 pb-24 w-full">
         <div
           className="rounded-xl p-10 md:p-14 text-center relative overflow-hidden"
-          style={{ backgroundColor: '#fff8e0', border: '1px solid #e6d5a8' }}
+          style={{ backgroundColor: 'var(--cream)', border: '1px solid var(--beige-deep)' }}
         >
           {/* Decorative gradient corner */}
           <div
             className="absolute top-0 right-0 w-[300px] h-[300px] rounded-full opacity-20 pointer-events-none"
             style={{
-              background: 'radial-gradient(circle, #fa520f 0%, transparent 70%)',
+              background: 'radial-gradient(circle, var(--primary) 0%, transparent 70%)',
               transform: 'translate(40%, -40%)',
             }}
           />
