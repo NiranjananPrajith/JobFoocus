@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import AddJobModal from '@/components/AddJobModal'
+import ThemeToggle from '@/components/ThemeToggle'
 import { createClient } from '@/lib/supabase/client'
 import { TIER_LABEL, TIER_PRICE_USD, type Tier } from '@/lib/limits'
 import { timeUntilReset } from '@/lib/usage-utils'
@@ -59,10 +60,9 @@ export default function NavBar() {
   return (
     <>
       <header
-        className="sticky top-0 z-50 w-full no-print"
+        className="sticky top-0 z-50 w-full no-print bg-canvas"
         style={{
-          backgroundColor: '#ffffff',
-          borderBottom: '1px solid #ededed',
+          borderBottom: '1px solid var(--hairline-soft)',
           height: '64px',
         }}
       >
@@ -100,14 +100,15 @@ export default function NavBar() {
                   href="/signup"
                   className="px-4 py-2 text-[14px] font-medium text-white rounded-md transition-colors"
                   style={{
-                    backgroundColor: '#fa520f',
+                    backgroundColor: 'var(--primary)',
                     fontFamily: 'Inter, system-ui, sans-serif',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#cc3a05')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fa520f')}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary-deep)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary)')}
                 >
                   Sign up
                 </a>
+                <ThemeToggle />
               </>
             )}
 
@@ -117,15 +118,17 @@ export default function NavBar() {
                 <button
                   className="px-5 py-2.5 rounded-md text-[14px] font-medium text-white transition-colors duration-150"
                   style={{
-                    backgroundColor: '#fa520f',
+                    backgroundColor: 'var(--primary)',
                     fontFamily: 'Inter, system-ui, sans-serif',
                   }}
                   onClick={() => setAddJobOpen(true)}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#cc3a05')}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fa520f')}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary-deep)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary)')}
                 >
                   Add Job
                 </button>
+
+                <ThemeToggle />
 
                 {/* Billing popdown — plan + usage + Upgrade/Manage.
                     Sits to the left of the profile icon so a paying
@@ -144,16 +147,16 @@ export default function NavBar() {
                     onClick={() => setProfileOpen(!profileOpen)}
                     className="w-9 h-9 rounded-full flex items-center justify-center border-2 transition-colors"
                     style={{
-                      borderColor: profileOpen ? '#cc3a05' : '#fa520f',
-                      backgroundColor: profileOpen ? '#fff8e0' : 'transparent',
+                      borderColor: profileOpen ? 'var(--primary-deep)' : 'var(--primary)',
+                      backgroundColor: profileOpen ? 'var(--cream)' : 'transparent',
                     }}
                     onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.borderColor = '#cc3a05'
-                      ;(e.currentTarget as HTMLButtonElement).style.backgroundColor = '#fff8e0'
+                      (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--primary-deep)'
+                      ;(e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--cream)'
                     }}
                     onMouseLeave={(e) => {
                       if (!profileOpen) {
-                        ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#fa520f'
+                        ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--primary)'
                         ;(e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'
                       }
                     }}
@@ -166,7 +169,7 @@ export default function NavBar() {
                   </button>
 
                   {profileOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl border border-hairline-soft shadow-lg z-50 overflow-hidden">
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-canvas rounded-xl border border-hairline-soft shadow-lg z-50 overflow-hidden">
                       <div className="px-4 py-3 border-b border-hairline-soft">
                         <p className="text-[12px] text-steel truncate">{user.email}</p>
                       </div>
@@ -376,16 +379,17 @@ function BillingPopdown({
         onClick={() => setOpen(!open)}
         className="w-9 h-9 rounded-full flex items-center justify-center border-2 transition-colors"
         style={{
-          borderColor: open ? '#cc3a05' : '#fa520f',
-          backgroundColor: open ? '#fff8e0' : 'transparent',
+          borderColor: open ? 'var(--primary-deep)' : 'var(--primary)',
+          backgroundColor: open ? 'var(--cream)' : 'transparent',
         }}
         onMouseEnter={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.borderColor = '#cc3a05'
-          ;(e.currentTarget as HTMLButtonElement).style.backgroundColor = '#fff8e0'
+          const el = e.currentTarget as HTMLButtonElement
+          el.style.borderColor = 'var(--primary-deep)'
+          el.style.backgroundColor = 'var(--cream)'
         }}
         onMouseLeave={(e) => {
           if (!open) {
-            ;(e.currentTarget as HTMLButtonElement).style.borderColor = '#fa520f'
+            ;(e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--primary)'
             ;(e.currentTarget as HTMLButtonElement).style.backgroundColor = 'transparent'
           }
         }}
@@ -402,7 +406,7 @@ function BillingPopdown({
         // Width: w-72 (288px) is wider than the profile dropdown's
         // w-56 because we need room for two progress bars + a
         // full-width button + a secondary text link.
-        <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl border border-hairline-soft shadow-lg z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-72 bg-canvas rounded-xl border border-hairline-soft shadow-lg z-50 overflow-hidden">
           {/* Header — current plan */}
           <div className="px-4 py-3 border-b border-hairline-soft">
             {loading && (
@@ -465,9 +469,9 @@ function BillingPopdown({
                 href="/account"
                 onClick={() => setOpen(false)}
                 className="block w-full text-center px-4 py-2 rounded-md text-[13px] font-medium text-white transition-colors"
-                style={{ backgroundColor: '#fa520f' }}
-                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#cc3a05')}
-                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#fa520f')}
+                style={{ backgroundColor: 'var(--primary)' }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary-deep)')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary)')}
               >
                 Account and Billing
               </a>
@@ -512,15 +516,15 @@ function CompactUsageBar({
       <div
         className="h-1.5 rounded-full overflow-hidden"
         style={{
-          backgroundColor: '#f3efe7',
-          border: '1px solid #e6d5a8',
+          backgroundColor: 'var(--cream-deeper)',
+          border: '1px solid var(--beige-deep)',
         }}
       >
         <div
           className="h-full rounded-full transition-all"
           style={{
             width: `${pct}%`,
-            backgroundColor: atCap ? '#dc2626' : '#fa520f',
+            backgroundColor: atCap ? '#dc2626' : 'var(--primary)',
           }}
         />
       </div>

@@ -13,8 +13,8 @@ export default function Footer() {
       <footer
         className="w-full py-14 px-6 no-print"
         style={{
-          backgroundColor: '#fff8e0',
-          borderTop: '1px solid #e6d5a8',
+          backgroundColor: 'var(--footer-cream)',
+          borderTop: '1px solid var(--beige-deep)',
         }}
       >
         <div className="max-w-[1280px] mx-auto">
@@ -129,7 +129,7 @@ export default function Footer() {
           {/* Bottom Bar */}
           <div
             className="pt-6 flex items-center justify-between border-t"
-            style={{ borderColor: '#e6d5a8' }}
+            style={{ borderColor: 'var(--beige-deep)' }}
           >
             <span
               className="text-[12px] text-steel"

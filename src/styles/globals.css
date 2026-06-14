@@ -40,6 +40,23 @@
   }
 }
 
+/* Smooth theme transitions */
+html,
+html *,
+html *::before,
+html *::after {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html,
+  html *,
+  html *::before,
+  html *::after {
+    transition: none !important;
+  }
+}
+
 @media print {
   .no-print {
     display: none !important;
@@ -86,4 +103,40 @@
   --on-cream: #1f1f1f;
   --footer-cream: #fff8e0;
   --link: #fa520f;
+}
+
+/* ==========================================================================
+   Dark Theme
+   ========================================================================== */
+
+.dark {
+  --cream: #1a1610;
+  --cream-light: #221e15;
+  --cream-deeper: #15120b;
+  --beige-deep: #3a3020;
+  --canvas: #0f0f0f;
+  --surface: #1a1a1a;
+  --surface-cream: #1a1610;
+  --surface-cream-soft: #221e15;
+  --surface-code: #2a2a2a;
+  --ink: #e8e8e8;
+  --ink-tint: #c8c8c8;
+  --charcoal: #d0d0d0;
+  --slate: #b0b0b0;
+  --steel: #909090;
+  --stone: #707070;
+  --muted: #505050;
+  --hairline: #2a2a2a;
+  --hairline-soft: #222222;
+  --hairline-strong: #333333;
+  --on-cream: #e8e8e8;
+  --footer-cream: #0f0d08;
+}
+
+/* Override Tailwind built-ins for dark mode */
+.dark .bg-white {
+  background-color: var(--canvas);
+}
+.dark .border-stone-200 {
+  border-color: var(--hairline);
 }
