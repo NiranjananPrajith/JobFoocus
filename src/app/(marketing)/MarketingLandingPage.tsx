@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Card from '@/components/design/Card'
+import Badge from '@/components/design/Badge'
 import SunsetStripeBand from '@/components/design/sunset-stripe-band'
 
 const CHROME_STORE_URL =
@@ -34,50 +35,47 @@ export default function MarketingLandingPage() {
   return (
     <>
       {/* ------------------------------------------------------------------ */}
-      {/* Header */}
+      {/* Header — glassmorphism nav */}
       {/* ------------------------------------------------------------------ */}
       <header
-        className="sticky top-0 z-50 w-full no-print bg-canvas"
-        style={{
-          borderBottom: '1px solid var(--hairline-soft)',
-          height: '64px',
-        }}
+        className="sticky top-0 z-50 w-full no-print bg-canvas/80 backdrop-blur-md border-b border-hairline-soft"
+        style={{ height: '64px' }}
       >
         <div className="max-w-[1280px] mx-auto px-4 md:px-6 h-full flex items-center justify-between">
-          <a href="/" className="flex items-center gap-3">
+          <a href="/" className="flex items-center gap-2">
             <img
               src="/icon_wide.webp"
               alt="Job Foocus"
-              className="h-8 object-contain"
+              className="h-7 object-contain"
             />
           </a>
 
           {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-1">
-            <Link
-              href="/features"
-              className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors"
+          <nav className="hidden md:flex items-center gap-8">
+            <a
+              href="#features"
+              className="text-[14px] text-steel hover:text-ink font-medium transition-colors"
               style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
             >
-              Features
-            </Link>
-            <Link
-              href="/privacy-policy"
-              className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors"
+              How it Works
+            </a>
+            <a
+              href="#privacy"
+              className="text-[14px] text-steel hover:text-ink font-medium transition-colors"
               style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
             >
               Privacy
-            </Link>
+            </a>
             <a
               href="#faq"
-              className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors"
+              className="text-[14px] text-steel hover:text-ink font-medium transition-colors"
               style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
             >
               FAQ
             </a>
-          </div>
+          </nav>
 
-          {/* Desktop CTA + mobile hamburger */}
+          {/* CTA + hamburger */}
           <div className="flex items-center gap-3">
             <a
               href={CHROME_STORE_URL}
@@ -95,10 +93,10 @@ export default function MarketingLandingPage() {
                 (e.currentTarget.style.backgroundColor = 'var(--primary)')
               }
             >
-              Add to Chrome
+              Add Extension — It&apos;s Free
             </a>
 
-            {/* Hamburger */}
+            {/* Hamburger — mobile only */}
             <div className="relative md:hidden">
               <button
                 onClick={() => setNavOpen(!navOpen)}
@@ -142,23 +140,24 @@ export default function MarketingLandingPage() {
                   </svg>
                 )}
               </button>
+
               {navOpen && (
                 <div className="absolute right-0 top-full mt-2 w-48 bg-canvas rounded-xl border border-hairline-soft shadow-lg z-50 overflow-hidden">
                   <div className="py-2">
-                    <Link
-                      href="/features"
+                    <a
+                      href="#features"
                       onClick={() => setNavOpen(false)}
                       className="block px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors"
                     >
-                      Features
-                    </Link>
-                    <Link
-                      href="/privacy-policy"
+                      How it Works
+                    </a>
+                    <a
+                      href="#privacy"
                       onClick={() => setNavOpen(false)}
                       className="block px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors"
                     >
                       Privacy
-                    </Link>
+                    </a>
                     <a
                       href="#faq"
                       onClick={() => setNavOpen(false)}
@@ -174,7 +173,7 @@ export default function MarketingLandingPage() {
                       onClick={() => setNavOpen(false)}
                       className="block px-4 py-2.5 text-[13px] text-primary font-medium hover:bg-surface transition-colors"
                     >
-                      Add to Chrome →
+                      Add Extension →
                     </a>
                   </div>
                 </div>
@@ -187,29 +186,40 @@ export default function MarketingLandingPage() {
       {/* ------------------------------------------------------------------ */}
       {/* Hero */}
       {/* ------------------------------------------------------------------ */}
-      <section className="relative bg-ink overflow-hidden">
-        <div className="absolute inset-0" aria-hidden="true">
-          <div className="absolute top-[-150px] right-[-80px] w-[500px] h-[500px] rounded-full bg-primary opacity-40 mix-blend-screen blur-[80px]" />
-          <div className="absolute bottom-[-150px] left-[-80px] w-[450px] h-[450px] rounded-full bg-sunshine-500 opacity-30 mix-blend-screen blur-[80px]" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-gradient-to-r from-primary via-sunshine-500 to-yellow-saturated opacity-20 mix-blend-screen blur-[100px]" />
-        </div>
+      <section className="relative w-full overflow-hidden bg-ink pt-24 pb-32 px-4 md:px-6">
+        <div
+          className="absolute inset-0 opacity-40 mix-blend-screen pointer-events-none"
+          style={{
+            background:
+              'linear-gradient(135deg, var(--sunshine-700) 0%, var(--sunshine-900) 40%, var(--primary) 100%)',
+            filter: 'blur(80px)',
+            transform: 'scale(1.2)',
+          }}
+          aria-hidden="true"
+        />
 
-        <div className="relative z-10 max-w-[1280px] mx-auto px-4 md:px-6 py-24 md:py-32 lg:py-40">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="font-display text-white text-[44px] md:text-[64px] lg:text-[84px] leading-[1.1] tracking-[-0.02em] mb-6">
-              Your Career Frontier.
+        <div className="relative z-10 max-w-[1280px] mx-auto">
+          <div className="max-w-2xl">
+            <h1
+              className="text-[52px] md:text-[72px] lg:text-[84px] text-white leading-[1.05] tracking-[-1.5px] mb-6"
+              style={{
+                fontFamily:
+                  '"PP Editorial Old", "Times New Roman", Georgia, serif',
+              }}
+            >
+              Your job search.
               <br />
-              <span style={{ color: 'var(--primary)' }}>In your hands.</span>
+              Beautifully organized.
             </h1>
             <p
-              className="text-on-dark-muted text-[16px] md:text-[18px] leading-relaxed max-w-2xl mx-auto mb-10"
+              className="text-[17px] md:text-[18px] text-stone leading-[1.50] mb-8"
               style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
             >
-              A browser extension that clips job descriptions, writes tailored
-              cover letters, and tracks your pipeline — all without sending your
-              data to a server.
+              Replace your messy spreadsheets. Job Foocus is the elegant browser
+              extension that saves jobs, drafts cover letters, and tracks your
+              interviews automatically.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <a
                 href={CHROME_STORE_URL}
                 target="_blank"
@@ -227,52 +237,51 @@ export default function MarketingLandingPage() {
                   (e.currentTarget.style.backgroundColor = 'var(--primary)')
                 }
               >
-                Install Extension
+                Add Extension
               </a>
-              <Link
-                href="/features"
+              <a
+                href="#features"
                 className="inline-flex items-center justify-center px-8 py-4 text-[16px] font-medium rounded-md transition-colors duration-150"
                 style={{
                   color: 'var(--on-dark)',
                   border: '1px solid var(--stone)',
                   fontFamily: 'Inter, system-ui, sans-serif',
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor =
-                    'rgba(255,255,255,0.1)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor =
+                    'rgba(255,255,255,0.1)')
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.backgroundColor = 'transparent')
+                }
               >
-                Read Documentation
-              </Link>
+                See how it works
+              </a>
             </div>
           </div>
         </div>
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Logo Wall */}
+      {/* Logo Wall (Social Proof) */}
       {/* ------------------------------------------------------------------ */}
-      <section className="py-12 md:py-16 border-b border-hairline-soft">
-        <div className="max-w-[1280px] mx-auto px-4 md:px-6">
-          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-center">
-            <span
-              className="text-[13px] text-steel font-medium tracking-wide uppercase"
-              style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-            >
-              Seamlessly extracts from
-            </span>
-            {['LinkedIn', 'Indeed', 'Greenhouse', 'Workday'].map((name) => (
-              <span
-                key={name}
-                className="text-[14px] text-ink font-semibold"
-                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-              >
-                {name}
-              </span>
-            ))}
+      <section className="py-12 border-b border-hairline-soft px-4 md:px-6">
+        <div className="max-w-[1280px] mx-auto flex flex-col md:flex-row items-center justify-between gap-8 opacity-60 grayscale">
+          <p
+            className="text-[13px] text-steel font-semibold uppercase tracking-[1px]"
+            style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+          >
+            Works seamlessly with
+          </p>
+          <div
+            className="flex flex-wrap items-center gap-8 md:gap-12 font-bold text-[18px] md:text-[22px]"
+            style={{ color: 'var(--stone)' }}
+          >
+            {['LinkedIn', 'Indeed', 'Greenhouse', 'Workday', 'Lever'].map(
+              (name) => (
+                <span key={name}>{name}</span>
+              ),
+            )}
           </div>
         </div>
       </section>
@@ -280,130 +289,155 @@ export default function MarketingLandingPage() {
       {/* ------------------------------------------------------------------ */}
       {/* Features Grid — 3-up */}
       {/* ------------------------------------------------------------------ */}
-      <section className="py-16 md:py-24" id="features">
-        <div className="max-w-[1280px] mx-auto px-4 md:px-6">
-          <div className="text-center mb-14">
-            <h2 className="font-display text-ink text-[32px] md:text-[40px] leading-[1.15] tracking-[-0.01em] mb-4">
-              Everything you need, nothing you don&apos;t.
-            </h2>
-            <p
-              className="text-steel text-[15px] md:text-[16px] max-w-lg mx-auto"
-              style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+      <section className="py-20 md:py-24 px-4 md:px-6" id="features">
+        <div className="max-w-[1280px] mx-auto">
+          <div className="mb-14">
+            <h2
+              className="text-[36px] md:text-[48px] lg:text-[52px] text-ink leading-[1.15] tracking-[-0.5px]"
+              style={{
+                fontFamily:
+                  '"PP Editorial Old", "Times New Roman", Georgia, serif',
+              }}
             >
-              Three tools that turn job hunting from a spreadsheet chore into a
-              streamlined workflow.
-            </p>
+              Everything you need in one tab.
+            </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Card 1 */}
-            <Card variant="elevated" className="flex flex-col items-start">
+            <Card
+              variant="elevated"
+              className="p-8 hover:-translate-y-1 transition-transform duration-300 flex flex-col items-start"
+            >
               <div
-                className="w-10 h-10 rounded-md flex items-center justify-center mb-4"
-                style={{ backgroundColor: 'var(--primary)' }}
+                className="w-12 h-12 rounded-md flex items-center justify-center mb-6"
+                style={{
+                  backgroundColor: 'var(--cream)',
+                  border: '1px solid var(--beige-deep)',
+                  color: 'var(--primary)',
+                }}
               >
                 <svg
-                  width="20"
-                  height="20"
+                  width="24"
+                  height="24"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="white"
+                  stroke="currentColor"
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                 </svg>
               </div>
               <h3
-                className="text-[18px] font-semibold text-ink mb-2"
+                className="text-[20px] md:text-[22px] font-medium text-ink mb-3"
                 style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
               >
-                One-Click Clipping
+                Save Jobs Instantly
               </h3>
               <p
-                className="text-[14px] text-steel leading-relaxed"
+                className="text-[15px] md:text-[16px] text-steel leading-[1.55]"
                 style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
               >
-                Click the extension icon on any job posting to instantly
-                capture the title, company, description, and requirements —
-                no copy-pasting, no manual entry.
+                Click the extension while viewing any job post. We automatically
+                pull the title, company, and details into your tracker.
               </p>
             </Card>
 
             {/* Card 2 */}
-            <Card variant="elevated" className="flex flex-col items-start">
+            <Card
+              variant="elevated"
+              className="p-8 hover:-translate-y-1 transition-transform duration-300 flex flex-col items-start"
+            >
               <div
-                className="w-10 h-10 rounded-md flex items-center justify-center mb-4"
-                style={{ backgroundColor: 'var(--primary)' }}
+                className="w-12 h-12 rounded-md flex items-center justify-center mb-6"
+                style={{
+                  backgroundColor: 'var(--cream)',
+                  border: '1px solid var(--beige-deep)',
+                  color: 'var(--primary)',
+                }}
               >
                 <svg
-                  width="20"
-                  height="20"
+                  width="24"
+                  height="24"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="white"
+                  stroke="currentColor"
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  <path d="M12 2a4 4 0 0 0-4 4v1a4 4 0 0 0 8 0V6a4 4 0 0 0-4-4z" />
-                  <path d="M20 12a8 8 0 1 1-16 0" />
-                  <circle cx="12" cy="12" r="3" />
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                  <polyline points="10 9 9 9 8 9" />
                 </svg>
               </div>
               <h3
-                className="text-[18px] font-semibold text-ink mb-2"
+                className="text-[20px] md:text-[22px] font-medium text-ink mb-3"
                 style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
               >
-                Local LLM Generation
+                Tailored Cover Letters
               </h3>
               <p
-                className="text-[14px] text-steel leading-relaxed"
+                className="text-[15px] md:text-[16px] text-steel leading-[1.55]"
                 style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
               >
-                Generate ATS-optimized cover letters and tailored resumes
-                powered by a local-aware AI model. Your data is never sent to
-                a third-party API.
+                Stop writing from scratch. The extension uses your master resume
+                to instantly draft a cover letter matching the job&apos;s exact
+                needs.
               </p>
             </Card>
 
             {/* Card 3 */}
-            <Card variant="elevated" className="flex flex-col items-start">
+            <Card
+              variant="elevated"
+              className="p-8 hover:-translate-y-1 transition-transform duration-300 flex flex-col items-start"
+            >
               <div
-                className="w-10 h-10 rounded-md flex items-center justify-center mb-4"
-                style={{ backgroundColor: 'var(--primary)' }}
+                className="w-12 h-12 rounded-md flex items-center justify-center mb-6"
+                style={{
+                  backgroundColor: 'var(--cream)',
+                  border: '1px solid var(--beige-deep)',
+                  color: 'var(--primary)',
+                }}
               >
                 <svg
-                  width="20"
-                  height="20"
+                  width="24"
+                  height="24"
                   viewBox="0 0 24 24"
                   fill="none"
-                  stroke="white"
+                  stroke="currentColor"
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  <line x1="18" y1="20" x2="18" y2="10" />
-                  <line x1="12" y1="20" x2="12" y2="4" />
-                  <line x1="6" y1="20" x2="6" y2="14" />
+                  <rect
+                    x="3"
+                    y="3"
+                    width="18"
+                    height="18"
+                    rx="2"
+                    ry="2"
+                  />
+                  <line x1="3" y1="9" x2="21" y2="9" />
+                  <line x1="9" y1="21" x2="9" y2="9" />
                 </svg>
               </div>
               <h3
-                className="text-[18px] font-semibold text-ink mb-2"
+                className="text-[20px] md:text-[22px] font-medium text-ink mb-3"
                 style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
               >
-                Pipeline Analytics
+                Visual Pipeline
               </h3>
               <p
-                className="text-[14px] text-steel leading-relaxed"
+                className="text-[15px] md:text-[16px] text-steel leading-[1.55]"
                 style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
               >
-                Track your applications through status stages, monitor your
-                response rate, and get daily follow-up reminders so no
-                opportunity falls through the cracks.
+                Never lose track of a follow-up. View your entire application
+                history on a beautiful, distraction-free dashboard.
               </p>
             </Card>
           </div>
@@ -411,90 +445,150 @@ export default function MarketingLandingPage() {
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* IDE Mockup */}
+      {/* UI Dashboard Mockup — replaces IDE code block */}
       {/* ------------------------------------------------------------------ */}
-      <section className="py-16 md:py-24 bg-surface">
-        <div className="max-w-[1280px] mx-auto px-4 md:px-6">
+      <section className="py-20 md:py-24 px-4 md:px-6 bg-surface">
+        <div className="max-w-[1280px] mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="font-display text-ink text-[32px] md:text-[40px] leading-[1.15] tracking-[-0.01em] mb-4">
-                Structured data, every time.
+              <h2
+                className="text-[36px] md:text-[48px] lg:text-[52px] text-ink leading-[1.15] tracking-[-0.5px] mb-6"
+                style={{
+                  fontFamily:
+                    '"PP Editorial Old", "Times New Roman", Georgia, serif',
+                }}
+              >
+                Clarity at a glance.
               </h2>
               <p
-                className="text-steel text-[15px] md:text-[16px] leading-relaxed mb-6"
+                className="text-[16px] md:text-[18px] text-steel leading-[1.50] mb-6"
                 style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
               >
-                No more parsing messy job boards. The extension extracts clean,
-                structured fields from any supported site and stores them
-                locally — ready for your dashboard.
+                Say goodbye to chaotic spreadsheets. Your dashboard automatically
+                tracks response rates, flags applications that need follow-ups,
+                and keeps your entire career journey in focus.
               </p>
-              <Link
-                href="/features"
-                className="text-[14px] font-medium transition-colors"
-                style={{
-                  color: 'var(--primary)',
-                  fontFamily: 'Inter, system-ui, sans-serif',
-                }}
-              >
-                See how it works →
-              </Link>
             </div>
 
-            <div
-              className="rounded-lg overflow-hidden border"
-              style={{
-                backgroundColor: 'var(--surface-code)',
-                borderColor: 'var(--hairline-strong)',
-              }}
-            >
+            {/* App UI Mockup */}
+            <div className="relative w-full h-[400px] flex items-center justify-center">
+              {/* Background decorative card */}
               <div
-                className="flex items-center gap-2 px-4 py-3"
+                className="absolute right-0 top-4 w-3/4 rounded-xl shadow-lg p-6 scale-95 origin-top-right"
                 style={{
-                  borderBottom: '1px solid var(--hairline-strong)',
+                  backgroundColor: 'var(--canvas)',
+                  border: '1px solid var(--hairline-strong)',
+                  opacity: 0.6,
                 }}
               >
-                <span
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: 'var(--stone)' }}
+                <div
+                  className="h-4 w-1/3 rounded mb-4"
+                  style={{ backgroundColor: 'var(--hairline-soft)' }}
                 />
-                <span
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: 'var(--stone)' }}
+                <div
+                  className="h-3 w-1/4 rounded"
+                  style={{ backgroundColor: 'var(--hairline-soft)' }}
                 />
-                <span
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: 'var(--stone)' }}
-                />
-                <span
-                  className="ml-3 text-[12px]"
-                  style={{
-                    color: 'var(--muted)',
-                    fontFamily: 'JetBrains Mono, ui-monospace, monospace',
-                  }}
-                >
-                  job-data.json
-                </span>
               </div>
-              <pre
-                className="px-4 py-5 text-[13px] leading-relaxed overflow-x-auto"
+
+              {/* Foreground active card */}
+              <div
+                className="relative z-10 w-[85%] rounded-xl shadow-xl p-6"
                 style={{
-                  color: 'var(--on-dark-muted)',
-                  fontFamily: 'JetBrains Mono, ui-monospace, monospace',
+                  backgroundColor: 'var(--canvas)',
+                  border: '1px solid var(--hairline-soft)',
                 }}
               >
-{`{
-  "title":        "Senior Frontend Engineer",
-  "company":      "Acme Corp",
-  "location":     "San Francisco, CA",
-  "salary":       "$160k – $210k",
-  "description":  "We are looking for...",
-  "requirements": [
-    "React, TypeScript, Next.js",
-    "8+ years experience"
-  ],
-  "status":       "saved"
-}`}
-              </pre>
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h4
+                      className="text-[18px] font-semibold text-ink"
+                      style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+                    >
+                      Frontend Engineer
+                    </h4>
+                    <p
+                      className="text-[15px] mt-1"
+                      style={{
+                        color: 'var(--steel)',
+                        fontFamily: 'Inter, system-ui, sans-serif',
+                      }}
+                    >
+                      Mistral AI &bull; Paris, France
+                    </p>
+                  </div>
+                  <Badge status="interview" />
+                </div>
+
+                <div className="flex gap-2 mb-6">
+                  <span
+                    className="px-3 py-1 rounded-full text-[12px] font-medium"
+                    style={{
+                      backgroundColor: '#eff6ff',
+                      color: '#2563eb',
+                      fontFamily: 'Inter, system-ui, sans-serif',
+                    }}
+                  >
+                    Tech Support
+                  </span>
+                  <span
+                    className="px-3 py-1 rounded-full text-[12px] font-medium"
+                    style={{
+                      backgroundColor: 'var(--surface)',
+                      color: 'var(--steel)',
+                      fontFamily: 'Inter, system-ui, sans-serif',
+                    }}
+                  >
+                    Applied 2d ago
+                  </span>
+                </div>
+
+                <div
+                  className="flex gap-3 pt-4"
+                  style={{ borderTop: '1px solid var(--hairline-soft)' }}
+                >
+                  <a
+                    href={CHROME_STORE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 inline-flex items-center justify-center py-2 text-[13px] font-medium rounded-md transition-colors duration-150"
+                    style={{
+                      color: 'var(--ink)',
+                      border: '1px solid var(--hairline-strong)',
+                      fontFamily: 'Inter, system-ui, sans-serif',
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor =
+                        'var(--surface)')
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor = 'transparent')
+                    }
+                  >
+                    View Cover Letter
+                  </a>
+                  <a
+                    href={CHROME_STORE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 inline-flex items-center justify-center py-2 text-[13px] font-medium rounded-md text-white transition-colors duration-150"
+                    style={{
+                      backgroundColor: 'var(--primary)',
+                      fontFamily: 'Inter, system-ui, sans-serif',
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor =
+                        'var(--primary-deep)')
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor =
+                        'var(--primary)')
+                    }
+                  >
+                    Update Status
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -503,41 +597,61 @@ export default function MarketingLandingPage() {
       {/* ------------------------------------------------------------------ */}
       {/* Privacy Banner */}
       {/* ------------------------------------------------------------------ */}
-      <section className="py-16 md:py-24" id="privacy">
-        <div className="max-w-[1280px] mx-auto px-4 md:px-6">
+      <section className="py-20 md:py-24 px-4 md:px-6" id="privacy">
+        <div className="max-w-[1280px] mx-auto">
           <Card
             variant="cream"
-            className="max-w-3xl mx-auto text-center p-8 md:p-12"
+            className="p-10 md:p-16 text-center border-2 border-beige-deep shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
           >
             <div
-              className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-5"
-              style={{ backgroundColor: 'var(--primary)' }}
+              className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-6"
+              style={{
+                backgroundColor: 'var(--canvas)',
+                border: '1px solid var(--beige-deep)',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+              }}
             >
               <svg
-                width="22"
-                height="22"
+                width="28"
+                height="28"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="white"
+                stroke="currentColor"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                style={{ color: 'var(--primary)' }}
               >
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <rect
+                  x="3"
+                  y="11"
+                  width="18"
+                  height="11"
+                  rx="2"
+                  ry="2"
+                />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
             </div>
-            <h2 className="font-display text-ink text-[28px] md:text-[34px] leading-[1.15] tracking-[-0.01em] mb-4">
-              Your data never leaves your machine.
+            <h2
+              className="text-[34px] md:text-[44px] lg:text-[52px] text-ink leading-[1.15] tracking-[-0.5px] mb-6"
+              style={{
+                fontFamily:
+                  '"PP Editorial Old", "Times New Roman", Georgia, serif',
+              }}
+            >
+              Your data stays on your machine.
             </h2>
             <p
-              className="text-steel text-[15px] md:text-[16px] leading-relaxed max-w-lg mx-auto mb-6"
-              style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+              className="text-[16px] md:text-[18px] leading-[1.50] max-w-2xl mx-auto mb-8"
+              style={{
+                color: 'var(--charcoal)',
+                fontFamily: 'Inter, system-ui, sans-serif',
+              }}
             >
-              Every job description, resume, and cover letter stays in your
-              browser&apos;s local storage. No cloud upload, no data mining,
-              no third-party access. <strong>Privacy isn&apos;t a feature —
-              it&apos;s the foundation.</strong>
+              We believe your career data is private. Job Foocus operates
+              entirely within your browser. No required accounts, no hidden
+              cloud databases, and zero tracking.
             </p>
             <Link
               href="/privacy-policy"
@@ -547,12 +661,13 @@ export default function MarketingLandingPage() {
                 border: '1px solid var(--beige-deep)',
                 fontFamily: 'Inter, system-ui, sans-serif',
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--cream-deeper)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor =
+                  'var(--cream-deeper)')
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = 'transparent')
+              }
             >
               Read our Privacy Promise
             </Link>
@@ -563,9 +678,19 @@ export default function MarketingLandingPage() {
       {/* ------------------------------------------------------------------ */}
       {/* FAQ */}
       {/* ------------------------------------------------------------------ */}
-      <section className="py-16 md:py-24 bg-surface-cream-soft border-y border-hairline-soft" id="faq">
-        <div className="max-w-[800px] mx-auto px-4 md:px-6">
-          <h2 className="font-display text-ink text-[28px] md:text-[34px] leading-[1.15] tracking-[-0.01em] text-center mb-10">
+      <section
+        className="py-20 md:py-24 px-4 md:px-6 border-y border-hairline-soft"
+        id="faq"
+        style={{ backgroundColor: 'var(--surface-cream-soft)' }}
+      >
+        <div className="max-w-[800px] mx-auto">
+          <h2
+            className="text-[28px] md:text-[34px] text-ink leading-[1.15] tracking-[-0.01em] text-center mb-10"
+            style={{
+              fontFamily:
+                '"PP Editorial Old", "Times New Roman", Georgia, serif',
+            }}
+          >
             Frequently Asked Questions
           </h2>
 
@@ -597,10 +722,12 @@ export default function MarketingLandingPage() {
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="shrink-0 ml-4 transition-transform duration-200"
+                    className="shrink-0 ml-4"
                     style={{
-                      transform:
-                        faqOpen[i] ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transform: faqOpen[i]
+                        ? 'rotate(180deg)'
+                        : 'rotate(0deg)',
+                      transition: 'transform 0.2s ease',
                     }}
                   >
                     <polyline points="6 9 12 15 18 9" />
@@ -637,158 +764,159 @@ export default function MarketingLandingPage() {
           borderTop: '1px solid var(--beige-deep)',
         }}
       >
-        <div className="max-w-[1280px] mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
-            {/* Brand */}
-            <div className="md:col-span-1">
-              <Link href="/" className="flex items-center gap-2 mb-4">
-                <img
-                  src="/icon_wide.webp"
-                  alt="Job Foocus"
-                  className="h-8 object-contain"
-                />
-              </Link>
-              <p
-                className="text-[14px] text-steel leading-relaxed max-w-[220px]"
-                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-              >
-                Track your job applications with confidence.
-              </p>
-            </div>
-
-            {/* Product */}
-            <div>
-              <h4
-                className="text-[12px] font-semibold uppercase tracking-[0.05em] text-ink mb-4"
-                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-              >
-                Product
-              </h4>
-              <ul className="space-y-2">
-                <li>
-                  <Link
-                    href="/features"
-                    className="text-[14px] text-primary hover:underline"
-                    style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-                  >
-                    Features
-                  </Link>
-                </li>
-                <li>
-                  <a
-                    href={CHROME_STORE_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[14px] text-primary hover:underline"
-                    style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-                  >
-                    Extension
-                  </a>
-                </li>
-                <li>
-                  <Link
-                    href="/pricing"
-                    className="text-[14px] text-primary hover:underline"
-                    style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-                  >
-                    Pricing
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Legal */}
-            <div>
-              <h4
-                className="text-[12px] font-semibold uppercase tracking-[0.05em] text-ink mb-4"
-                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-              >
-                Legal
-              </h4>
-              <ul className="space-y-2">
-                <li>
-                  <Link
-                    href="/privacy-policy"
-                    className="text-[14px] text-primary hover:underline"
-                    style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-                  >
-                    Privacy Policy
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/terms-of-service"
-                    className="text-[14px] text-primary hover:underline"
-                    style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-                  >
-                    Terms of Service
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Connect */}
-            <div>
-              <h4
-                className="text-[12px] font-semibold uppercase tracking-[0.05em] text-ink mb-4"
-                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-              >
-                Connect
-              </h4>
-              <ul className="space-y-2">
-                <li>
-                  <a
-                    href="https://instagram.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[14px] text-primary hover:underline"
-                    style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-                  >
-                    Instagram
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://x.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[14px] text-primary hover:underline"
-                    style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-                  >
-                    X
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://github.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[14px] text-primary hover:underline"
-                    style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-                  >
-                    GitHub
-                  </a>
-                </li>
-              </ul>
-            </div>
+        <div className="max-w-[1280px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+          {/* Brand */}
+          <div className="md:col-span-2">
+            <a href="/" className="flex items-center gap-2 mb-4">
+              <img
+                src="/icon_wide.webp"
+                alt="Job Foocus"
+                className="h-8 object-contain grayscale opacity-80"
+              />
+            </a>
+            <p
+              className="text-[14px] text-steel leading-relaxed max-w-xs"
+              style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+            >
+              The elegant, private extension for professionals who want to own
+              their job search.
+            </p>
           </div>
 
-          {/* Bottom */}
+          {/* Product */}
+          <div>
+            <h4
+              className="text-[11px] font-bold uppercase tracking-[1px] mb-4"
+              style={{
+                color: 'var(--ink)',
+                fontFamily: 'Inter, system-ui, sans-serif',
+              }}
+            >
+              Product
+            </h4>
+            <ul className="space-y-2 text-[14px]">
+              <li>
+                <a
+                  href={CHROME_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition-colors hover:underline"
+                  style={{
+                    color: 'var(--steel)',
+                    fontFamily: 'Inter, system-ui, sans-serif',
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.color = 'var(--primary)')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color = 'var(--steel)')
+                  }
+                >
+                  Add Extension
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#features"
+                  className="transition-colors hover:underline"
+                  style={{
+                    color: 'var(--steel)',
+                    fontFamily: 'Inter, system-ui, sans-serif',
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.color = 'var(--primary)')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color = 'var(--steel)')
+                  }
+                >
+                  How it works
+                </a>
+              </li>
+              <li>
+                <Link
+                  href="/support"
+                  className="transition-colors hover:underline"
+                  style={{
+                    color: 'var(--steel)',
+                    fontFamily: 'Inter, system-ui, sans-serif',
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.color = 'var(--primary)')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color = 'var(--steel)')
+                  }
+                >
+                  Help Center
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Legal */}
+          <div>
+            <h4
+              className="text-[11px] font-bold uppercase tracking-[1px] mb-4"
+              style={{
+                color: 'var(--ink)',
+                fontFamily: 'Inter, system-ui, sans-serif',
+              }}
+            >
+              Legal
+            </h4>
+            <ul className="space-y-2 text-[14px]">
+              <li>
+                <Link
+                  href="/privacy-policy"
+                  className="transition-colors hover:underline"
+                  style={{
+                    color: 'var(--steel)',
+                    fontFamily: 'Inter, system-ui, sans-serif',
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.color = 'var(--primary)')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color = 'var(--steel)')
+                  }
+                >
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/terms-of-service"
+                  className="transition-colors hover:underline"
+                  style={{
+                    color: 'var(--steel)',
+                    fontFamily: 'Inter, system-ui, sans-serif',
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.color = 'var(--primary)')
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color = 'var(--steel)')
+                  }
+                >
+                  Terms of Service
+                </Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom bar */}
+        <div className="max-w-[1280px] mx-auto">
           <div
-            className="pt-6 flex items-center justify-between border-t"
-            style={{ borderColor: 'var(--beige-deep)' }}
+            className="pt-6 flex items-center justify-between"
+            style={{ borderTop: '1px solid var(--beige-deep)' }}
           >
             <span
               className="text-[12px] text-steel"
               style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
             >
-              © 2026 Job Foocus. All rights reserved.
-            </span>
-            <span
-              className="text-[12px] text-steel"
-              style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-            >
-              v1.0.0
+              &copy; 2026 Job Foocus. All rights reserved.
             </span>
           </div>
         </div>
