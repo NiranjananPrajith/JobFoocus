@@ -14,7 +14,7 @@ const CHROME_STORE_URL =
 const faqItems = [
   {
     q: 'Is my data stored on your servers?',
-    a: 'No. All job postings, resumes, and cover letters stay in your browser\'s local storage. We never upload your data anywhere — the AI processing happens on-demand and nothing is retained after the document is generated.',
+    a: 'Yes — your job postings, resumes, and cover letters are stored securely in our database so they sync seamlessly across your devices. Your personal information is never sent to any AI models or third parties. AI processing happens on-demand and nothing is retained after the document is generated.',
   },
   {
     q: 'How much does it cost?',
