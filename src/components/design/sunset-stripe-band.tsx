@@ -7,7 +7,7 @@ const SunsetStripeBand = () => {
     <div
       className="w-full py-5 no-print"
       style={{
-        background: 'linear-gradient(to right, #fa520f, #ffa110, #ffb83e, #ffd900, #fff8e0)',
+        background: 'var(--sunset-stripe)',
       }}
     />
   );

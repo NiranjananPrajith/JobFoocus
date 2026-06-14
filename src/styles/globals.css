@@ -103,6 +103,7 @@ html *::after {
   --on-cream: #1f1f1f;
   --footer-cream: #fff8e0;
   --link: #fa520f;
+  --sunset-stripe: linear-gradient(to right, #fa520f, #ffa110, #ffb83e, #ffd900, #fff8e0);
 }
 
 /* ==========================================================================
@@ -131,6 +132,7 @@ html *::after {
   --hairline-strong: #333333;
   --on-cream: #e8e8e8;
   --footer-cream: #0f0d08;
+  --sunset-stripe: linear-gradient(to right, #fa520f, #ffa110, #ffb83e, #ffd900, #0f0d08);
 }
 
 /* Override Tailwind built-ins for dark mode */
