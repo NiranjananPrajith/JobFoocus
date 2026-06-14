@@ -15,7 +15,7 @@ export default function SignupPage() {
 
 function SignupFallback() {
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#fafafa' }}>
+    <div className="min-h-screen flex items-center justify-center bg-surface">
       <div className="text-[14px] text-steel">Loading…</div>
     </div>
   )
@@ -85,7 +85,7 @@ function SignupContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6" style={{ backgroundColor: '#fafafa' }}>
+    <div className="min-h-screen flex items-center justify-center px-6 bg-surface">
       <div className="w-full max-w-[400px]">
         <div className="text-center mb-8">
           <img src="/icon.webp" alt="Job Foocus" className="w-12 h-12 rounded-xl mx-auto mb-4" />
@@ -110,9 +110,9 @@ function SignupContent() {
           </div>
         )}
 
-        <div className="bg-white rounded-xl border border-hairline-soft p-6 space-y-4">
+        <div className="bg-canvas rounded-xl border border-hairline-soft p-6 space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-[13px] text-red-600">
+            <div className="bg-surface border border-red-500/30 rounded-lg px-4 py-3 text-[13px] text-red-600">
               {error}
             </div>
           )}
@@ -120,7 +120,7 @@ function SignupContent() {
           <button
             onClick={handleGoogleSignUp}
             disabled={googleLoading}
-            className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-lg border border-hairline-strong text-[14px] font-medium text-ink bg-white hover:bg-surface transition-colors disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-3 px-4 py-2.5 rounded-lg border border-hairline-strong text-[14px] font-medium text-ink bg-canvas hover:bg-surface transition-colors disabled:opacity-60"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -139,7 +139,7 @@ function SignupContent() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {sent ? (
-              <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-4 text-[13px] text-green-700 text-center">
+              <div className="bg-surface border border-green-500/30 rounded-lg px-4 py-4 text-[13px] text-green-700 text-center">
                 <p className="font-semibold mb-1">Check your email</p>
                 <p>We sent a magic link to <strong>{email}</strong>. Click the link to create your account and sign in.</p>
               </div>
@@ -152,7 +152,7 @@ function SignupContent() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full px-3 py-2.5 rounded-lg border border-hairline-strong text-[14px] text-ink bg-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                    className="w-full px-3 py-2.5 rounded-lg border border-hairline-strong text-[14px] text-ink bg-canvas focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                     placeholder="you@example.com"
                   />
                 </div>
