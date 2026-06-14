@@ -34,15 +34,6 @@ const BROWSER_GROUPS: { group: string; browsers: BrowserEntry[] }[] = [
   },
 ];
 
-function OperaFallbackIcon() {
-  return (
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-      <circle cx="24" cy="24" r="22" fill="#FF1B2D" />
-      <text x="24" y="24" textAnchor="middle" dominantBaseline="central" fill="white" fontSize="22" fontFamily="Inter, system-ui, sans-serif" fontWeight="700">O</text>
-    </svg>
-  );
-}
-
 export default function ExtensionInstallPage() {
   return (
     <div className="max-w-[860px] mx-auto">
@@ -75,15 +66,11 @@ export default function ExtensionInstallPage() {
                 rel="noopener noreferrer"
                 className="group flex flex-col items-center gap-2 rounded-xl border border-hairline-soft bg-canvas p-5 hover:border-primary/40 hover:bg-primary/[0.03] transition-colors"
               >
-                {b.id === 'opera' ? (
-                  <OperaFallbackIcon />
-                ) : (
-                  <img
+                <img
                     src={b.logo}
                     alt={`${b.name} logo`}
                     className="w-12 h-12 object-contain"
                   />
-                )}
                 <p className="text-[14px] font-medium text-ink">{b.name}</p>
                 <span className="text-[11px] text-steel group-hover:text-primary transition-colors">
                   Install{b.store === 'chrome' ? ' from Chrome Web Store' : ' from Firefox Add-ons'}
