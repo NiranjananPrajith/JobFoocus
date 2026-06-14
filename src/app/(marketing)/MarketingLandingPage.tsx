@@ -13,16 +13,28 @@ const CHROME_STORE_URL =
 
 const faqItems = [
   {
-    q: 'Is my data stored on your servers?',
-    a: 'Yes — your job postings, resumes, and cover letters are stored securely in our database so they sync seamlessly across your devices. Your personal information is never sent to any AI models or third parties. AI processing happens on-demand and nothing is retained after the document is generated.',
+    q: 'What does Job Foocus actually do?',
+    a: 'Job Foocus turns a job description into a tailored resume and cover letter in one click. Upload your master resume once, then browse any job posting — click the extension, and it captures the job, generates ATS-optimized documents matched to that role, and files everything in your dashboard. No more copy-pasting or rewriting from scratch.',
   },
   {
-    q: 'How much does it cost?',
-    a: 'Job Foocus is free to start with daily usage caps. Paid tiers unlock higher limits for power users. There is no credit card required to begin.',
+    q: 'Is it free?',
+    a: 'Yes — free forever with 5 job captures and 25 AI document edits per day. No credit card required. Paid plans start at $5/month for higher limits if you need more.',
   },
   {
-    q: 'Which browsers are supported?',
-    a: 'Chrome, Firefox, and all Chromium-based browsers (Edge, Brave, Opera, Vivaldi, Arc, Zen). Install the extension from the Chrome Web Store or Firefox Add-ons.',
+    q: 'How does the browser extension work?',
+    a: 'Install it once from the Chrome Web Store or Firefox Add-ons. When you\'re on any job posting — LinkedIn, Indeed, Glassdoor, a company career page — click the Job Foocus icon or use the right-click menu. It extracts the title, company, description, and location, then files it into your dashboard with one click. Works on Chrome, Firefox, Edge, Brave, Opera, Vivaldi, Arc, and Zen.',
+  },
+  {
+    q: 'How does the AI tailoring work?',
+    a: 'You upload your master resume — the full, unfiltered version with all your experience. When you capture a job, the AI analyzes both your resume and the job description, then generates a version that emphasizes the skills, experience, and keywords most relevant to that specific role. Your work history and education stay the same; the AI adjusts emphasis and wording to match. Cover letters follow the same process.',
+  },
+  {
+    q: 'Are the generated documents ATS-friendly?',
+    a: 'Yes. Job Foocus generates clean HTML that prints to PDF with ATS-safe formatting — no floats, no multi-column layouts, no text baked into images. Your resume passes through applicant tracking systems cleanly.',
+  },
+  {
+    q: 'Is my data private?',
+    a: 'Your resumes and job data are stored securely in your account and synced across your devices. Your personal information is never sent to AI models or third parties — AI processing happens on-demand and nothing is retained after document generation. You can export all your data or permanently delete your account at any time from Account settings.',
   },
 ]
 

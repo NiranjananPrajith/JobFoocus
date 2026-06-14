@@ -4,18 +4,17 @@ import { useState } from 'react';
 
 function FaqItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = useState(false);
-
   return (
     <div
       className="rounded-lg overflow-hidden"
       style={{
-        border: '1px solid #ededed',
+        border: '1px solid var(--hairline-soft)',
       }}
     >
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left transition-colors"
-        style={{ backgroundColor: open ? '#fafafa' : '#ffffff' }}
+        style={{ backgroundColor: open ? 'var(--surface)' : 'var(--canvas)' }}
       >
         <span className="text-[15px] font-medium text-ink">{question}</span>
         <svg
@@ -47,40 +46,40 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
 
 const faqData = [
   {
-    category: 'General',
+    category: 'Getting Started',
     items: [
       {
-        question: 'Is Job Foocus free?',
-        answer: 'Yes. The free tier includes 5 job additions and 25 AI document edits per day. No credit card required to sign up.',
+        question: 'What is Job Foocus?',
+        answer: 'Job Foocus is a job application platform that turns a job description into a tailored resume and cover letter in one click. You upload your master resume once, then use the browser extension to capture any job posting — the AI generates ATS-optimized documents matched to that role and files everything in your dashboard.',
       },
       {
-        question: 'What browsers does the extension work on?',
-        answer: 'Chrome, Edge, Brave (version 88+), and Firefox (version 109+).',
+        question: 'Is it free?',
+        answer: 'Yes — free forever with 5 job captures and 25 AI document edits per day. No credit card required. Paid plans start at $5/month (Pro) or $12/month (Max) for higher limits.',
       },
       {
-        question: 'Does the extension work on all job boards?',
-        answer: 'The extension works on any publicly visible job posting page — LinkedIn, Indeed, Glassdoor, company career pages, and more. If the page shows a job description, Job Foocus can capture it. The extension cannot read pages that require login to view the job description (e.g., some LinkedIn pages when not logged in).',
+        question: 'Which browsers does the extension work on?',
+        answer: 'Chrome, Firefox, Edge, Brave, Opera, Vivaldi, Arc, and Zen. Install from the Chrome Web Store or Firefox Add-ons — it works on any Chromium-based browser (version 88+) and Firefox (version 140+).',
       },
       {
         question: 'Can I use Job Foocus on my phone?',
-        answer: 'The website is responsive and works on mobile browsers. The browser extension is desktop-only (Chrome, Edge, Brave, Firefox).',
+        answer: 'The website is fully responsive and works on mobile browsers. The browser extension is desktop-only, but once jobs are captured they sync to your dashboard and are accessible from any device.',
       },
     ],
   },
   {
-    category: 'Documents',
+    category: 'Documents & AI',
     items: [
       {
-        question: 'How does Job Foocus tailor my resume?',
-        answer: 'Job Foocus uses AI to analyze your master resume and the job description, then creates a version of your resume that emphasizes the skills, experience, and keywords most relevant to that specific job. Your contact information, work history, and education stay the same — the AI adjusts emphasis, wording, and formatting to match the job.',
+        question: 'How does the AI tailoring work?',
+        answer: 'Upload your master resume — the complete version with all your experience and skills. When you capture a job, the AI analyzes both your resume and the job description, then generates a version that emphasizes the skills, experience, and keywords most relevant to that specific role. Your work history and education stay the same; the AI adjusts emphasis and wording to match.',
       },
       {
         question: 'Are the generated documents ATS-friendly?',
-        answer: 'Yes. Job Foocus generates clean HTML that prints to PDF with ATS-safe formatting — no floats, no multi-column layouts, no text-in-images. Your resume will pass through applicant tracking systems cleanly.',
+        answer: 'Yes. Job Foocus generates clean HTML that prints to PDF with ATS-safe formatting — no floats, no multi-column layouts, no text baked into images. Your resume passes through applicant tracking systems cleanly.',
       },
       {
         question: 'Can I edit the generated documents?',
-        answer: 'Yes. Open any document and use the AI editor (click "Edit with AI") or edit the HTML directly. You can also regenerate documents at any time.',
+        answer: 'Yes. Open any document and use the AI editor (click "Edit with AI") to make changes with natural language, or edit the HTML directly. You can also regenerate documents at any time from the job workspace.',
       },
       {
         question: 'What is the master resume?',
@@ -93,15 +92,11 @@ const faqData = [
     items: [
       {
         question: 'How do I upgrade my plan?',
-        answer: 'Click the credit card icon in the top-right navigation, then click "Upgrade." You\'ll be taken to Stripe Checkout to complete the payment.',
+        answer: 'Click the credit card icon in the top-right navigation, then click "Upgrade." You\'ll be taken to Stripe Checkout to complete the payment. No credit card is required for the free plan.',
       },
       {
         question: 'How do I cancel my subscription?',
         answer: 'Click the credit card icon → "Manage Subscription" → cancel from the Stripe Customer Portal. Your access continues until the end of your current billing period.',
-      },
-      {
-        question: 'Is there a refund policy?',
-        answer: 'Contact us at support@jobfoocus.com if you have billing concerns. We handle refunds on a case-by-case basis.',
       },
       {
         question: 'Is my payment information secure?',
@@ -110,19 +105,19 @@ const faqData = [
     ],
   },
   {
-    category: 'Privacy & Security',
+    category: 'Privacy & Data',
     items: [
       {
         question: 'What data does the extension collect?',
-        answer: 'The extension only reads page content when you click "Add Job" or use the right-click shortcut. It extracts publicly visible job posting details (title, company, description, location, salary) and sends them to your Job Foocus dashboard. No data is collected passively.',
+        answer: 'The extension only reads page content when you click "Add Job" or use the right-click shortcut. It extracts publicly visible job posting details (title, company, description, location) and sends them to your dashboard. No data is collected passively.',
       },
       {
         question: 'Where is my data stored?',
-        answer: 'Your account data, resumes, and application records are stored securely in the cloud. We implement industry-standard security measures to protect your information.',
+        answer: 'Your account data, resumes, and application records are stored securely in the cloud and synced across your devices. AI processing happens on-demand and nothing is retained after document generation. Your personal information is never sent to third parties.',
       },
       {
         question: 'Can I export or delete my data?',
-        answer: 'Yes. Go to Account → Export Data to download all your data, or Account → Delete Account to permanently remove everything.',
+        answer: 'Yes. Go to Account → Export Data to download everything, or Account → Delete Account to permanently remove all your data. You\'re always in control.',
       },
     ],
   },
