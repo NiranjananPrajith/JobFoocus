@@ -16,9 +16,11 @@ export default function NavBar() {
   const { theme, toggleTheme } = useTheme()
   const [profileOpen, setProfileOpen] = useState(false)
   const [billingOpen, setBillingOpen] = useState(false)
+  const [navMenuOpen, setNavMenuOpen] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const profileRef = useRef<HTMLDivElement>(null)
   const billingRef = useRef<HTMLDivElement>(null)
+  const navMenuRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -40,6 +42,9 @@ export default function NavBar() {
       }
       if (billingRef.current && !billingRef.current.contains(e.target as Node)) {
         setBillingOpen(false)
+      }
+      if (navMenuRef.current && !navMenuRef.current.contains(e.target as Node)) {
+        setNavMenuOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -82,15 +87,25 @@ export default function NavBar() {
           <div className="flex items-center gap-3 md:gap-4">
             {!user && (
               <>
-                {!['/login', '/signup', '/pricing'].some(p => pathname === p) && (
-                  <a
-                    href="/pricing"
-                    className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors"
-                    style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
-                  >
-                    Pricing
-                  </a>
-                )}
+                {/* Desktop nav links — hidden on mobile */}
+                <div className="hidden md:flex items-center gap-1">
+                  {pathname !== '/' && (
+                    <a href="/" className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                      Features
+                    </a>
+                  )}
+                  {pathname !== '/pricing' && (
+                    <a href="/pricing" className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                      Pricing
+                    </a>
+                  )}
+                  {pathname !== '/extension-install' && (
+                    <a href="/extension-install" className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                      Downloads
+                    </a>
+                  )}
+                </div>
+
                 <a
                   href="/login"
                   className="px-4 py-2 text-[14px] rounded-md font-medium text-white transition-colors duration-150"
@@ -103,7 +118,50 @@ export default function NavBar() {
                 >
                   Get Started
                 </a>
+
                 <ThemeToggle />
+
+                {/* Hamburger — mobile only */}
+                <div className="relative md:hidden" ref={navMenuRef}>
+                  <button
+                    onClick={() => setNavMenuOpen(!navMenuOpen)}
+                    className="w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors"
+                    style={{
+                      borderColor: navMenuOpen ? 'var(--primary-deep)' : 'var(--primary)',
+                      backgroundColor: navMenuOpen ? 'var(--cream)' : 'transparent',
+                    }}
+                    aria-label="Menu"
+                  >
+                    {navMenuOpen ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="3" y1="6" x2="21" y2="6" />
+                        <line x1="3" y1="12" x2="21" y2="12" />
+                        <line x1="3" y1="18" x2="21" y2="18" />
+                      </svg>
+                    )}
+                  </button>
+
+                  {navMenuOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-canvas rounded-xl border border-hairline-soft shadow-lg z-50 overflow-hidden">
+                      <div className="py-2">
+                        <a href="/" onClick={() => setNavMenuOpen(false)} className="block px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors">
+                          Features
+                        </a>
+                        <a href="/pricing" onClick={() => setNavMenuOpen(false)} className="block px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors">
+                          Pricing
+                        </a>
+                        <a href="/extension-install" onClick={() => setNavMenuOpen(false)} className="block px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors">
+                          Downloads
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </>
             )}
 
