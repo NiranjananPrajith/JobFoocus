@@ -184,47 +184,58 @@ export default function MarketingLandingPage() {
       </header>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Hero */}
+      {/* Hero — two-column with browser mockup */}
       {/* ------------------------------------------------------------------ */}
-      <section className="relative w-full overflow-hidden bg-ink pt-24 pb-32 px-4 md:px-6">
+      <section className="relative w-full overflow-hidden bg-ink pt-16 pb-24 lg:pt-24 lg:pb-36 px-4 md:px-6">
         <div
           className="absolute inset-0 opacity-40 mix-blend-screen pointer-events-none"
           style={{
             background:
               'linear-gradient(135deg, var(--sunshine-700) 0%, var(--sunshine-900) 40%, var(--primary) 100%)',
-            filter: 'blur(80px)',
+            filter: 'blur(100px)',
             transform: 'scale(1.2)',
           }}
           aria-hidden="true"
         />
 
-        <div className="relative z-10 max-w-[1280px] mx-auto">
-          <div className="max-w-2xl">
+        <div className="relative z-10 max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+
+          {/* Left — editorial hook (5 cols) */}
+          <div className="lg:col-span-6 xl:col-span-5 max-w-xl">
+            <span
+              className="inline-block text-[11px] font-bold uppercase tracking-[1.5px] text-primary mb-4"
+              style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+            >
+              Now Available on Chrome &amp; Firefox
+            </span>
+
             <h1
-              className="text-[52px] md:text-[72px] lg:text-[84px] text-white leading-[1.05] tracking-[-1.5px] mb-6"
+              className="text-[52px] sm:text-[64px] lg:text-[76px] text-white leading-[1.05] tracking-[-1.5px] mb-6"
               style={{
                 fontFamily:
                   '"PP Editorial Old", "Times New Roman", Georgia, serif',
               }}
             >
-              Your job search.
+              Your job hunt.
               <br />
               Beautifully organized.
             </h1>
+
             <p
-              className="text-[17px] md:text-[18px] text-stone leading-[1.50] mb-8"
+              className="text-[17px] sm:text-[18px] text-stone leading-[1.50] mb-8"
               style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
             >
-              Replace your messy spreadsheets. Job Foocus is the elegant browser
-              extension that saves jobs, drafts cover letters, and tracks your
-              interviews automatically.
+              Spreadsheets belong in finance, not your career. Job Foocus is the
+              elegant browser extension that clips listings, drafts cover
+              letters, and tracks your trajectory in one click.
             </p>
+
             <div className="flex flex-col sm:flex-row gap-4">
               <a
                 href={CHROME_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center px-8 py-4 text-[16px] font-medium rounded-md text-white transition-colors duration-150"
+                className="inline-flex items-center justify-center gap-2 px-8 py-3.5 text-[15px] font-medium rounded-md text-white transition-colors duration-150"
                 style={{
                   backgroundColor: 'var(--primary)',
                   fontFamily: 'Inter, system-ui, sans-serif',
@@ -237,11 +248,21 @@ export default function MarketingLandingPage() {
                   (e.currentTarget.style.backgroundColor = 'var(--primary)')
                 }
               >
-                Add Extension
+                <span>Add Extension</span>
+                <svg
+                  width="16"
+                  height="16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
               </a>
               <a
                 href="#features"
-                className="inline-flex items-center justify-center px-8 py-4 text-[16px] font-medium rounded-md transition-colors duration-150"
+                className="inline-flex items-center justify-center px-8 py-3.5 text-[15px] font-medium rounded-md transition-colors duration-150"
                 style={{
                   color: 'var(--on-dark)',
                   border: '1px solid var(--stone)',
@@ -257,6 +278,185 @@ export default function MarketingLandingPage() {
               >
                 See how it works
               </a>
+            </div>
+          </div>
+
+          {/* Right — browser window mockup (7 cols) */}
+          <div className="lg:col-span-6 xl:col-span-7 relative w-full flex justify-center">
+            <div className="relative w-full max-w-[580px] aspect-[1.4] overflow-hidden rounded-xl border border-white/10 shadow-2xl backdrop-blur-md"
+              style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
+            >
+              {/* Browser chrome */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/10"
+                style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
+              >
+                <div className="flex space-x-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                  <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                </div>
+                <div className="rounded px-6 py-0.5 text-[10px] text-stone select-none"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.05)', fontFamily: 'JetBrains Mono, ui-monospace, monospace' }}
+                >
+                  stripe.com/careers/designer
+                </div>
+                <div className="w-12" />
+              </div>
+
+              {/* Content area */}
+              <div className="p-6 h-full flex flex-col justify-between">
+                {/* Fake job board background */}
+                <div className="opacity-45" style={{ filter: 'blur(0.3px)' }}>
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <div className="h-6 w-32 rounded mb-2"
+                        style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
+                      />
+                      <div className="h-4 w-48 rounded"
+                        style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                      />
+                    </div>
+                    <div className="h-10 w-24 rounded-md"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <div className="h-3 w-full rounded"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                    />
+                    <div className="h-3 w-[90%] rounded"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                    />
+                    <div className="h-3 w-[95%] rounded"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Overlapping extension panel */}
+                <div
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%] w-[90%] sm:w-[380px] rounded-xl p-6 border"
+                  style={{
+                    backgroundColor: 'var(--cream)',
+                    borderColor: 'var(--beige-deep)',
+                    color: 'var(--ink)',
+                    boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+                  }}
+                >
+                  {/* Panel header */}
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-5 h-5 rounded-sm flex items-center justify-center font-bold text-[10px] text-white"
+                        style={{ backgroundColor: 'var(--primary)' }}
+                      >
+                        F
+                      </div>
+                      <span
+                        className="text-[12px] font-bold uppercase tracking-[1px]"
+                        style={{
+                          color: 'var(--ink)',
+                          fontFamily: 'Inter, system-ui, sans-serif',
+                        }}
+                      >
+                        Job Foocus
+                      </span>
+                    </div>
+                    <Badge
+                      status="prospect"
+                      className="!bg-[#e5e5e5] !text-[#4a4a4a] text-[11px]"
+                    />
+                  </div>
+
+                  {/* Body */}
+                  <div className="space-y-4">
+                    {/* Extraction row */}
+                    <div
+                      className="p-3 rounded-lg flex items-center justify-between"
+                      style={{
+                        backgroundColor: 'var(--canvas)',
+                        border: '1px solid var(--beige-deep)',
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                          <svg
+                            width="12"
+                            height="12"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                          >
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p
+                            className="text-[13px] font-semibold"
+                            style={{
+                              color: 'var(--ink)',
+                              fontFamily: 'Inter, system-ui, sans-serif',
+                            }}
+                          >
+                            Senior Product Designer
+                          </p>
+                          <p
+                            className="text-[11px]"
+                            style={{
+                              color: 'var(--steel)',
+                              fontFamily: 'Inter, system-ui, sans-serif',
+                            }}
+                          >
+                            Stripe &bull; Remote, US
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        className="text-[11px] font-semibold"
+                        style={{
+                          color: 'var(--primary)',
+                          fontFamily: 'Inter, system-ui, sans-serif',
+                        }}
+                      >
+                        Clipped
+                      </span>
+                    </div>
+
+                    {/* Cover letter row */}
+                    <div
+                      className="p-3 rounded-lg"
+                      style={{
+                        backgroundColor: 'var(--canvas)',
+                        border: '1px solid var(--beige-deep)',
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <p
+                          className="text-[12px] font-semibold"
+                          style={{
+                            color: 'var(--steel)',
+                            fontFamily: 'Inter, system-ui, sans-serif',
+                          }}
+                        >
+                          Custom Cover Letter
+                        </p>
+                        <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-primary/10 text-primary">
+                          Draft Ready
+                        </span>
+                      </div>
+                      <div className="space-y-1.5 opacity-70">
+                        <div className="h-1.5 w-full rounded"
+                          style={{ backgroundColor: 'var(--steel)', opacity: 0.2 }}
+                        />
+                        <div className="h-1.5 w-[90%] rounded"
+                          style={{ backgroundColor: 'var(--steel)', opacity: 0.2 }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
