@@ -97,7 +97,9 @@ function AuthContent({ defaultTab }: { defaultTab: Tab }) {
     <div className="min-h-screen flex items-center justify-center px-6 bg-surface">
       <div className="w-full max-w-[400px]">
         <div className="text-center mb-8">
-          <img src="/icon.webp" alt="Job Foocus" className="w-12 h-12 rounded-xl mx-auto mb-4" />
+          <a href="/">
+            <img src="/icon.webp" alt="Job Foocus" className="w-12 h-12 rounded-xl mx-auto mb-4" />
+          </a>
           <h1 className="text-[24px] font-semibold text-ink" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
             {isLogin ? 'Welcome back' : 'Create your account'}
           </h1>
