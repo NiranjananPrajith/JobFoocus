@@ -168,7 +168,7 @@ function LoginContent() {
           <p className="text-[12px] text-steel mb-2">Don&apos;t have an account?</p>
           <a
             href={next ? `/signup?next=${encodeURIComponent(next)}` : '/signup'}
-            className="block w-full px-4 py-2.5 rounded-lg border border-primary text-primary text-[14px] font-medium hover:bg-primary/5 transition-colors"
+            className="inline-flex items-center justify-center px-4 py-2.5 rounded-lg border border-primary text-primary text-[14px] font-medium hover:bg-primary/5 transition-colors"
           >
             Create your account &nbsp;→
           </a>
