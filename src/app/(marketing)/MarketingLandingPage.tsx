@@ -96,7 +96,7 @@ export default function MarketingLandingPage() {
             </div>
             <a
               href="/signup"
-              className="hidden md:inline-flex px-4 py-2 text-[14px] rounded-md font-medium text-white transition-colors duration-150"
+              className="inline-flex px-4 py-2 text-[14px] rounded-md font-medium text-white transition-colors duration-150"
               style={{
                 backgroundColor: 'var(--primary)',
                 fontFamily: 'Inter, system-ui, sans-serif',
