@@ -181,14 +181,6 @@ export default function MarketingLandingPage() {
                       FAQ
                     </a>
                     <div className="border-t border-hairline-soft my-1" />
-                    <a
-                      href="/signup"
-                      onClick={() => setNavOpen(false)}
-                      className="block px-4 py-2.5 text-[13px] text-primary font-medium hover:bg-surface transition-colors"
-                    >
-                      Get Started →
-                    </a>
-                    <div className="border-t border-hairline-soft my-1" />
                     <div className="flex items-center justify-between px-4 py-2.5">
                       <span className="text-[13px] text-ink" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                         Theme
