@@ -1300,7 +1300,7 @@ function ApplicationContent() {
               {jobDescExpanded && (
                 <div className="mt-2">
                   <div
-                    className="job-desc-content text-[13px] text-steel rounded-lg border border-stone-200 bg-canvas/50 p-4 max-h-[300px] overflow-y-auto"
+                    className="job-desc-content text-[13px] text-ink rounded-lg border border-stone-200 bg-canvas/50 p-4 max-h-[300px] overflow-y-auto"
                     dangerouslySetInnerHTML={{ __html: jobDescContent }}
                   />
                   <style>{`
@@ -1308,12 +1308,12 @@ function ApplicationContent() {
                       font-size: 14px;
                       font-weight: 600;
                       margin-bottom: 8px;
-                      color: #1a1a1a;
+                      color: var(--ink);
                     }
                     .job-desc-content p {
                       margin-bottom: 8px;
                       line-height: 1.5;
-                      color: #444;
+                      color: var(--ink);
                     }
                     .job-desc-content ul, .job-desc-content ol {
                       margin-bottom: 8px;
@@ -1321,7 +1321,7 @@ function ApplicationContent() {
                     }
                     .job-desc-content li {
                       margin-bottom: 4px;
-                      color: #444;
+                      color: var(--ink);
                     }
                     .job-desc-content strong {
                       font-weight: 600;
