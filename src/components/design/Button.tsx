@@ -28,7 +28,7 @@ const Button = ({
   const variantClasses: Record<ButtonVariant, string> = {
     primary: 'bg-primary text-on-primary hover:bg-primary-deep',
     cream: 'bg-cream text-ink border border-beige-deep hover:bg-cream-deeper',
-    dark: 'bg-ink text-on-dark hover:bg-charcoal',
+    dark: 'bg-surface-code text-on-dark hover:brightness-125',
     secondary:
       'bg-transparent text-ink border border-hairline-strong hover:bg-surface',
     'on-cream':
