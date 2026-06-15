@@ -79,8 +79,8 @@ export default function SupportPage() {
       {/* ── Topic Grid ────────────────────────────────────────── */}
       <section className="px-6 pb-16">
         <div className="max-w-[768px] mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <a href="#getting-started" className="group flex items-start gap-4 p-5 rounded-xl transition-colors" style={{ backgroundColor: '#fff8e0', border: '1px solid #e6d5a8' }}>
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: '#fff0c2', border: '1px solid #e6d5a8' }}>
+          <a href="#getting-started" className="group flex items-start gap-4 p-5 rounded-xl transition-colors" style={{ backgroundColor: 'var(--cream)', border: '1px solid var(--beige-deep)' }}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--cream-deeper)', border: '1px solid var(--beige-deep)' }}>
               <IconGettingStarted />
             </div>
             <div>
@@ -88,8 +88,8 @@ export default function SupportPage() {
               <p className="text-[13px] text-steel leading-relaxed">Create an account, upload your resume, and add your first job</p>
             </div>
           </a>
-          <a href="#using-the-website" className="group flex items-start gap-4 p-5 rounded-xl transition-colors" style={{ backgroundColor: '#fff8e0', border: '1px solid #e6d5a8' }}>
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: '#fff0c2', border: '1px solid #e6d5a8' }}>
+          <a href="#using-the-website" className="group flex items-start gap-4 p-5 rounded-xl transition-colors" style={{ backgroundColor: 'var(--cream)', border: '1px solid var(--beige-deep)' }}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--cream-deeper)', border: '1px solid var(--beige-deep)' }}>
               <IconWebsite />
             </div>
             <div>
@@ -97,8 +97,8 @@ export default function SupportPage() {
               <p className="text-[13px] text-steel leading-relaxed">Add jobs, generate resumes, and track your applications</p>
             </div>
           </a>
-          <a href="#browser-extension" className="group flex items-start gap-4 p-5 rounded-xl transition-colors" style={{ backgroundColor: '#fff8e0', border: '1px solid #e6d5a8' }}>
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: '#fff0c2', border: '1px solid #e6d5a8' }}>
+          <a href="#browser-extension" className="group flex items-start gap-4 p-5 rounded-xl transition-colors" style={{ backgroundColor: 'var(--cream)', border: '1px solid var(--beige-deep)' }}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--cream-deeper)', border: '1px solid var(--beige-deep)' }}>
               <IconExtension />
             </div>
             <div>
@@ -106,8 +106,8 @@ export default function SupportPage() {
               <p className="text-[13px] text-steel leading-relaxed">Capture jobs from LinkedIn, Indeed, and any job board</p>
             </div>
           </a>
-          <a href="#your-account" className="group flex items-start gap-4 p-5 rounded-xl transition-colors" style={{ backgroundColor: '#fff8e0', border: '1px solid #e6d5a8' }}>
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: '#fff0c2', border: '1px solid #e6d5a8' }}>
+          <a href="#your-account" className="group flex items-start gap-4 p-5 rounded-xl transition-colors" style={{ backgroundColor: 'var(--cream)', border: '1px solid var(--beige-deep)' }}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--cream-deeper)', border: '1px solid var(--beige-deep)' }}>
               <IconAccount />
             </div>
             <div>
@@ -159,7 +159,7 @@ export default function SupportPage() {
               <div
                 key={item.step}
                 className="flex items-start gap-5 p-5 rounded-xl"
-                style={{ backgroundColor: '#ffffff', border: '1px solid #ededed' }}
+                style={{ backgroundColor: 'var(--canvas)', border: '1px solid var(--hairline-soft)' }}
               >
                 <div
                   className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-[14px] font-semibold"
@@ -180,7 +180,7 @@ export default function SupportPage() {
       </section>
 
       {/* ── Using the Website (cream section) ─────────────────── */}
-      <section id="using-the-website" className="scroll-mt-20" style={{ backgroundColor: '#fff8e0' }}>
+      <section id="using-the-website" className="scroll-mt-20" style={{ backgroundColor: 'var(--cream)' }}>
         <div className="px-6 py-16">
           <div className="max-w-[768px] mx-auto">
             <div className="mb-8">
@@ -243,7 +243,7 @@ export default function SupportPage() {
                 <div
                   key={card.title}
                   className="rounded-xl p-5"
-                  style={{ backgroundColor: '#ffffff', border: '1px solid #e6d5a8' }}
+                  style={{ backgroundColor: 'var(--canvas)', border: '1px solid var(--beige-deep)' }}
                 >
                   <p className="text-[14px] font-semibold text-ink mb-3">{card.title}</p>
                   <ul className="space-y-2">
@@ -282,7 +282,7 @@ export default function SupportPage() {
               <span
                 key={browser}
                 className="inline-flex items-center px-3 py-1.5 rounded-full text-[12px] font-semibold text-ink"
-                style={{ backgroundColor: '#fff0c2', border: '1px solid #e6d5a8' }}
+                style={{ backgroundColor: 'var(--cream-deeper)', border: '1px solid var(--beige-deep)' }}
               >
                 {browser}
               </span>
@@ -316,9 +316,9 @@ export default function SupportPage() {
                   <div>
                     <p className="text-[14px] font-semibold text-ink mb-1">Keyboard shortcut</p>
                     <p className="text-[13px] text-steel leading-relaxed">
-                      <kbd className="text-[12px] bg-surface px-1.5 py-0.5 rounded font-mono" style={{ border: '1px solid #ededed' }}>Ctrl+Shift+J</kbd>
+                      <kbd className="text-[12px] bg-surface px-1.5 py-0.5 rounded font-mono" style={{ border: '1px solid var(--hairline-soft)' }}>Ctrl+Shift+J</kbd>
                       <span className="mx-1.5">/</span>
-                      <kbd className="text-[12px] bg-surface px-1.5 py-0.5 rounded font-mono" style={{ border: '1px solid #ededed' }}>Cmd+Shift+J</kbd>
+                      <kbd className="text-[12px] bg-surface px-1.5 py-0.5 rounded font-mono" style={{ border: '1px solid var(--hairline-soft)' }}>Cmd+Shift+J</kbd>
                     </p>
                   </div>
                 </div>
@@ -326,20 +326,20 @@ export default function SupportPage() {
             </div>
 
             {/* Browser mockup */}
-            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #ededed', boxShadow: 'rgba(0,0,0,0.06) 0px 8px 24px' }}>
-              <div className="bg-surface px-4 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid #ededed' }}>
+            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--hairline-soft)', boxShadow: 'rgba(0,0,0,0.06) 0px 8px 24px' }}>
+              <div className="bg-surface px-4 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid var(--hairline-soft)' }}>
                 <div className="flex gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#e5e5e5' }} />
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#e5e5e5' }} />
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#e5e5e5' }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--hairline)' }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--hairline)' }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--hairline)' }} />
                 </div>
                 <div className="flex-1 flex justify-center">
                   <span className="text-[11px] text-steel font-medium">linkedin.com/jobs</span>
                 </div>
               </div>
-              <div className="p-5 bg-white">
+              <div className="p-5 bg-canvas">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fff8e0', border: '1px solid #e6d5a8' }}>
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--cream)', border: '1px solid var(--beige-deep)' }}>
                     <img src="/icon.webp" alt="Job Foocus" className="w-8 h-8 rounded object-contain" />
                   </div>
                   <div>
@@ -363,7 +363,7 @@ export default function SupportPage() {
           {/* Privacy note */}
           <div
             className="flex items-start gap-4 p-5 rounded-xl"
-            style={{ backgroundColor: '#ffffff', border: '1px solid #ededed' }}
+            style={{ backgroundColor: 'var(--canvas)', border: '1px solid var(--hairline-soft)' }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -381,7 +381,7 @@ export default function SupportPage() {
       </section>
 
       {/* ── Your Account (cream section) ──────────────────────── */}
-      <section id="your-account" className="scroll-mt-20" style={{ backgroundColor: '#fff8e0' }}>
+      <section id="your-account" className="scroll-mt-20" style={{ backgroundColor: 'var(--cream)' }}>
         <div className="px-6 py-16">
           <div className="max-w-[768px] mx-auto">
             <div className="mb-8">
@@ -404,8 +404,8 @@ export default function SupportPage() {
                   key={tier.name}
                   className="rounded-xl p-5 relative"
                   style={{
-                    backgroundColor: tier.featured ? '#ffffff' : '#ffffff',
-                    border: tier.featured ? '2px solid #fa520f' : '1px solid #e6d5a8',
+                    backgroundColor: 'var(--canvas)',
+                    border: tier.featured ? '2px solid #fa520f' : '1px solid var(--beige-deep)',
                   }}
                 >
                   {tier.featured && (
@@ -434,16 +434,16 @@ export default function SupportPage() {
 
             {/* Data management */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="rounded-xl p-5" style={{ backgroundColor: '#ffffff', border: '1px solid #e6d5a8' }}>
+              <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--canvas)', border: '1px solid var(--beige-deep)' }}>
                 <p className="text-[14px] font-semibold text-ink mb-2">Export your data</p>
                 <p className="text-[13px] text-steel leading-relaxed">
                   Go to <span className="text-ink font-medium">Account → Export Data</span> to download all your job applications, documents, master resume, and settings as a single JSON file.
                 </p>
               </div>
-              <div className="rounded-xl p-5" style={{ backgroundColor: '#ffffff', border: '1px solid #e6d5a8' }}>
+              <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--canvas)', border: '1px solid var(--beige-deep)' }}>
                 <p className="text-[14px] font-semibold text-ink mb-2">Delete your account</p>
                 <p className="text-[13px] text-steel leading-relaxed">
-                  Go to <span className="text-ink font-medium">Account → Delete Account</span> and type <code className="text-[12px] bg-surface px-1 py-0.5 rounded" style={{ border: '1px solid #ededed' }}>DELETE</code> to confirm. This permanently removes all data.
+                  Go to <span className="text-ink font-medium">Account → Delete Account</span> and type <code className="text-[12px] bg-surface px-1 py-0.5 rounded" style={{ border: '1px solid var(--hairline-soft)' }}>DELETE</code> to confirm. This permanently removes all data.
                 </p>
               </div>
             </div>
@@ -471,7 +471,7 @@ export default function SupportPage() {
         <div className="max-w-[768px] mx-auto">
           <div
             className="rounded-xl p-8 md:p-10 text-center relative overflow-hidden"
-            style={{ backgroundColor: '#fff8e0', border: '1px solid #e6d5a8' }}
+            style={{ backgroundColor: 'var(--cream)', border: '1px solid var(--beige-deep)' }}
           >
             {/* Decorative gradient corner */}
             <div
