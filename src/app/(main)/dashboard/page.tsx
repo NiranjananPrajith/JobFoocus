@@ -471,10 +471,7 @@ export default function DashboardPage() {
         <div className="flex gap-4">
           <a
             href="/application"
-            className="inline-flex items-center px-5 py-2.5 text-[14px] font-medium rounded-md text-white transition-colors"
-            style={{ backgroundColor: 'var(--ink)' }}
-            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--ink-tint)')}
-            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--ink)')}
+            className="inline-flex items-center px-5 py-2.5 text-[14px] font-medium rounded-md text-white bg-surface-code hover:brightness-125 transition-all"
           >
             Add New Job
           </a>
