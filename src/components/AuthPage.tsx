@@ -129,7 +129,7 @@ function AuthContent({ defaultTab }: { defaultTab: Tab }) {
               onClick={() => handleTabChange('login')}
               className={`flex-1 py-2 text-[13px] font-medium rounded-md transition-colors ${
                 isLogin
-                  ? 'bg-canvas text-ink shadow-sm'
+                  ? 'bg-primary text-on-primary shadow-sm'
                   : 'text-steel hover:text-ink'
               }`}
             >
@@ -139,7 +139,7 @@ function AuthContent({ defaultTab }: { defaultTab: Tab }) {
               onClick={() => handleTabChange('signup')}
               className={`flex-1 py-2 text-[13px] font-medium rounded-md transition-colors ${
                 !isLogin
-                  ? 'bg-canvas text-ink shadow-sm'
+                  ? 'bg-primary text-on-primary shadow-sm'
                   : 'text-steel hover:text-ink'
               }`}
             >
