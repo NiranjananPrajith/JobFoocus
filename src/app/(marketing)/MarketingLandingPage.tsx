@@ -206,22 +206,22 @@ export default function MarketingLandingPage() {
       {/* ------------------------------------------------------------------ */}
       {/* 2. Responsive Light/Dark Hero Section */}
       {/* ------------------------------------------------------------------ */}
-      <section className="relative w-full overflow-hidden bg-[#fffcf7] dark:bg-[#0c0d0b] pt-16 pb-24 lg:pt-24 lg:pb-36 px-6 border-b border-black/[0.03] dark:border-white/5 transition-colors duration-200">
+      <section className="relative w-full overflow-hidden bg-canvas dark:bg-canvas pt-16 pb-24 lg:pt-24 lg:pb-36 px-6 border-b border-hairline dark:border-hairline transition-colors duration-200">
         
-        {/* Light Mode Glow - Gentle golden aura (hidden in dark mode) */}
+        {/* Light Mode Glow - Warm golden aura behind mockup */}
         <div
-          className="absolute right-0 top-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-60 mix-blend-multiply pointer-events-none hidden lg:block dark:hidden"
+          className="absolute right-0 top-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-40 mix-blend-multiply pointer-events-none hidden lg:block dark:hidden"
           style={{
-            background: 'radial-gradient(circle, rgba(255,220,150,0.5) 0%, rgba(255,240,210,0.15) 60%, rgba(0,0,0,0) 75%)',
-            filter: 'blur(50px)',
+            background: 'radial-gradient(circle, rgba(250,82,15,0.12) 0%, rgba(255,208,106,0.18) 40%, rgba(255,240,210,0.08) 65%, rgba(0,0,0,0) 80%)',
+            filter: 'blur(60px)',
           }}
         />
 
-        {/* Dark Mode Glow - Saturated sunset gradient (hidden in light mode) */}
+        {/* Dark Mode Glow - Deep sunset gradient behind mockup */}
         <div
-          className="absolute right-0 top-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-30 mix-blend-screen pointer-events-none hidden dark:lg:block"
+          className="absolute right-0 top-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-25 mix-blend-screen pointer-events-none hidden dark:lg:block"
           style={{
-            background: 'radial-gradient(circle, rgba(250,82,15,0.7) 0%, rgba(255,161,16,0.3) 50%, rgba(0,0,0,0) 70%)',
+            background: 'radial-gradient(circle, rgba(250,82,15,0.6) 0%, rgba(255,161,16,0.25) 45%, rgba(0,0,0,0) 70%)',
             filter: 'blur(80px)',
           }}
         />
@@ -231,18 +231,18 @@ export default function MarketingLandingPage() {
           {/* Left Column: Adaptive High-Legibility Typography */}
           <div className="lg:col-span-6 xl:col-span-5 max-w-xl">
             {/* Eyebrow - Dynamic color switch */}
-            <span className="inline-block text-[11px] font-bold uppercase tracking-[1.5px] text-primary dark:text-[#ffd06a] mb-4">
+            <span className="inline-block text-[11px] font-bold uppercase tracking-[1.5px] text-primary dark:text-sunshine-300 mb-4">
               Now Live &bull; Explore Your Free Workspace
             </span>
             
             <h1
-              className="text-[52px] sm:text-[64px] lg:text-[76px] text-ink dark:text-white leading-[1.05] tracking-[-1.5px] mb-6"
+              className="text-[52px] sm:text-[64px] lg:text-[76px] text-ink dark:text-ink leading-[1.05] tracking-[-1.5px] mb-6"
               style={{ fontFamily: '"PP Editorial Old", "Times New Roman", Georgia, serif' }}
             >
               Your job hunt.<br />Beautifully organized.
             </h1>
             
-            <p className="text-[17px] sm:text-[18px] text-slate dark:text-zinc-300 leading-[1.50] mb-8 font-sans">
+            <p className="text-[17px] sm:text-[18px] text-slate dark:text-slate leading-[1.50] mb-8 font-sans">
               Spreadsheets belong in finance, not your career. Create your private dashboard in 30 seconds to instantly track applications, sync across devices, and draft custom cover letters.
             </p>
             
@@ -261,14 +261,14 @@ export default function MarketingLandingPage() {
                 <a href="#features">
                   <Button
                     variant="secondary"
-                    className="text-[15px] px-8 py-3.5 border-hairline-strong text-ink hover:bg-black/5 dark:!text-white dark:!border-white/20 dark:hover:!border-white/40 dark:hover:!bg-white/5 flex items-center justify-center transition-all"
+                    className="text-[15px] px-8 py-3.5 border-hairline-strong text-ink hover:bg-black/5 dark:text-ink dark:border-hairline-strong dark:hover:bg-surface flex items-center justify-center transition-all"
                   >
                     See how it works
                   </Button>
                 </a>
               </div>
               {/* Friction-reducing micro-copy */}
-              <span className="text-[12px] text-steel dark:text-stone font-sans pl-1">
+              <span className="text-[12px] text-steel dark:text-steel font-sans pl-1">
                 ⚡ Sets up your custom dashboard instantly. No credit card required.
               </span>
             </div>
@@ -278,16 +278,16 @@ export default function MarketingLandingPage() {
           <div className="lg:col-span-6 xl:col-span-7 relative w-full flex justify-center">
             
             {/* Outer Browser Shell: Swaps colors based on system theme */}
-            <div className="relative w-full max-w-[580px] aspect-[1.4] bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl overflow-hidden shadow-xl dark:shadow-2xl transition-colors duration-200">
+            <div className="relative w-full max-w-[580px] aspect-[1.4] bg-white dark:bg-surface border border-hairline dark:border-hairline rounded-xl overflow-hidden shadow-xl dark:shadow-2xl transition-colors duration-200">
               
               {/* Browser Controls */}
-              <div className="flex items-center px-4 py-3 border-b border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/5 justify-between">
+              <div className="flex items-center px-4 py-3 border-b border-hairline dark:border-hairline bg-surface dark:bg-canvas justify-between">
                 <div className="flex space-x-2">
                   <div className="w-3 h-3 rounded-full bg-red-500/80" />
                   <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
                   <div className="w-3 h-3 rounded-full bg-green-500/80" />
                 </div>
-                <div className="bg-black/5 dark:bg-white/5 rounded px-6 py-0.5 text-[10px] text-steel dark:text-zinc-400 font-mono select-none">
+                <div className="bg-canvas dark:bg-canvas rounded px-6 py-0.5 text-[10px] text-steel dark:text-steel font-mono select-none border border-hairline-soft dark:border-hairline">
                   naukri.com/job/google-ux-designer
                 </div>
                 <div className="w-12" />
@@ -300,38 +300,35 @@ export default function MarketingLandingPage() {
                 <div className="opacity-45" style={{ filter: 'blur(0.3px)' }}>
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <div className="h-6 w-32 bg-black/10 dark:bg-white/20 rounded mb-2" />
-                      <div className="h-4 w-48 bg-black/5 dark:bg-white/10 rounded" />
+                      <div className="h-6 w-32 bg-hairline dark:bg-hairline-strong rounded mb-2" />
+                      <div className="h-4 w-48 bg-hairline-soft dark:bg-hairline rounded" />
                     </div>
-                    <div className="h-10 w-24 bg-black/5 dark:bg-white/10 rounded-md" />
+                    <div className="h-10 w-24 bg-hairline-soft dark:bg-hairline rounded-md" />
                   </div>
                   <div className="space-y-3">
-                    <div className="h-3 w-full bg-black/5 dark:bg-white/10 rounded" />
-                    <div className="h-3 w-[90%] bg-black/5 dark:bg-white/10 rounded" />
-                    <div className="h-3 w-[95%] bg-black/5 dark:bg-white/10 rounded" />
+                    <div className="h-3 w-full bg-hairline-soft dark:bg-hairline rounded" />
+                    <div className="h-3 w-[90%] bg-hairline-soft dark:bg-hairline rounded" />
+                    <div className="h-3 w-[95%] bg-hairline-soft dark:bg-hairline rounded" />
                   </div>
                 </div>
 
-                {/* Overlapping Extension UI Panel (Hardcoded Static light values to prevent CSS inheritance glitches) */}
+                {/* Overlapping Extension UI Panel — Fully theme-aware */}
                 <div
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%] w-[90%] sm:w-[380px] rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] p-6"
-                  style={{ background: '#fff8e0', color: '#1f1f1f', border: '1px solid #e6d5a8' }}
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%] w-[90%] sm:w-[380px] rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.12)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-6 bg-cream dark:bg-cream border border-beige-deep dark:border-hairline-strong"
                 >
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-2">
                       <div
-                        className="w-5 h-5 rounded-sm flex items-center justify-center font-bold text-[10px]"
-                        style={{ backgroundColor: '#fa520f', color: '#ffffff' }}
+                        className="w-5 h-5 rounded-sm flex items-center justify-center font-bold text-[10px] bg-primary text-on-primary"
                       >
                         F
                       </div>
-                      <span className="text-[12px] font-bold uppercase tracking-[1px] font-sans" style={{ color: '#1f1f1f' }}>
+                      <span className="text-[12px] font-bold uppercase tracking-[1px] font-sans text-on-cream">
                         Job Foocus
                       </span>
                     </div>
                     <span
-                      className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                      style={{ backgroundColor: '#fff0c2', color: '#1f1f1f' }}
+                      className="rounded-full px-2.5 py-1 text-[11px] font-semibold bg-cream-deeper text-on-cream"
                     >
                       Prospect
                     </span>
@@ -339,33 +336,32 @@ export default function MarketingLandingPage() {
 
                   <div className="space-y-4">
                     {/* Extraction Status Row */}
-                    <div className="p-3 rounded-lg flex items-center justify-between" style={{ backgroundColor: '#ffffff', border: '1px solid #e6d5a8' }}>
+                    <div className="p-3 rounded-lg flex items-center justify-between bg-white dark:bg-cream-light border border-beige-deep dark:border-hairline">
                       <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 rounded-full flex items-center justify-center text-green-600" style={{ backgroundColor: '#f0fdf4' }}>
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center text-green-600 bg-[#f0fdf4] dark:bg-[#1a2e1a]">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
                         </div>
                         <div>
-                          <p className="text-[13px] font-semibold" style={{ color: '#1f1f1f' }}>Senior UX Designer</p>
-                          <p className="text-[11px]" style={{ color: '#6a6a6a' }}>Google &bull; Bengaluru, IN</p>
+                          <p className="text-[13px] font-semibold text-on-cream">Senior UX Designer</p>
+                          <p className="text-[11px] text-steel">Google &bull; Bengaluru, IN</p>
                         </div>
                       </div>
-                      <span className="text-[11px] font-semibold" style={{ color: '#fa520f' }}>Clipped</span>
+                      <span className="text-[11px] font-semibold text-primary">Clipped</span>
                     </div>
 
                     {/* Tailored Cover Letter Generation Box */}
-                    <div className="rounded-lg p-3" style={{ backgroundColor: '#ffffff', border: '1px solid #e6d5a8' }}>
+                    <div className="rounded-lg p-3 bg-white dark:bg-cream-light border border-beige-deep dark:border-hairline">
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-[12px] font-semibold" style={{ color: '#6a6a6a' }}>Custom Cover Letter</p>
+                        <p className="text-[12px] font-semibold text-steel">Custom Cover Letter</p>
                         <span
-                          className="text-[10px] px-2 py-0.5 rounded font-semibold uppercase"
-                          style={{ backgroundColor: 'rgba(250,82,15,0.1)', color: '#fa520f' }}
+                          className="text-[10px] px-2 py-0.5 rounded font-semibold uppercase bg-primary/10 text-primary"
                         >
                           Draft Ready
                         </span>
                       </div>
                       <div className="space-y-1.5 opacity-70">
-                        <div className="h-1.5 w-full rounded" style={{ backgroundColor: 'rgba(106,106,106,0.2)' }} />
-                        <div className="h-1.5 w-[90%] rounded" style={{ backgroundColor: 'rgba(106,106,106,0.2)' }} />
+                        <div className="h-1.5 w-full rounded bg-steel/20" />
+                        <div className="h-1.5 w-[90%] rounded bg-steel/20" />
                       </div>
                     </div>
                   </div>
