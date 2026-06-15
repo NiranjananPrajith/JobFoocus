@@ -142,3 +142,21 @@ html *::after {
 .dark .border-stone-200 {
   border-color: var(--hairline);
 }
+
+/* Blue palette (privacy sections, PII indicators) */
+.dark .bg-blue-50 { background-color: #0f1729; }
+.dark .bg-blue-50\/60 { background-color: #0f1729; }
+.dark .bg-blue-100 { background-color: #1a2a4a; }
+.dark .border-blue-200 { border-color: #1e3a5f; }
+.dark .border-blue-400 { border-color: #60a5fa; }
+.dark .text-blue-600 { color: #60a5fa; }
+.dark .text-blue-700 { color: #93c5fd; }
+.dark .text-blue-800 { color: #bfdbfe; }
+.dark .hover\:bg-blue-100:hover { background-color: #1a2a4a; }
+
+/* Red palette (delete buttons, error containers) */
+.dark .bg-red-50 { background-color: #2d1215; }
+.dark .border-red-200 { border-color: #4a1c1f; }
+.dark .border-red-300 { border-color: #7f1d1d; }
+.dark .text-red-700 { color: #fca5a5; }
+.dark .hover\:bg-red-50:hover { background-color: #2d1215; }
