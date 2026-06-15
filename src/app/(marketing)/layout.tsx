@@ -8,9 +8,9 @@ export default function MarketingLayout({
 }) {
   return (
     <div className="min-h-screen bg-canvas selection:bg-primary selection:text-white">
-      <NavBar variant="marketing" />
+      <NavBar />
       {children}
-      <Footer variant="marketing" />
+      <Footer />
     </div>
   )
 }

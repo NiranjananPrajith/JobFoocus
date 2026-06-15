@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import NavBar from '@/components/NavBar';
 import Footer from '@/components/Footer';
-import SunsetStripeBand from '@/components/design/sunset-stripe-band';
 
 export const metadata: Metadata = {
   title: 'Job Foocus',

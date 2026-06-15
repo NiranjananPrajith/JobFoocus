@@ -10,7 +10,7 @@ import { TIER_LABEL, TIER_PRICE_USD, type Tier } from '@/lib/limits'
 import { timeUntilReset } from '@/lib/usage-utils'
 import type { User } from '@supabase/supabase-js'
 
-export default function NavBar({ variant = 'app' }: { variant?: 'app' | 'marketing' }) {
+export default function NavBar() {
   const pathname = usePathname()
   const [addJobOpen, setAddJobOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
@@ -67,7 +67,7 @@ export default function NavBar({ variant = 'app' }: { variant?: 'app' | 'marketi
   return (
     <>
       <header
-        className={`sticky top-0 z-50 w-full no-print ${variant === 'marketing' ? 'bg-canvas/80 backdrop-blur-md' : 'bg-canvas'}`}
+        className="sticky top-0 z-50 w-full no-print bg-canvas"
         style={{
           borderBottom: '1px solid var(--hairline-soft)',
           height: '64px',
@@ -79,7 +79,7 @@ export default function NavBar({ variant = 'app' }: { variant?: 'app' | 'marketi
             <img
               src="/icon_wide.webp"
               alt="Job Foocus"
-              className={`${variant === 'marketing' ? 'h-7' : 'h-8'} object-contain`}
+              className="h-8 object-contain"
             />
           </a>
 
@@ -88,40 +88,20 @@ export default function NavBar({ variant = 'app' }: { variant?: 'app' | 'marketi
             {!user && (
               <>
                 {/* Desktop nav links */}
-                {variant === 'marketing' ? (
-                  <div className="hidden md:flex items-center gap-8">
-                    <a href="#features" className="text-[14px] text-steel hover:text-ink font-medium transition-colors" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                      How it Works
-                    </a>
-                    <a href="#privacy" className="text-[14px] text-steel hover:text-ink font-medium transition-colors" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                      Privacy
-                    </a>
-                    <a href="#faq" className="text-[14px] text-steel hover:text-ink font-medium transition-colors" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                      FAQ
-                    </a>
-                  </div>
-                ) : (
-                  <div className="hidden md:flex items-center gap-1">
-                    {pathname !== '/' && (
-                      <a href="/" className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                        Features
-                      </a>
-                    )}
-                    {pathname !== '/pricing' && (
-                      <a href="/pricing" className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                        Pricing
-                      </a>
-                    )}
-                    {pathname !== '/extension-install' && (
-                      <a href="/extension-install" className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                        Extension
-                      </a>
-                    )}
-                  </div>
-                )}
+                <div className="hidden md:flex items-center gap-1">
+                  <a href="/" className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                    Features
+                  </a>
+                  <a href="/pricing" className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                    Pricing
+                  </a>
+                  <a href="/extension-install" className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                    Extension
+                  </a>
+                </div>
 
                 <a
-                  href={variant === 'marketing' ? '/signup' : '/login'}
+                  href="/login"
                   className="px-4 py-2 text-[14px] rounded-md font-medium text-white transition-colors duration-150"
                   style={{
                     backgroundColor: 'var(--primary)',
@@ -130,7 +110,7 @@ export default function NavBar({ variant = 'app' }: { variant?: 'app' | 'marketi
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary-deep)')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary)')}
                 >
-                  {variant === 'marketing' ? "Get Started \u2014 It\u2019s Free" : 'Get Started'}
+                  Get Started
                 </a>
 
                 <ThemeToggle />
@@ -163,38 +143,22 @@ export default function NavBar({ variant = 'app' }: { variant?: 'app' | 'marketi
                   {navMenuOpen && (
                     <div className="absolute right-0 top-full mt-2 w-48 bg-canvas rounded-xl border border-hairline-soft shadow-lg z-50 overflow-hidden">
                       <div className="py-2">
-                        {variant === 'marketing' ? (
-                          <>
-                            <a href="#features" onClick={() => setNavMenuOpen(false)} className="block px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors">
-                              How it Works
-                            </a>
-                            <a href="#privacy" onClick={() => setNavMenuOpen(false)} className="block px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors">
-                              Privacy
-                            </a>
-                            <a href="#faq" onClick={() => setNavMenuOpen(false)} className="block px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors">
-                              FAQ
-                            </a>
-                            <div className="border-t border-hairline-soft my-1" />
-                            <div className="flex items-center justify-between px-4 py-2.5">
-                              <span className="text-[13px] text-ink" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                                Theme
-                              </span>
-                              <ThemeToggle />
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <a href="/" onClick={() => setNavMenuOpen(false)} className="block px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors">
-                              Features
-                            </a>
-                            <a href="/pricing" onClick={() => setNavMenuOpen(false)} className="block px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors">
-                              Pricing
-                            </a>
-                            <a href="/extension-install" onClick={() => setNavMenuOpen(false)} className="block px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors">
-                              Extension
-                            </a>
-                          </>
-                        )}
+                        <a href="/" onClick={() => setNavMenuOpen(false)} className="block px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors">
+                          Features
+                        </a>
+                        <a href="/pricing" onClick={() => setNavMenuOpen(false)} className="block px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors">
+                          Pricing
+                        </a>
+                        <a href="/extension-install" onClick={() => setNavMenuOpen(false)} className="block px-4 py-2.5 text-[13px] text-ink hover:bg-surface transition-colors">
+                          Extension
+                        </a>
+                        <div className="border-t border-hairline-soft my-1" />
+                        <div className="flex items-center justify-between px-4 py-2.5">
+                          <span className="text-[13px] text-ink" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                            Theme
+                          </span>
+                          <ThemeToggle />
+                        </div>
                       </div>
                     </div>
                   )}
