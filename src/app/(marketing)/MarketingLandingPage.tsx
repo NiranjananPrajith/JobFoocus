@@ -318,11 +318,11 @@ export default function MarketingLandingPage() {
                 >
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-2">
-                      <div
-                        className="w-5 h-5 rounded-sm flex items-center justify-center font-bold text-[10px] bg-primary text-on-primary"
-                      >
-                        F
-                      </div>
+                      <img
+                        src="/icon.webp"
+                        alt="JobFoocus"
+                        className="w-5 h-5 rounded-sm object-cover"
+                      />
                       <span className="text-[12px] font-bold uppercase tracking-[1px] font-sans text-on-cream">
                         Job Foocus
                       </span>
@@ -343,7 +343,10 @@ export default function MarketingLandingPage() {
                         </div>
                         <div>
                           <p className="text-[13px] font-semibold text-on-cream">Senior UX Designer</p>
-                          <p className="text-[11px] text-steel">Google &bull; Bengaluru, IN</p>
+                          <div className="flex items-center gap-1.5">
+                            <img src="/company-logos/google-logo.svg" alt="Google" className="w-3.5 h-3.5" />
+                            <p className="text-[11px] text-steel">Google &bull; Bengaluru, IN</p>
+                          </div>
                         </div>
                       </div>
                       <span className="text-[11px] font-semibold text-primary">Clipped</span>
