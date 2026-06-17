@@ -59,7 +59,7 @@ async function zenChat(prompt: string, system: string): Promise<string> {
   }
 
   const data = await res.json();
-  const content = data.choices?.[0]?.message?.content || '';
+  const content = data.choices?.[0]?.message?.content || data.content || '';
 
   if (!content) {
     console.error('[AI] Empty response from JobFoocus AI. Full data:', JSON.stringify(data));
