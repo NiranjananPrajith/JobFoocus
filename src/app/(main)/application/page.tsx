@@ -384,7 +384,9 @@ function ApplicationContent() {
   async function runExtensionPipelineCore(
     jdText: string,
     cancelled: { current: boolean },
-    preFormattedJD?: FormattedJD
+    preFormattedJD?: FormattedJD,
+    extCompany?: string | null,
+    extTitle?: string | null
   ): Promise<PipelineOutcome> {
     // 3a. Daily-limit pre-check. Same shape as AddJobModal.handleSubmitJD:
     // bail early with a friendly modal before we burn AI tokens on a
@@ -447,6 +449,22 @@ function ApplicationContent() {
 
     if (cancelled.current) return { kind: 'other-fail', message: 'Cancelled' };
 
+    // If the AI couldn't parse at all, but the extension provided
+    // company/title, construct a minimal FormattedJD and proceed.
+    if ((formatResult === 'parse-fail' || !formattedJD) && extCompany && extTitle) {
+      formattedJD = {
+        company: extCompany,
+        job_title: extTitle,
+        location: '',
+        employment_type: '',
+        summary: '',
+        responsibilities: [],
+        requirements: [],
+        preferred: [],
+      };
+      formatResult = 'ok';
+    }
+
     if (formatResult === 'parse-fail' || !formattedJD) {
       return {
         kind: 'clarify',
@@ -456,9 +474,20 @@ function ApplicationContent() {
       };
     }
 
-    if (formatResult === 'missing-fields') {
-      const mc = isUnknownValue(formattedJD.company);
-      const mt = isUnknownValue(formattedJD.job_title);
+    // Patch missing fields with extension-provided values.
+    if (formatResult === 'missing-fields' || formatResult === 'ok') {
+      if (isUnknownValue(formattedJD.company) && extCompany) {
+        formattedJD.company = extCompany;
+      }
+      if (isUnknownValue(formattedJD.job_title) && extTitle) {
+        formattedJD.job_title = extTitle;
+      }
+    }
+
+    // Re-check after patching.
+    const mc = isUnknownValue(formattedJD.company);
+    const mt = isUnknownValue(formattedJD.job_title);
+    if (mc || mt) {
       const question = mc && mt
         ? "We couldn't find a company name or job title in the job description. Can you tell us both?"
         : mc
@@ -572,7 +601,7 @@ function ApplicationContent() {
       setPipelineMode('processing');
       setPipelineStep('analyzing');
 
-      const outcome = await runExtensionPipelineCore(extJd || '', { current: cancelled });
+      const outcome = await runExtensionPipelineCore(extJd || '', { current: cancelled }, undefined, extCompany, extTitle);
 
       if (cancelled) return;
 
