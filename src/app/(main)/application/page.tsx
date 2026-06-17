@@ -553,7 +553,7 @@ function ApplicationContent() {
           // scraped content. Fall through to the jd-retry state so the
           // user can paste a cleaner JD.
           setJdRetryText(extJd || '');
-          setJdRetryError(null);
+          setJdRetryError('Could not identify a job posting in this page. Copy the full job description and paste it below.');
           setPipelineMode('jd-retry');
           return;
         case 'manual-fill':
@@ -743,7 +743,7 @@ function ApplicationContent() {
       switch (outcome.kind) {
         case 'parse-fail':
           setJdRetryError(
-            "We still couldn't find a proper job description in your text. Make sure it includes the full job title, company name, responsibilities, and requirements — then try again."
+            `We still couldn't find a proper job description in your text. ${outcome.message} Make sure it includes the full job title, company name, responsibilities, and requirements — then try again.`
           );
           setPipelineMode('jd-retry');
           return;

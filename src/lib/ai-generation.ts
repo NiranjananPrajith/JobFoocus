@@ -74,7 +74,7 @@ async function zenChat(prompt: string, system: string): Promise<string> {
 // AI Step 1: Format raw job description
 // ---------------------------------------------------------------------------
 
-interface FormattedJD {
+export interface FormattedJD {
   company: string;
   job_title: string;
   location: string;
@@ -584,14 +584,15 @@ export async function editDocumentHTML(
 export async function generateMaskedJobEntryAndDocuments(
   jobDescription: string,
   category: string,
-  onStep?: ProgressCallback
+  onStep?: ProgressCallback,
+  preFormattedJD?: FormattedJD
 ): Promise<GeneratedJob> {
   console.log('[AI] generateMaskedJobEntryAndDocuments called');
   const masterResume = await getMasterResume();
   if (!masterResume) throw new Error('Master resume not found.');
 
   onStep?.('analyzing');
-  const formattedJD = await formatJobDescription(jobDescription);
+  const formattedJD = preFormattedJD || await formatJobDescription(jobDescription);
   console.log('[AI] JD formatted:', formattedJD.company, formattedJD.job_title);
 
   const folder = 'job-' + Date.now();

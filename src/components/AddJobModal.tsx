@@ -9,11 +9,22 @@ import Button from '@/components/design/Button';
 import CategorySelector from '@/components/CategorySelector';
 import ManageCategoriesModal from '@/components/ManageCategoriesModal';
 import AddJobStepper, { type AddJobStep } from '@/components/AddJobStepper';
-import { isMasterResumeBlank, generateMaskedJobEntryAndDocuments } from '@/lib/ai-generation';
+import { isMasterResumeBlank, formatJobDescription, generateMaskedJobEntryAndDocuments } from '@/lib/ai-generation';
 import { ensureUncategorizedCategory, getUserCategories, saveCategory, type UserCategory } from '@/lib/storage-adapter';
 import UpgradePromptModal from '@/components/UpgradePromptModal';
+import type { FormattedJD } from '@/lib/ai-generation';
 
-type ModalState = 'two_column' | 'paste_jd' | 'blank_resume' | 'processing';
+type ModalState = 'two_column' | 'paste_jd' | 'blank_resume' | 'processing' | 'manual_fill';
+
+// Values treated as "the AI couldn't figure this out"
+const UNKNOWN_VALUES = new Set([
+  '', 'unknown', 'unknown company', 'n/a', 'na', 'null', 'none',
+  'not specified', 'not found', '[unknown]', 'undefined',
+]);
+function isUnknownValue(v: string | undefined | null): boolean {
+  if (v == null) return true;
+  return UNKNOWN_VALUES.has(String(v).trim().toLowerCase());
+}
 
 const INSTALL_GUIDE_URL = '/extension-install';
 
@@ -63,6 +74,13 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
   // paste_jd) so the user can verify the AI pulled the right posting.
   const [resultHeader, setResultHeader] = useState<{ company: string; jobTitle: string } | null>(null);
 
+  // Manual-fill state: the AI partially parsed the JD but couldn't
+  // identify company name and/or job title. We hold the parsed JD
+  // so we don't re-call the AI when the user fills in the gaps.
+  const [manualFillJD, setManualFillJD] = useState<FormattedJD | null>(null);
+  const [manualCompany, setManualCompany] = useState('');
+  const [manualTitle, setManualTitle] = useState('');
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -81,6 +99,9 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
       setSelectedCategory('Uncategorized');
       setDestination(null);
       setResultHeader(null);
+      setManualFillJD(null);
+      setManualCompany('');
+      setManualTitle('');
     }
   }, [isOpen]);
 
@@ -152,19 +173,70 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
       console.warn('[AddJobModal] usage pre-check failed, continuing:', err);
     }
 
-    setState('processing');
+    // Step 1: Try to parse the JD. If the AI throws, it's a
+    // complete parse failure — the text doesn't look like a JD.
+    let formattedJD;
+    try {
+      formattedJD = await formatJobDescription(jdText);
+    } catch (err) {
+      const raw = err instanceof Error ? err.message : '';
+      setPasteError(
+        raw
+          ? `We had trouble reading this job description: ${raw}`
+          : "We couldn't find a proper job description in your text. Make sure you've pasted the full posting — including the job title, company name, responsibilities, and requirements — then try again."
+      );
+      setState('paste_jd');
+      return;
+    }
+
+    // Step 2: Check for missing required fields.
+    const missingCompany = isUnknownValue(formattedJD.company);
+    const missingTitle = isUnknownValue(formattedJD.job_title);
+    if (missingCompany || missingTitle) {
+      setManualFillJD(formattedJD);
+      setManualCompany(missingCompany ? '' : formattedJD.company);
+      setManualTitle(missingTitle ? '' : formattedJD.job_title);
+      setState('manual_fill');
+      return;
+    }
+
+    // Step 3: All fields present — proceed with the full pipeline.
+    await runFullPipeline(formattedJD);
+  };
+
+  const handleManualFillSave = async () => {
+    if (!manualFillJD) return;
+    const company = manualCompany.trim();
+    const title = manualTitle.trim();
+    if (!company && isUnknownValue(manualFillJD.company)) {
+      setPasteError('Please enter the company name.');
+      return;
+    }
+    if (!title && isUnknownValue(manualFillJD.job_title)) {
+      setPasteError('Please enter the job title.');
+      return;
+    }
+
+    const filledJD: FormattedJD = {
+      ...manualFillJD,
+      company: company || manualFillJD.company,
+      job_title: title || manualFillJD.job_title,
+    };
+
+    await runFullPipeline(filledJD);
+  };
+
+  // Shared pipeline runner used by both handleSubmitJD (when all fields
+  // are present) and handleManualFillSave (after the user fills gaps).
+  // Accepts a pre-formatted JD to avoid a second AI call.
+  async function runFullPipeline(alreadyFormatted: FormattedJD) {
     setProcessingStep('analyzing');
+    setState('processing');
+    setPasteError(null);
 
     try {
       // If the user kept the default Uncategorized selection, make sure
-      // the system row exists BEFORE the pipeline runs. The extension
-      // flow already does this (see runExtensionPipelineCore in
-      // application/page.tsx); the manual flow now matches so the saved
-      // app has a proper category_id FK instead of being stored with
-      // just the category text. This is what makes the real row in
-      // user_categories the single "Uncategorized" the user sees, and
-      // what keeps the CategorySelector from showing the system stub
-      // AND the real row as duplicates.
+      // the system row exists BEFORE the pipeline runs.
       if (selectedCategory === 'Uncategorized') {
         const uncategorized = await ensureUncategorizedCategory();
         if (!uncategorized) {
@@ -174,7 +246,7 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
 
       const result = await generateMaskedJobEntryAndDocuments(jdText, selectedCategory, (step) => {
         setProcessingStep(step);
-      });
+      }, alreadyFormatted);
 
       // Surface the AI-extracted header on the processing view so the
       // user can verify the right posting was pulled.
@@ -184,10 +256,7 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
       });
 
       // Build the saved-app URL and let the useEffect above handle
-      // the auto-redirect after the celebration pause. Same shape as
-      // the extension pipeline (Uncategorized stays as a literal key
-      // for the saved-app URL; the storage layer resolves it to the
-      // real category_id via the userCats lookup).
+      // the auto-redirect after the celebration pause.
       const appUrl = `/application?app=${encodeURIComponent(result.category)}/${encodeURIComponent(result.folder)}`;
       setDestination(appUrl);
       setProcessingStep('done');
@@ -195,9 +264,7 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
 
       // Bump the daily counter. Fire-and-forget — the user is about
       // to be redirected to the new app, so we don't need to wait
-      // for the round-trip or surface an error if it fails (the
-      // server-side save is the source of truth; a missed increment
-      // just means tomorrow's count is one lower than reality).
+      // for the round-trip or surface an error if it fails.
       void fetch('/api/usage/increment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -205,28 +272,20 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
       }).catch((err) => console.warn('[AddJobModal] usage increment failed:', err));
     } catch (err) {
       console.error('[AddJobModal] Failed to process job:', err);
-      // Roll back to paste_jd with the JD preserved so the user can
-      // retry without re-typing. The error message is friendlier
-      // than a raw "Failed to parse: JSON was malformed" — most
-      // failures here mean the AI couldn't extract a proper job
-      // description from the pasted text, so we tell the user that
-      // and leave them on the form.
       const raw = err instanceof Error ? err.message : '';
       const isParseFailure =
         /json|parse|format/i.test(raw) ||
         raw.toLowerCase().includes('malformed') ||
-        raw.toLowerCase().includes('did not return') ||
-        raw.toLowerCase().includes('no company') ||
-        raw.toLowerCase().includes('no job title');
+        raw.toLowerCase().includes('did not return');
       setPasteError(
         isParseFailure
           ? "We couldn't find a proper job description in your text. Make sure you've pasted the full posting — including the job title, company name, responsibilities, and requirements — then try again."
           : `Something went wrong while processing this job. ${raw ? `(${raw})` : ''} You can edit the text below and try again.`
       );
-      setState('paste_jd');
+      setState(manualFillJD ? 'manual_fill' : 'paste_jd');
       setProcessingStep('analyzing');
     }
-  };
+  }
 
   const handleViewJob = () => {
     if (!destination) return;
@@ -413,6 +472,76 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
                   Add Job
                 </Button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── State: Manual Fill ─── */}
+        {state === 'manual_fill' && manualFillJD && (
+          <div className="p-8">
+            <div className="mb-1 text-[12px] font-semibold uppercase tracking-wider text-primary">
+              One more step
+            </div>
+            <h2 className="text-[22px] font-semibold text-ink mb-2">
+              We couldn&apos;t find the{' '}
+              {(() => {
+                const missing: string[] = [];
+                if (isUnknownValue(manualFillJD.company)) missing.push('company name');
+                if (isUnknownValue(manualFillJD.job_title)) missing.push('job title');
+                return missing.join(' and ');
+              })()}
+            </h2>
+            <p className="text-[14px] text-steel leading-relaxed mb-6">
+              The job description is a bit sparse, so our AI couldn&apos;t pick up the missing
+              detail{isUnknownValue(manualFillJD.company) && isUnknownValue(manualFillJD.job_title) ? 's' : ''}.
+              Fill in the highlighted field{isUnknownValue(manualFillJD.company) && isUnknownValue(manualFillJD.job_title) ? 's' : ''} below
+              and we&apos;ll save the application and generate your resume and cover letter.
+            </p>
+
+            {pasteError && (
+              <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-[13px] text-amber-900 leading-relaxed">
+                {pasteError}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[12px] uppercase tracking-wide text-steel mb-2">
+                  Company
+                  {isUnknownValue(manualFillJD.company) && <span className="ml-1 text-red-600 normal-case">*</span>}
+                </label>
+                <input
+                  type="text"
+                  value={manualCompany}
+                  onChange={(e) => setManualCompany(e.target.value)}
+                  placeholder="e.g. Concentrix"
+                  disabled={!isUnknownValue(manualFillJD.company)}
+                  className="w-full px-4 py-3 rounded-md border border-hairline-strong bg-white text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-11 disabled:bg-canvas disabled:text-steel disabled:cursor-not-allowed"
+                />
+              </div>
+              <div>
+                <label className="block text-[12px] uppercase tracking-wide text-steel mb-2">
+                  Job title
+                  {isUnknownValue(manualFillJD.job_title) && <span className="ml-1 text-red-600 normal-case">*</span>}
+                </label>
+                <input
+                  type="text"
+                  value={manualTitle}
+                  onChange={(e) => setManualTitle(e.target.value)}
+                  placeholder="e.g. Customer Service / Technical Support Rep"
+                  disabled={!isUnknownValue(manualFillJD.job_title)}
+                  className="w-full px-4 py-3 rounded-md border border-hairline-strong bg-white text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-11 disabled:bg-canvas disabled:text-steel disabled:cursor-not-allowed"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <Button variant="ghost" onClick={() => { setState('paste_jd'); setManualFillJD(null); }}>
+                Back
+              </Button>
+              <Button variant="primary" onClick={handleManualFillSave}>
+                Save &amp; Continue
+              </Button>
             </div>
           </div>
         )}
