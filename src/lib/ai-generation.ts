@@ -34,7 +34,7 @@ async function zenChat(prompt: string, system: string): Promise<string> {
         },
         body: JSON.stringify({
           model: MODEL,
-          max_tokens: 4096,
+          max_tokens: 16384,
           messages: [
             ...(system ? [{ role: 'system', content: system }] : []),
             { role: 'user', content: prompt },

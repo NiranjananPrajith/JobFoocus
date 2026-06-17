@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 4096,
+      max_tokens: 16384,
       messages,
       temperature: 0.3,
     }),
