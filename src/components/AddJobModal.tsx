@@ -9,12 +9,14 @@ import Button from '@/components/design/Button';
 import CategorySelector from '@/components/CategorySelector';
 import ManageCategoriesModal from '@/components/ManageCategoriesModal';
 import AddJobStepper, { type AddJobStep } from '@/components/AddJobStepper';
-import { isMasterResumeBlank, formatJobDescription, generateMaskedJobEntryAndDocuments } from '@/lib/ai-generation';
+import { isMasterResumeBlank, formatJobDescription, conversationalParseJD, generateMaskedJobEntryAndDocuments } from '@/lib/ai-generation';
 import { ensureUncategorizedCategory, getUserCategories, saveCategory, type UserCategory } from '@/lib/storage-adapter';
 import UpgradePromptModal from '@/components/UpgradePromptModal';
-import type { FormattedJD } from '@/lib/ai-generation';
+import type { FormattedJD, ClarifyResult } from '@/lib/ai-generation';
 
-type ModalState = 'two_column' | 'paste_jd' | 'blank_resume' | 'processing' | 'manual_fill';
+type ModalState = 'two_column' | 'paste_jd' | 'blank_resume' | 'processing' | 'manual_fill' | 'clarify_jd';
+
+const MAX_CLARIFY_ROUNDS = 3;
 
 // Values treated as "the AI couldn't figure this out"
 const UNKNOWN_VALUES = new Set([
@@ -81,6 +83,14 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
   const [manualCompany, setManualCompany] = useState('');
   const [manualTitle, setManualTitle] = useState('');
 
+  // Clarify state: the AI couldn't parse the JD or fields are missing.
+  // We ask the user short natural questions up to MAX_CLARIFY_ROUNDS.
+  const [clarifyQuestion, setClarifyQuestion] = useState<string | null>(null);
+  const [clarifyAnswer, setClarifyAnswer] = useState('');
+  const [clarifyHistory, setClarifyHistory] = useState<{ question: string; answer: string }[]>([]);
+  const [clarifyRound, setClarifyRound] = useState(0);
+  const [clarifyPartialJD, setClarifyPartialJD] = useState<FormattedJD | null>(null);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -102,6 +112,11 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
       setManualFillJD(null);
       setManualCompany('');
       setManualTitle('');
+      setClarifyQuestion(null);
+      setClarifyAnswer('');
+      setClarifyHistory([]);
+      setClarifyRound(0);
+      setClarifyPartialJD(null);
     }
   }, [isOpen]);
 
@@ -174,18 +189,19 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
     }
 
     // Step 1: Try to parse the JD. If the AI throws, it's a
-    // complete parse failure — the text doesn't look like a JD.
+    // complete parse failure — start the conversational loop.
     let formattedJD;
     try {
       formattedJD = await formatJobDescription(jdText);
-    } catch (err) {
-      const raw = err instanceof Error ? err.message : '';
-      setPasteError(
-        raw
-          ? `We had trouble reading this job description: ${raw}`
-          : "We couldn't find a proper job description in your text. Make sure you've pasted the full posting — including the job title, company name, responsibilities, and requirements — then try again."
-      );
-      setState('paste_jd');
+    } catch {
+      // Complete parse failure — ask a generic starter question.
+      // conversationalParseJD will be called once the user answers.
+      setClarifyQuestion('What job are you applying for?');
+      setClarifyAnswer('');
+      setClarifyHistory([]);
+      setClarifyRound(0);
+      setClarifyPartialJD(null);
+      setState('clarify_jd');
       return;
     }
 
@@ -193,10 +209,17 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
     const missingCompany = isUnknownValue(formattedJD.company);
     const missingTitle = isUnknownValue(formattedJD.job_title);
     if (missingCompany || missingTitle) {
-      setManualFillJD(formattedJD);
-      setManualCompany(missingCompany ? '' : formattedJD.company);
-      setManualTitle(missingTitle ? '' : formattedJD.job_title);
-      setState('manual_fill');
+      const question = missingCompany && missingTitle
+        ? 'What company and position is this job for?'
+        : missingCompany
+          ? 'What company is this job for?'
+          : 'What position are you applying for?';
+      setClarifyQuestion(question);
+      setClarifyAnswer('');
+      setClarifyHistory([]);
+      setClarifyRound(0);
+      setClarifyPartialJD(formattedJD);
+      setState('clarify_jd');
       return;
     }
 
@@ -204,30 +227,63 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
     await runFullPipeline(formattedJD);
   };
 
-  const handleManualFillSave = async () => {
-    if (!manualFillJD) return;
-    const company = manualCompany.trim();
-    const title = manualTitle.trim();
-    if (!company && isUnknownValue(manualFillJD.company)) {
-      setPasteError('Please enter the company name.');
-      return;
-    }
-    if (!title && isUnknownValue(manualFillJD.job_title)) {
-      setPasteError('Please enter the job title.');
+  const handleClarifySubmit = async () => {
+    const answer = clarifyAnswer.trim();
+    if (!answer) return;
+
+    const newHistory = [
+      ...clarifyHistory,
+      { question: clarifyQuestion!, answer },
+    ];
+    const nextRound = clarifyRound + 1;
+
+    if (nextRound >= MAX_CLARIFY_ROUNDS) {
+      // Exhausted retries — fall back to manual-fill.
+      if (clarifyPartialJD) {
+        setManualFillJD(clarifyPartialJD);
+        setManualCompany(isUnknownValue(clarifyPartialJD.company) ? '' : clarifyPartialJD.company);
+        setManualTitle(isUnknownValue(clarifyPartialJD.job_title) ? '' : clarifyPartialJD.job_title);
+        setState('manual_fill');
+      } else {
+        setPasteError("I couldn't identify this as a job description. Make sure you've pasted the full posting — including the job title, company name, responsibilities, and requirements — then try again.");
+        setState('paste_jd');
+      }
       return;
     }
 
-    const filledJD: FormattedJD = {
-      ...manualFillJD,
-      company: company || manualFillJD.company,
-      job_title: title || manualFillJD.job_title,
-    };
+    try {
+      const result = await conversationalParseJD(jdText, newHistory);
 
-    await runFullPipeline(filledJD);
+      switch (result.kind) {
+        case 'success':
+          await runFullPipeline(result.formattedJD);
+          break;
+        case 'question':
+          setClarifyQuestion(result.question);
+          setClarifyHistory(newHistory);
+          setClarifyRound(nextRound);
+          setClarifyAnswer('');
+          break;
+        case 'failed':
+          // AI explicitly gave up — fall back to manual-fill.
+          if (clarifyPartialJD) {
+            setManualFillJD(clarifyPartialJD);
+            setManualCompany(isUnknownValue(clarifyPartialJD.company) ? '' : clarifyPartialJD.company);
+            setManualTitle(isUnknownValue(clarifyPartialJD.job_title) ? '' : clarifyPartialJD.job_title);
+            setState('manual_fill');
+          } else {
+            setPasteError(result.message);
+            setState('paste_jd');
+          }
+          break;
+      }
+    } catch {
+      setPasteError('Something went wrong. Try pasting the full job description again.');
+      setState('paste_jd');
+    }
   };
 
-  // Shared pipeline runner used by both handleSubmitJD (when all fields
-  // are present) and handleManualFillSave (after the user fills gaps).
+  // Shared pipeline runner used by handleSubmitJD, handleManualFillSave,
   // Accepts a pre-formatted JD to avoid a second AI call.
   async function runFullPipeline(alreadyFormatted: FormattedJD) {
     setProcessingStep('analyzing');
@@ -282,10 +338,32 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
           ? "We couldn't find a proper job description in your text. Make sure you've pasted the full posting — including the job title, company name, responsibilities, and requirements — then try again."
           : `Something went wrong while processing this job. ${raw ? `(${raw})` : ''} You can edit the text below and try again.`
       );
-      setState(manualFillJD ? 'manual_fill' : 'paste_jd');
+      setState('paste_jd');
       setProcessingStep('analyzing');
     }
   }
+
+  const handleManualFillSave = async () => {
+    if (!manualFillJD) return;
+    const company = manualCompany.trim();
+    const title = manualTitle.trim();
+    if (!company && isUnknownValue(manualFillJD.company)) {
+      setPasteError('Please enter the company name.');
+      return;
+    }
+    if (!title && isUnknownValue(manualFillJD.job_title)) {
+      setPasteError('Please enter the job title.');
+      return;
+    }
+
+    const filledJD: FormattedJD = {
+      ...manualFillJD,
+      company: company || manualFillJD.company,
+      job_title: title || manualFillJD.job_title,
+    };
+
+    await runFullPipeline(filledJD);
+  };
 
   const handleViewJob = () => {
     if (!destination) return;
@@ -542,6 +620,62 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
               <Button variant="primary" onClick={handleManualFillSave}>
                 Save &amp; Continue
               </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ─── State: Clarify JD ─── */}
+        {state === 'clarify_jd' && clarifyQuestion && (
+          <div className="p-8">
+            <div className="mb-1 text-[12px] font-semibold uppercase tracking-wider text-primary">
+              One more detail needed
+            </div>
+            <h2 className="text-[22px] font-semibold text-ink mb-4">
+              {clarifyQuestion}
+            </h2>
+
+            {pasteError && (
+              <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-3 text-[13px] text-amber-900 leading-relaxed">
+                {pasteError}
+              </div>
+            )}
+
+            <input
+              type="text"
+              value={clarifyAnswer}
+              onChange={(e) => setClarifyAnswer(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleClarifySubmit(); }}
+              placeholder="Type your answer here..."
+              className="w-full px-4 py-3 rounded-xl border border-hairline-strong bg-canvas text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-stone-400"
+              autoFocus
+            />
+
+            {/* Reference text */}
+            <details className="mt-4 group">
+              <summary className="text-[12px] text-steel cursor-pointer select-none hover:text-ink transition-colors">
+                View original job description
+              </summary>
+              <div className="mt-2 p-3 rounded-lg bg-stone-50 border border-hairline text-[12px] text-steel leading-relaxed max-h-40 overflow-y-auto whitespace-pre-wrap">
+                {jdText}
+              </div>
+            </details>
+
+            <div className="flex items-center justify-between mt-6">
+              <p className="text-[12px] text-steel">
+                {MAX_CLARIFY_ROUNDS - clarifyRound} attempt{MAX_CLARIFY_ROUNDS - clarifyRound !== 1 ? 's' : ''} remaining
+              </p>
+              <div className="flex gap-3">
+                <Button variant="ghost" onClick={() => { setState('paste_jd'); }}>
+                  Back
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleClarifySubmit}
+                  disabled={!clarifyAnswer.trim()}
+                >
+                  Submit
+                </Button>
+              </div>
             </div>
           </div>
         )}

@@ -121,6 +121,92 @@ export async function formatJobDescription(rawJD: string): Promise<FormattedJD> 
 }
 
 // ---------------------------------------------------------------------------
+// Conversational JD parse: iteratively ask the user for missing details
+// ---------------------------------------------------------------------------
+
+export type ClarifyResult =
+  | { kind: 'success'; formattedJD: FormattedJD }
+  | { kind: 'question'; question: string }
+  | { kind: 'failed'; message: string };
+
+interface Clarification {
+  question: string;
+  answer: string;
+}
+
+const CLARIFY_SYSTEM = `You are parsing a job posting from text the user pasted. The user has also answered some follow-up questions.
+
+TASK: Given the original text and any clarifications, decide which case applies:
+
+CASE 1 — You can now extract the full job posting (company name, job title, location, employment type, summary, responsibilities, requirements, preferred qualifications):
+Return a flat JSON object with EXACTLY these fields:
+{"kind":"success","company":"XYZ Corp","job_title":"Software Engineer","location":"Remote","employment_type":"Full-time","summary":"2-3 sentence overview","responsibilities":["...","..."],"requirements":["...","..."],"preferred":["...","..."]}
+- Use the original text FIRST, then supplement with clarification answers
+- Only use "Unknown Company" or "Not specified" as last resort
+- Be thorough — include all details you can extract
+
+CASE 2 — You are still missing required information (especially company or job title):
+Return: {"kind":"question","question":"a short, conversational question asking for the ONE most critical missing piece"}
+- Keep the question under 100 characters
+- Ask about only ONE thing at a time
+- Do NOT ask about something the user has already clarified
+- Examples: "What company is this job for?" or "What position are you applying for?"
+
+CASE 3 — The text clearly is not a job posting and clarifications have not helped:
+Return: {"kind":"failed","message":"A brief, user-friendly explanation of why parsing failed"}
+
+Return ONLY valid JSON — no markdown, no code fences, no explanation.`;
+
+export async function conversationalParseJD(
+  jdText: string,
+  clarifications: Clarification[]
+): Promise<ClarifyResult> {
+  const historyBlock = clarifications.length > 0
+    ? '\n\nUSER CLARIFICATIONS:\n' + clarifications
+      .map((c, i) => `Q${i + 1}: ${c.question}\nA${i + 1}: ${c.answer}`)
+      .join('\n')
+    : '';
+
+  const prompt = `ORIGINAL TEXT:\n${jdText}${historyBlock}`;
+
+  const raw = await zenChat(prompt, CLARIFY_SYSTEM);
+  const jsonMatch = raw.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    return { kind: 'failed', message: 'Could not understand the job description. Try pasting the full posting.' };
+  }
+
+  try {
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    if (parsed.kind === 'success') {
+      const jd: FormattedJD = {
+        company: parsed.company || 'Unknown Company',
+        job_title: parsed.job_title || 'Not specified',
+        location: parsed.location || 'Not specified',
+        employment_type: parsed.employment_type || 'Full-time',
+        summary: parsed.summary || '',
+        responsibilities: Array.isArray(parsed.responsibilities) ? parsed.responsibilities : [],
+        requirements: Array.isArray(parsed.requirements) ? parsed.requirements : [],
+        preferred: Array.isArray(parsed.preferred) ? parsed.preferred : [],
+      };
+      return { kind: 'success', formattedJD: jd };
+    }
+
+    if (parsed.kind === 'question' && typeof parsed.question === 'string') {
+      return { kind: 'question', question: parsed.question };
+    }
+
+    if (parsed.kind === 'failed' && typeof parsed.message === 'string') {
+      return { kind: 'failed', message: parsed.message };
+    }
+
+    return { kind: 'failed', message: 'Unexpected response from AI. Try pasting the full job description.' };
+  } catch {
+    return { kind: 'failed', message: 'Could not parse the AI response. Try again.' };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // AI Classification: Assign job to category
 // ---------------------------------------------------------------------------
 

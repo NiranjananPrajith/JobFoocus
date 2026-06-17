@@ -22,8 +22,10 @@ import { StatusType } from '@/lib/design-system';
 import {
   generateMaskedDocumentsForExistingJob,
   formatJobDescription,
+  conversationalParseJD,
   buildJobDescriptionHTML,
 } from '@/lib/ai-generation';
+import type { FormattedJD } from '@/lib/ai-generation';
 import AddJobStepper from '@/components/AddJobStepper';
 import UpgradePromptModal from '@/components/UpgradePromptModal';
 
@@ -121,7 +123,7 @@ function ApplicationContent() {
     (!!extTitle || !!extCompany || !!extJd || !!extUrl || extHeuristicMiss || !!extLocation || !!extSalary || !!extPosted || !!extWorkType);
 
   type PipelineStep = 'analyzing' | 'resume' | 'cover_letter' | 'done';
-  type PipelineMode = 'auth-checking' | 'processing' | 'manual-fill' | 'jd-retry' | 'error' | null;
+  type PipelineMode = 'auth-checking' | 'processing' | 'manual-fill' | 'jd-retry' | 'clarify-jd' | 'error' | null;
 
   // Held while the user is filling in the manual-fill form. Captures
   // everything the AI extracted + the original job description + a
@@ -169,6 +171,15 @@ function ApplicationContent() {
   // textbox and click "Add Job" to retry the pipeline manually.
   const [jdRetryText, setJdRetryText] = useState('');
   const [jdRetryError, setJdRetryError] = useState<string | null>(null);
+
+  // Clarify-jd state: the AI couldn't parse the JD or fields are missing.
+  // We ask the user short natural questions up to 3 rounds.
+  const [clarifyQuestion, setClarifyQuestion] = useState<string | null>(null);
+  const [clarifyAnswer, setClarifyAnswer] = useState('');
+  const [clarifyHistory, setClarifyHistory] = useState<{question: string; answer: string}[]>([]);
+  const [clarifyRound, setClarifyRound] = useState(0);
+  const [clarifyPartialJD, setClarifyPartialJD] = useState<FormattedJD | null>(null);
+  const [clarifyJdText, setClarifyJdText] = useState('');
 
   // Daily-limit block. Snapshot from the server, shown in the upgrade
   // modal so the user sees the exact numbers they were blocked at.
@@ -365,13 +376,15 @@ function ApplicationContent() {
   type PipelineOutcome =
     | { kind: 'success'; folder: string }
     | { kind: 'parse-fail'; message: string }
+    | { kind: 'clarify'; question: string; partialJD: FormattedJD | null; jdText: string }
     | { kind: 'manual-fill'; folder: string; formattedJD: ManualFillPayload['formattedJD']; missingCompany: boolean; missingTitle: boolean }
     | { kind: 'other-fail'; message: string }
     | { kind: 'limit-blocked'; tier: 'free' | 'pro' | 'max'; jobsUsed: number; jobsLimit: number; editsUsed: number; editsLimit: number };
 
   async function runExtensionPipelineCore(
     jdText: string,
-    cancelled: { current: boolean }
+    cancelled: { current: boolean },
+    preFormattedJD?: FormattedJD
   ): Promise<PipelineOutcome> {
     // 3a. Daily-limit pre-check. Same shape as AddJobModal.handleSubmitJD:
     // bail early with a friendly modal before we burn AI tokens on a
@@ -411,39 +424,55 @@ function ApplicationContent() {
     }
 
     // 3b. Format the JD. Parse / format failures here are what
-    // send the caller to the jd-retry state.
-    let formattedJD;
-    try {
-      formattedJD = await formatJobDescription(jdText);
-    } catch (err) {
-      const raw = err instanceof Error ? err.message : 'The AI did not return a parseable job description.';
-      return { kind: 'parse-fail', message: raw };
+    // send the caller to the clarification loop.
+    // If a preFormattedJD was passed in (from the clarify loop), skip AI parsing.
+    let formattedJD: FormattedJD | undefined;
+    let formatResult: 'ok' | 'parse-fail' | 'missing-fields';
+
+    if (preFormattedJD) {
+      formattedJD = preFormattedJD;
+      const mc = isUnknownValue(formattedJD.company);
+      const mt = isUnknownValue(formattedJD.job_title);
+      formatResult = (mc || mt) ? 'missing-fields' : 'ok';
+    } else {
+      try {
+        formattedJD = await formatJobDescription(jdText);
+        const mc = isUnknownValue(formattedJD.company);
+        const mt = isUnknownValue(formattedJD.job_title);
+        formatResult = (mc || mt) ? 'missing-fields' : 'ok';
+      } catch {
+        formatResult = 'parse-fail';
+      }
     }
+
     if (cancelled.current) return { kind: 'other-fail', message: 'Cancelled' };
 
-    const folder = 'job-' + Date.now();
-
-    // 3c. Required-field gate.
-    const missingCompany = isUnknownValue(formattedJD.company);
-    const missingTitle = isUnknownValue(formattedJD.job_title);
-    if (missingCompany || missingTitle) {
+    if (formatResult === 'parse-fail' || !formattedJD) {
       return {
-        kind: 'manual-fill',
-        folder,
-        formattedJD: {
-          company: formattedJD.company || '',
-          job_title: formattedJD.job_title || '',
-          location: formattedJD.location || '',
-          employment_type: formattedJD.employment_type || '',
-          summary: formattedJD.summary || '',
-          responsibilities: formattedJD.responsibilities || [],
-          requirements: formattedJD.requirements || [],
-          preferred: formattedJD.preferred || [],
-        },
-        missingCompany,
-        missingTitle,
+        kind: 'clarify',
+        question: '',
+        partialJD: null,
+        jdText,
       };
     }
+
+    if (formatResult === 'missing-fields') {
+      const mc = isUnknownValue(formattedJD.company);
+      const mt = isUnknownValue(formattedJD.job_title);
+      const question = mc && mt
+        ? 'What company and position is this job for?'
+        : mc
+          ? 'What company is this job for?'
+          : 'What position are you applying for?';
+      return {
+        kind: 'clarify',
+        question,
+        partialJD: formattedJD,
+        jdText,
+      };
+    }
+
+    const folder = 'job-' + Date.now();
 
     // 3d. Save application.
     try {
@@ -555,6 +584,17 @@ function ApplicationContent() {
           setJdRetryText(extJd || '');
           setJdRetryError('Could not identify a job posting in this page. Copy the full job description and paste it below.');
           setPipelineMode('jd-retry');
+          return;
+        case 'clarify':
+          setClarifyQuestion(
+            outcome.question || 'What job are you applying for?'
+          );
+          setClarifyAnswer('');
+          setClarifyHistory([]);
+          setClarifyRound(0);
+          setClarifyPartialJD(outcome.partialJD);
+          setClarifyJdText(outcome.jdText);
+          setPipelineMode('clarify-jd');
           return;
         case 'manual-fill':
           setManualFill({
@@ -741,24 +781,16 @@ function ApplicationContent() {
       if (cancelled.current) return;
 
       switch (outcome.kind) {
-        case 'parse-fail':
-          setJdRetryError(
-            `We still couldn't find a proper job description in your text. ${outcome.message} Make sure it includes the full job title, company name, responsibilities, and requirements — then try again.`
+        case 'clarify':
+          setClarifyQuestion(
+            outcome.question || 'What job are you applying for?'
           );
-          setPipelineMode('jd-retry');
-          return;
-        case 'manual-fill':
-          setManualFill({
-            folder: outcome.folder,
-            jobDescription: jdRetryText,
-            formattedJD: outcome.formattedJD,
-            missingCompany: outcome.missingCompany,
-            missingTitle: outcome.missingTitle,
-          });
-          setManualCompany(outcome.formattedJD.company);
-          setManualTitle(outcome.formattedJD.job_title);
-          setManualFillError(null);
-          setPipelineMode('manual-fill');
+          setClarifyAnswer('');
+          setClarifyHistory([]);
+          setClarifyRound(0);
+          setClarifyPartialJD(outcome.partialJD);
+          setClarifyJdText(outcome.jdText);
+          setPipelineMode('clarify-jd');
           return;
         case 'other-fail':
           setPipelineError(outcome.message);
@@ -784,6 +816,114 @@ function ApplicationContent() {
   const handleJdRetryCancel = () => {
     setJdRetryText('');
     setJdRetryError(null);
+    setPipelineMode(null);
+    router.replace('/dashboard');
+  };
+
+  const MAX_CLARIFY_ROUNDS = 3;
+
+  const handleClarifySubmit = async () => {
+    if (!clarifyAnswer.trim()) return;
+    const newRound = clarifyRound + 1;
+    const newHistory: { question: string; answer: string }[] = [
+      ...clarifyHistory,
+      { question: clarifyQuestion || '', answer: clarifyAnswer },
+    ];
+
+    if (newRound >= MAX_CLARIFY_ROUNDS) {
+      // Give up — route to jd-retry so the user can paste a cleaner JD.
+      setJdRetryText(clarifyJdText);
+      setJdRetryError(
+        'We had trouble identifying this job. Copy the full job description and paste it below.'
+      );
+      setPipelineMode('jd-retry');
+      return;
+    }
+
+    setClarifyRound(newRound);
+    setClarifyHistory(newHistory);
+    setClarifyAnswer('');
+    setPipelineStep('analyzing');
+
+    try {
+      const result = await conversationalParseJD(
+        clarifyJdText,
+        newHistory
+      );
+
+      if (result.kind === 'success') {
+        // Fully parsed — run the rest of the pipeline with preFormattedJD.
+        setPipelineStep('resume');
+        const cancelled = { current: false };
+        const outcome = await runExtensionPipelineCore(clarifyJdText, cancelled, result.formattedJD);
+        if (cancelled.current) return;
+
+        switch (outcome.kind) {
+          case 'clarify':
+            // Still ambiguous after re-parsing — show the next question.
+            setClarifyQuestion(outcome.question || 'Could you tell me more about this job?');
+            setClarifyPartialJD(outcome.partialJD);
+            setPipelineMode('clarify-jd');
+            return;
+          case 'other-fail':
+            setPipelineError(outcome.message);
+            setPipelineMode('error');
+            return;
+          case 'limit-blocked':
+            setLimitBlock({
+              tier: outcome.tier,
+              used: outcome.jobsUsed,
+              limit: outcome.jobsLimit,
+              editsUsed: outcome.editsUsed,
+              editsLimit: outcome.editsLimit,
+            });
+            return;
+          case 'success': {
+            const destination = `/application?app=Uncategorized/${encodeURIComponent(outcome.folder)}`;
+            setPipelineDestination(destination);
+            await new Promise((r) => setTimeout(r, 700));
+            if (cancelled.current) return;
+            setPipelineMode(null);
+            router.replace(destination);
+            return;
+          }
+        }
+      } else if (result.kind === 'question') {
+        // Still ambiguous — show the next question from the AI.
+        setClarifyQuestion(result.question);
+        setPipelineMode('clarify-jd');
+      } else {
+        // 'failed' — route to jd-retry.
+        setJdRetryText(clarifyJdText);
+        setJdRetryError(
+          result.message || 'We had trouble processing your answer. Copy the full job description and paste it below.'
+        );
+        setPipelineMode('jd-retry');
+      }
+    } catch {
+      // Fallback on error: route to jd-retry.
+      setJdRetryText(clarifyJdText);
+      setJdRetryError(
+        'We had trouble processing your answer. Copy the full job description and paste it below.'
+      );
+      setPipelineMode('jd-retry');
+    }
+  };
+
+  const handleClarifySkip = () => {
+    // Skip the clarify flow and go straight to jd-retry.
+    setJdRetryText(clarifyJdText);
+    setJdRetryError(null);
+    setPipelineMode('jd-retry');
+  };
+
+  const handleClarifyCancel = () => {
+    setClarifyQuestion(null);
+    setClarifyAnswer('');
+    setClarifyHistory([]);
+    setClarifyRound(0);
+    setClarifyPartialJD(null);
+    setClarifyJdText('');
     setPipelineMode(null);
     router.replace('/dashboard');
   };
@@ -1026,6 +1166,82 @@ function ApplicationContent() {
             <button
               type="button"
               onClick={handleJdRetryCancel}
+              className="text-[14px] text-steel hover:text-ink transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (pipelineMode === 'clarify-jd' && clarifyQuestion !== null) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-4">
+        <Card variant="cream" className="max-w-[560px] w-full p-8">
+          <div className="mb-1 text-[12px] font-semibold uppercase tracking-wider text-primary">
+            Tell us about this job
+          </div>
+          <h2 className="text-[22px] md:text-[24px] font-semibold text-ink mb-2">
+            {clarifyQuestion}
+          </h2>
+
+          {clarifyHistory.length > 0 && (
+            <div className="mb-4 space-y-2">
+              {clarifyHistory.map((h, i) => (
+                <div key={i} className="rounded-lg border border-hairline-strong bg-white p-3">
+                  <p className="text-[12px] text-steel font-medium mb-1">You said:</p>
+                  <p className="text-[14px] text-ink">{h.answer}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <details className="mb-4">
+            <summary className="text-[12px] text-steel cursor-pointer hover:text-ink transition-colors select-none">
+              View original job description
+            </summary>
+            <div className="mt-2 max-h-[200px] overflow-y-auto rounded-lg border border-hairline-strong bg-white p-3 text-[13px] text-ink leading-relaxed whitespace-pre-wrap">
+              {clarifyJdText}
+            </div>
+          </details>
+
+          <div className="mb-2">
+            <textarea
+              value={clarifyAnswer}
+              onChange={(e) => setClarifyAnswer(e.target.value)}
+              rows={3}
+              placeholder="Type your answer here..."
+              className="w-full px-4 py-3 rounded-xl border border-hairline-strong bg-white text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none placeholder:text-stone-400"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleClarifySubmit();
+                }
+              }}
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              variant="primary"
+              onClick={handleClarifySubmit}
+              disabled={!clarifyAnswer.trim()}
+            >
+              Next
+            </Button>
+            <button
+              type="button"
+              onClick={handleClarifySkip}
+              className="text-[14px] text-steel hover:text-ink transition-colors"
+            >
+              Paste the full description instead
+            </button>
+            <button
+              type="button"
+              onClick={handleClarifyCancel}
               className="text-[14px] text-steel hover:text-ink transition-colors"
             >
               Cancel
