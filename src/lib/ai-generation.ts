@@ -4,12 +4,12 @@ import type { CategoryKey, StatusKey } from '@/lib/storage-adapter';
 import formattingGuides from './formatting-guides.json';
 
 // ---------------------------------------------------------------------------
-// OpenCode ZEN (OpenAI-compatible API via direct fetch)
+// JobFoocus AI (internal model)
 // ---------------------------------------------------------------------------
 
 const API_KEY = process.env.OPENCODE_ZEN_API_KEY || '';
 const MODEL = 'deepseek-v4-flash-free';
-// Server-side: call OpenCode ZEN directly. Client-side: call our Next.js API route to avoid CORS.
+// Server-side: call JobFoocus AI directly. Client-side: call our Next.js API route to avoid CORS.
 const AI_API_URL = typeof window !== 'undefined' ? '/api/ai' : 'https://opencode.ai/zen/v1/chat/completions';
 
 type AIFunction = 'analyzing' | 'resume' | 'cover_letter' | 'done';
@@ -19,11 +19,11 @@ async function zenChat(prompt: string, system: string): Promise<string> {
   const isServer = typeof window === 'undefined';
 
   if (isServer && !API_KEY) {
-    console.error('[AI] OPENCODE_ZEN_API_KEY is not configured.');
-    throw new Error('OPENCODE_ZEN_API_KEY is not configured.');
+    console.error('[AI] AI API key is not configured.');
+    throw new Error('[AI] AI API key is not configured.');
   }
 
-  console.log('[AI] Sending request to OpenCode ZEN...', { model: MODEL, promptLength: prompt.length });
+  console.log('[AI] Sending request to JobFoocus AI...', { model: MODEL, promptLength: prompt.length });
 
   const fetchOptions = isServer
     ? {
@@ -50,20 +50,20 @@ async function zenChat(prompt: string, system: string): Promise<string> {
 
   const res = await fetch(AI_API_URL, fetchOptions as RequestInit);
 
-  console.log('[AI] OpenCode ZEN response status:', res.status, res.statusText);
+  console.log('[AI] JobFoocus AI response status:', res.status, res.statusText);
 
   if (!res.ok) {
     const errText = await res.text();
-    console.error('[AI] OpenCode ZEN API error:', res.status, errText);
-    throw new Error(`OpenCode ZEN API error ${res.status}: ${errText}`);
+    console.error('[AI] AI API error:', res.status, errText);
+    throw new Error(`AI API error ${res.status}: ${errText}`);
   }
 
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content || '';
 
   if (!content) {
-    console.error('[AI] Empty response from OpenCode ZEN.');
-    throw new Error('OpenCode ZEN returned empty response.');
+    console.error('[AI] Empty response from JobFoocus AI. Full data:', JSON.stringify(data));
+    throw new Error('JobFoocus AI returned empty response.');
   }
 
   console.log('[AI] Extracted content length:', content.length);

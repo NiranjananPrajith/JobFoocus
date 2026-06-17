@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   const { prompt, system } = await req.json();
 
   if (!API_KEY) {
-    return NextResponse.json({ error: 'OPENCODE_ZEN_API_KEY not configured' }, { status: 500 });
+    return NextResponse.json({ error: 'AI service not configured' }, { status: 500 });
   }
 
   if (!prompt) {
