@@ -36,7 +36,7 @@ export default function PrivacyPolicyPage() {
         <section>
           <h2 className="text-[18px] font-semibold text-ink mb-3">4. AI Document Generation</h2>
           <p className="text-[15px] text-steel leading-relaxed">
-            Job Foocus uses the MiniMax API (Anthropic API compatibility endpoint) to generate tailored resumes and cover letters. Your job description and master resume data are sent to this API solely for the purpose of document generation. We do not use your data to train AI models.
+            Job Foocus uses the DeepSeek AI API (via OpenCode ZEN) to generate tailored resumes and cover letters. Your job description and master resume data are sent to this API solely for the purpose of document generation. We do not use your data to train AI models.
           </p>
         </section>
 
@@ -57,7 +57,7 @@ export default function PrivacyPolicyPage() {
         <section>
           <h2 className="text-[18px] font-semibold text-ink mb-3">7. Third-Party Services</h2>
           <p className="text-[15px] text-steel leading-relaxed">
-            Our AI document generation is powered by MiniMax. When you use the platform, your job description and master resume data are temporarily sent to MiniMax's API solely for generating your tailored documents. Their use of your data is governed by MiniMax's own privacy policy. Job Foocus is not responsible for the privacy practices of third-party services you connect (such as cloud storage providers) beyond what is described in this policy.
+            Our AI document generation is powered by DeepSeek (via OpenCode ZEN). When you use the platform, your job description and master resume data are temporarily sent to DeepSeek's API solely for generating your tailored documents. Their use of your data is governed by DeepSeek's own privacy policy. Job Foocus is not responsible for the privacy practices of third-party services you connect (such as cloud storage providers) beyond what is described in this policy.
           </p>
         </section>
 

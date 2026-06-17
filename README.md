@@ -29,7 +29,7 @@ any job board.
 
 ## Features
 
-- **AI document generation** — server-side calls to the MiniMax M2.7 model
+- **AI document generation** — server-side calls to the DeepSeek V4 Flash Free model
   draft a tailored `resume.html` and `cover_letter.html`. PII is masked
   before the prompt and demasked on the way back so the model never sees
   your real phone/email.
@@ -59,7 +59,7 @@ any job board.
 | Database         | Supabase Postgres with RLS                          |
 | Auth             | Supabase Auth (email + Google OAuth)                |
 | Payments         | Stripe Checkout + Customer Portal + webhooks        |
-| AI               | MiniMax M2.7 via direct HTTP (Anthropic-compatible) |
+| AI               | DeepSeek V4 Flash Free via OpenCode ZEN (OpenAI-compatible) |
 | PDF rendering    | `pdfjs-dist` (worker copied to `public/pdf-worker/`) |
 | Styling          | Tailwind CSS                                        |
 | Hosting          | Vercel                                              |
@@ -96,7 +96,7 @@ Stripe and Supabase keys are sensitive.
 
 | Variable                                | Required | Where it comes from                            |
 | --------------------------------------- | -------- | ---------------------------------------------- |
-| `MINIMAX_API_KEY`                       | yes      | MiniMax dashboard                              |
+| `OPENCODE_ZEN_API_KEY`                 | yes      | OpenCode ZEN dashboard                              |
 | `NEXT_PUBLIC_SUPABASE_URL`              | yes      | Supabase project settings                      |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`  | yes      | Supabase project settings (anon / publishable) |
 | `SUPABASE_SERVICE_ROLE_KEY`             | yes      | Supabase project settings (service role, secret) |

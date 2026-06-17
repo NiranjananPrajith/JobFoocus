@@ -54,7 +54,7 @@ export default function TermsOfServicePage() {
         <section>
           <h2 className="text-[18px] font-semibold text-ink mb-3">7. Third-Party Services and APIs</h2>
           <p className="text-[15px] text-steel leading-relaxed">
-            Job Foocus relies on third-party services, including the MiniMax API, for AI document generation. These services are subject to their own terms and privacy policies. We do not guarantee the continuous availability, accuracy, or reliability of any third-party service. Job Foocus reserves the right to modify, replace, or discontinue reliance on any third-party API without notice.
+            Job Foocus relies on third-party services, including the DeepSeek AI API (via OpenCode ZEN), for AI document generation. These services are subject to their own terms and privacy policies. We do not guarantee the continuous availability, accuracy, or reliability of any third-party service. Job Foocus reserves the right to modify, replace, or discontinue reliance on any third-party API without notice.
           </p>
         </section>
 

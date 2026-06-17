@@ -32,5 +32,8 @@ tsconfig.tsbuildinfo
 .env
 .env.local
 
+# HyperFrames video compositions
+/video/
+
 # Claude
 .claude

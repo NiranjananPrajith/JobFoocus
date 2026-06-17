@@ -4,26 +4,26 @@ import type { CategoryKey, StatusKey } from '@/lib/storage-adapter';
 import formattingGuides from './formatting-guides.json';
 
 // ---------------------------------------------------------------------------
-// Minimax API (Anthropic API compatibility via direct fetch)
+// OpenCode ZEN (OpenAI-compatible API via direct fetch)
 // ---------------------------------------------------------------------------
 
-const API_KEY = process.env.MINIMAX_API_KEY || '';
-const MODEL = 'MiniMax-M2.7';
-// Server-side: call Minimax directly. Client-side: call our Next.js API route to avoid CORS.
-const AI_API_URL = typeof window !== 'undefined' ? '/api/ai' : 'https://api.minimax.io/anthropic/v1/messages';
+const API_KEY = process.env.OPENCODE_ZEN_API_KEY || '';
+const MODEL = 'deepseek-v4-flash-free';
+// Server-side: call OpenCode ZEN directly. Client-side: call our Next.js API route to avoid CORS.
+const AI_API_URL = typeof window !== 'undefined' ? '/api/ai' : 'https://opencode.ai/zen/v1/chat/completions';
 
 type AIFunction = 'analyzing' | 'resume' | 'cover_letter' | 'done';
 type ProgressCallback = (step: AIFunction) => void;
 
-async function minimaxChat(prompt: string, system: string): Promise<string> {
+async function zenChat(prompt: string, system: string): Promise<string> {
   const isServer = typeof window === 'undefined';
 
   if (isServer && !API_KEY) {
-    console.error('[AI] MINIMAX_API_KEY is not configured.');
-    throw new Error('MINIMAX_API_KEY is not configured.');
+    console.error('[AI] OPENCODE_ZEN_API_KEY is not configured.');
+    throw new Error('OPENCODE_ZEN_API_KEY is not configured.');
   }
 
-  console.log('[AI] Sending request to Minimax...', { model: MODEL, promptLength: prompt.length });
+  console.log('[AI] Sending request to OpenCode ZEN...', { model: MODEL, promptLength: prompt.length });
 
   const fetchOptions = isServer
     ? {
@@ -35,8 +35,10 @@ async function minimaxChat(prompt: string, system: string): Promise<string> {
         body: JSON.stringify({
           model: MODEL,
           max_tokens: 4096,
-          system,
-          messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }],
+          messages: [
+            ...(system ? [{ role: 'system', content: system }] : []),
+            { role: 'user', content: prompt },
+          ],
           temperature: 0.3,
         }),
       }
@@ -48,42 +50,20 @@ async function minimaxChat(prompt: string, system: string): Promise<string> {
 
   const res = await fetch(AI_API_URL, fetchOptions as RequestInit);
 
-  console.log('[AI] Minimax response status:', res.status, res.statusText);
+  console.log('[AI] OpenCode ZEN response status:', res.status, res.statusText);
 
   if (!res.ok) {
     const errText = await res.text();
-    console.error('[AI] Minimax API error:', res.status, errText);
-    throw new Error(`Minimax API error ${res.status}: ${errText}`);
+    console.error('[AI] OpenCode ZEN API error:', res.status, errText);
+    throw new Error(`OpenCode ZEN API error ${res.status}: ${errText}`);
   }
 
   const data = await res.json();
-
-  let content: string;
-
-  if (typeof data.content === 'string') {
-    // Direct string response
-    content = data.content;
-  } else if (Array.isArray(data.content)) {
-    // Array of content blocks [{type: "text", text: "..."}]
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const textBlocks = data.content
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .filter((b: any) => b && b.type === 'text')
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((b: any) => b.text || '');
-    content = textBlocks.join('');
-  } else if (data.content != null && typeof data.content === 'object') {
-    // Single content object {type: "text", text: "..."}
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    content = (data.content as any).text || '';
-  } else {
-    console.error('[AI] Unexpected Minimax response structure:', typeof data.content, JSON.stringify(data.content).slice(0, 200));
-    throw new Error('Minimax returned an unexpected response format.');
-  }
+  const content = data.choices?.[0]?.message?.content || '';
 
   if (!content) {
-    console.error('[AI] Empty response from Minimax.');
-    throw new Error('Minimax returned empty response.');
+    console.error('[AI] Empty response from OpenCode ZEN.');
+    throw new Error('OpenCode ZEN returned empty response.');
   }
 
   console.log('[AI] Extracted content length:', content.length);
@@ -109,7 +89,7 @@ export async function formatJobDescription(rawJD: string): Promise<FormattedJD> 
   console.log('[AI] Step 1: Formatting job description, input length:', rawJD.length);
   const system = 'You are an expert job posting analyst. Parse the provided job posting and return a JSON object with exactly these fields:\n- company: string (the hiring company name, or "Unknown Company" if not found)\n- job_title: string (the exact job title)\n- location: string (city/region or "Not specified")\n- employment_type: string (full-time, part-time, contract, etc.)\n- summary: string (2-3 sentence overview of the role)\n- responsibilities: string[] (array of 4-8 key responsibilities as concise bullet points)\n- requirements: string[] (array of 4-8 minimum requirements as bullet points)\n- preferred: string[] (array of 2-4 nice-to-have qualifications, or empty array if none)\n\nReturn ONLY the JSON object. No markdown, no code blocks, no explanation. The JSON must be parseable with JSON.parse().';
 
-  const result = await minimaxChat(
+  const result = await zenChat(
     'Parse this job posting:\n\n' + rawJD,
     system
   );
@@ -168,7 +148,7 @@ Based on the job title, company, and description, which single category best fit
 Respond with ONLY the category name, or "Uncategorized" if none clearly fit.`;
 
   try {
-    const result = await minimaxChat(prompt, system);
+    const result = await zenChat(prompt, system);
     const trimmed = result.trim();
 
     // Check if the result matches one of our category names
@@ -226,7 +206,7 @@ Company: ${jd.company}
 Title: ${jd.job_title}
 Key Requirements: ${(jd.requirements || []).join(', ')}`;
 
-  return minimaxChat(prompt, system);
+  return zenChat(prompt, system);
 }
 
 // ---------------------------------------------------------------------------
@@ -261,7 +241,7 @@ RULES:
 CANDIDATE DATA:
 ${maskedMasterResume}`;
 
-  const raw = await minimaxChat(prompt, system);
+  const raw = await zenChat(prompt, system);
 
   // Parse out the three labeled paragraphs from plain text response
   const para1Match = raw.match(/\[PARA1\]\s*\n([\s\S]*?)(?=\[PARA2\]|$)/i);
@@ -548,7 +528,7 @@ INSTRUCTIONS:
 - For resumes: keep Professional Summary, Skills, Work Experience, Education, and Certifications sections intact unless specifically asked to change them
 - For cover letters: keep all paragraphs and all structural elements (sender block, date, recipient, subject, signature) intact unless specifically asked to change them`;
 
-  const raw = await minimaxChat(prompt, system);
+  const raw = await zenChat(prompt, system);
   if (!raw || raw.length < 50) {
     throw new Error('AI returned an invalid or empty response. Please try again.');
   }

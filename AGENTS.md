@@ -36,7 +36,7 @@ popup ─────────────── click ──────┤
               /api/usage/*  /api/stripe/*  /api/ai/edit-document
                                               │
                                               ▼
-                                MiniMax M2.7  +  Stripe API
+                                 DeepSeek V4 Flash Free (via OpenCode ZEN)  +  Stripe API
 ```
 
 ### Source of truth for tier → limits
@@ -103,15 +103,15 @@ through to the matching `/api/db/*` route.
 
 ### 2.3 AI: `src/lib/ai-generation.ts`
 
-All LLM calls go through `minimaxChat(prompt, system)`:
+All LLM calls go through `zenChat(prompt, system)`:
 
 - **Server-side** (`typeof window === 'undefined'`): calls the
-  MiniMax Anthropic-compatible API directly with the `MINIMAX_API_KEY`
+  OpenCode ZEN OpenAI-compatible API directly with the `OPENCODE_ZEN_API_KEY`
   env var. Throws if the key is missing.
 - **Client-side**: POSTs to `/api/ai`, which is a thin proxy that does
   the same call server-side. (CORS avoidance.)
 
-The model is `'MiniMax-M2.7'`. The prompt is constructed with PII
+The model is `'deepseek-v4-flash-free'`. The prompt is constructed with PII
 masked via `maskPII(html, profile)` from `src/lib/pii-utils.ts`, and
 the response is run through `demaskPII(html, profile)` before being
 returned. The PII profile is a stable JSON blob generated on first

@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_KEY = process.env.MINIMAX_API_KEY || '';
-const MODEL = 'MiniMax-M2.7';
-const BASE_URL = 'https://api.minimax.io/anthropic/v1/messages';
+const API_KEY = process.env.OPENCODE_ZEN_API_KEY || '';
+const MODEL = 'deepseek-v4-flash-free';
+const BASE_URL = 'https://opencode.ai/zen/v1/chat/completions';
 
 export async function POST(req: NextRequest) {
   const { prompt, system } = await req.json();
 
   if (!API_KEY) {
-    return NextResponse.json({ error: 'MINIMAX_API_KEY not configured' }, { status: 500 });
+    return NextResponse.json({ error: 'OPENCODE_ZEN_API_KEY not configured' }, { status: 500 });
   }
 
   if (!prompt) {
@@ -20,6 +20,10 @@ export async function POST(req: NextRequest) {
   // sending anything to the server, so the server only ever sees structured tags
   // like <PII_NAME>John Doe</PII_NAME>, never raw PII.
 
+  const messages: { role: string; content: string }[] = [];
+  if (system) messages.push({ role: 'system', content: system });
+  messages.push({ role: 'user', content: prompt });
+
   const response = await fetch(BASE_URL, {
     method: 'POST',
     headers: {
@@ -29,8 +33,7 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({
       model: MODEL,
       max_tokens: 4096,
-      system: system || '',
-      messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }],
+      messages,
       temperature: 0.3,
     }),
   });
@@ -41,12 +44,10 @@ export async function POST(req: NextRequest) {
   }
 
   const data = await response.json();
-  const contentBlocks = data.content || [];
-  const textBlocks = contentBlocks.filter((block: { type: string }) => block.type === 'text');
-  const content = textBlocks.map((block: { text?: string }) => block.text || '').join('');
+  const content = data.choices?.[0]?.message?.content || '';
 
   if (!content) {
-    return NextResponse.json({ error: 'Empty response from AI', content: data.content }, { status: 502 });
+    return NextResponse.json({ error: 'Empty response from AI', response: data }, { status: 502 });
   }
 
   return NextResponse.json({ content });
