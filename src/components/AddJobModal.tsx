@@ -196,7 +196,7 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
     } catch {
       // Complete parse failure — ask a generic starter question.
       // conversationalParseJD will be called once the user answers.
-      setClarifyQuestion('What job are you applying for?');
+      setClarifyQuestion("We couldn't understand this job description. What job are you applying for?");
       setClarifyAnswer('');
       setClarifyHistory([]);
       setClarifyRound(0);
@@ -210,10 +210,10 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
     const missingTitle = isUnknownValue(formattedJD.job_title);
     if (missingCompany || missingTitle) {
       const question = missingCompany && missingTitle
-        ? 'What company and position is this job for?'
+        ? "We couldn't find a company name or job title in the job description. Can you tell us both?"
         : missingCompany
-          ? 'What company is this job for?'
-          : 'What position are you applying for?';
+          ? "We couldn't find a company name in the job description. What company is this job for?"
+          : "We couldn't find a job title in the job description. Can you enter it below?";
       setClarifyQuestion(question);
       setClarifyAnswer('');
       setClarifyHistory([]);

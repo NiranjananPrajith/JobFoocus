@@ -460,10 +460,10 @@ function ApplicationContent() {
       const mc = isUnknownValue(formattedJD.company);
       const mt = isUnknownValue(formattedJD.job_title);
       const question = mc && mt
-        ? 'What company and position is this job for?'
+        ? "We couldn't find a company name or job title in the job description. Can you tell us both?"
         : mc
-          ? 'What company is this job for?'
-          : 'What position are you applying for?';
+          ? "We couldn't find a company name in the job description. What company is this job for?"
+          : "We couldn't find a job title in the job description. Can you enter it below?";
       return {
         kind: 'clarify',
         question,
@@ -587,7 +587,7 @@ function ApplicationContent() {
           return;
         case 'clarify':
           setClarifyQuestion(
-            outcome.question || 'What job are you applying for?'
+            outcome.question || "We couldn't understand this job description. What job are you applying for?"
           );
           setClarifyAnswer('');
           setClarifyHistory([]);
@@ -595,19 +595,6 @@ function ApplicationContent() {
           setClarifyPartialJD(outcome.partialJD);
           setClarifyJdText(outcome.jdText);
           setPipelineMode('clarify-jd');
-          return;
-        case 'manual-fill':
-          setManualFill({
-            folder: outcome.folder,
-            jobDescription: extJd || '',
-            formattedJD: outcome.formattedJD,
-            missingCompany: outcome.missingCompany,
-            missingTitle: outcome.missingTitle,
-          });
-          setManualCompany(extCompany || outcome.formattedJD.company);
-          setManualTitle(extTitle || outcome.formattedJD.job_title);
-          setManualFillError(null);
-          setPipelineMode('manual-fill');
           return;
         case 'other-fail':
           setPipelineError(outcome.message);
@@ -783,7 +770,7 @@ function ApplicationContent() {
       switch (outcome.kind) {
         case 'clarify':
           setClarifyQuestion(
-            outcome.question || 'What job are you applying for?'
+            outcome.question || "We couldn't understand this job description. What job are you applying for?"
           );
           setClarifyAnswer('');
           setClarifyHistory([]);
@@ -861,7 +848,7 @@ function ApplicationContent() {
         switch (outcome.kind) {
           case 'clarify':
             // Still ambiguous after re-parsing — show the next question.
-            setClarifyQuestion(outcome.question || 'Could you tell me more about this job?');
+            setClarifyQuestion(outcome.question || "We couldn't understand this job description. What job are you applying for?");
             setClarifyPartialJD(outcome.partialJD);
             setPipelineMode('clarify-jd');
             return;
