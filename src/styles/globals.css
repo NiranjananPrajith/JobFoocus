@@ -113,9 +113,12 @@ html *::after {
   --active-bg: #1f1f1f;
   --active-text: #ffffff;
   --hover-bg: rgba(0, 0, 0, 0.05);
+  /* Card surface (default/elevated card body) */
+  --card: #ffffff;
   /* Info / Blue (PII indicators, info panels) */
   --info-bg: #eff6ff;
   --info-bg-strong: #dbeafe;
+  --info-bg-soft: #eff6ff;
   --info-border: #bfdbfe;
   --info-border-strong: #60a5fa;
   --info-text: #2563eb;
@@ -132,16 +135,21 @@ html *::after {
    ========================================================================== */
 
 .dark {
-  --cream: #181713;
-  --cream-light: #1c1a15;
-  --cream-deeper: #2a281f;
-  --beige-deep: #2e2c21;
+  /* Cream / Neutral — grey-leaning, clearly separated from surface */
+  --cream: #232523;
+  --cream-light: #2a2c2a;
+  --cream-deeper: #34362f;
+  --beige-deep: #3a3a32;
+  /* Surface ladder — progressively lighter, cool grey tones */
   --canvas: #0e0f0c;
-  --surface: #141512;
-  --surface-elevated: #1c1d1a;
-  --surface-cream: #181713;
-  --surface-cream-soft: #161511;
+  --surface: #161719;
+  --surface-elevated: #1d1f22;
+  --surface-cream: #1d1f1c;
+  --surface-cream-soft: #1a1c1e;
   --surface-code: #2a2a2a;
+  /* Card surface — gives default/elevated cards real definition on canvas */
+  --card: #1a1c1e;
+  /* Text — unchanged from before */
   --ink: #f5f5f4;
   --ink-tint: #e7e5e4;
   --charcoal: #d6d3d1;
@@ -149,24 +157,31 @@ html *::after {
   --steel: #78716c;
   --stone: #57534e;
   --muted: #44403c;
-  --hairline: #1c1d1a;
-  --hairline-soft: #181916;
-  --hairline-strong: #33352f;
+  /* Borders — strengthened so card edges are clearly visible */
+  --hairline: #2a2c2a;
+  --hairline-soft: #1f2123;
+  --hairline-strong: #44464a;
+  /* Semantic — footer has its own value, never re-collapses with surface */
   --on-cream: #f5f5f4;
-  --footer-cream: #141512;
-  --sunset-stripe: linear-gradient(to right, #fa520f, #ffa110, #ffb83e, #ffd900, #141512);
+  --footer-cream: #1a1c1e;
+  --sunset-stripe: linear-gradient(to right, #fa520f, #ffa110, #ffb83e, #ffd900, #161719);
+  /* Functional */
   --scrim: rgba(0, 0, 0, 0.7);
   --input-bg: #1c1c1e;
-  --toggle-off: #3d3d3a;
-  --active-bg: #2e2c21;
+  --toggle-off: #3d3f42;
+  /* Interactive states */
+  --active-bg: #3a3a32;
   --active-text: #f5f5f4;
   --hover-bg: rgba(255, 255, 255, 0.06);
+  /* Info / Blue */
   --info-bg: #0f1729;
   --info-bg-strong: #1a2a4a;
+  --info-bg-soft: #141e33;
   --info-border: #1e3a5f;
   --info-border-strong: #60a5fa;
   --info-text: #60a5fa;
   --info-text-strong: #93c5fd;
+  /* Danger / Red */
   --danger-bg: #2d1215;
   --danger-border: #4a1c1f;
   --danger-border-strong: #7f1d1d;
@@ -175,7 +190,7 @@ html *::after {
 
 /* Blue palette (privacy sections, PII indicators) — Tailwind built-in overrides */
 .dark .bg-blue-50 { background-color: var(--info-bg); }
-.dark .bg-blue-50\/60 { background-color: var(--info-bg); }
+.dark .bg-blue-50\/60 { background-color: var(--info-bg-soft); }
 .dark .bg-blue-100 { background-color: var(--info-bg-strong); }
 .dark .border-blue-200 { border-color: var(--info-border); }
 .dark .border-blue-400 { border-color: var(--info-border-strong); }

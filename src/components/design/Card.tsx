@@ -24,14 +24,14 @@ const Card = ({
   className = '',
 }: CardProps) => {
   const variantClasses: Record<CardVariant, string> = {
-    default: 'bg-canvas border border-hairline-soft',
+    default: 'bg-card border border-hairline',
     elevated:
-      'bg-canvas border border-hairline-soft shadow-[rgba(0,0,0,0.04)_0px_4px_12px]',
+      'bg-card border border-hairline shadow-[rgba(0,0,0,0.04)_0px_4px_12px] dark:shadow-[rgba(0,0,0,0.35)_0px_4px_12px]',
     cream: 'bg-cream border border-beige-deep',
     'cream-soft': 'bg-surface-cream-soft',
     'feature-product':
-      'bg-canvas border border-hairline-soft shadow-[rgba(0,0,0,0.04)_0px_4px_12px]',
-    glass: 'bg-canvas/60 backdrop-blur-md border border-hairline/50 rounded-xl',
+      'bg-card border border-hairline shadow-[rgba(0,0,0,0.04)_0px_4px_12px] dark:shadow-[rgba(0,0,0,0.35)_0px_4px_12px]',
+    glass: 'bg-card/60 backdrop-blur-md border border-hairline/50 rounded-xl',
     outlined: 'bg-transparent border border-hairline-soft',
     filled: 'bg-surface border border-hairline-soft',
   };

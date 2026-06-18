@@ -32,6 +32,7 @@ const config: Config = {
         "surface-cream": "var(--surface-cream)",
         "surface-cream-soft": "var(--surface-cream-soft)",
         "surface-code": "var(--surface-code)",
+        card: "var(--card)",
         // Text
         ink: "var(--ink)",
         "ink-tint": "var(--ink-tint)",
@@ -60,6 +61,7 @@ const config: Config = {
         // Info / Blue (PII indicators, info panels)
         "info-bg": "var(--info-bg)",
         "info-bg-strong": "var(--info-bg-strong)",
+        "info-bg-soft": "var(--info-bg-soft)",
         "info-border": "var(--info-border)",
         "info-border-strong": "var(--info-border-strong)",
         "info-text": "var(--info-text)",
