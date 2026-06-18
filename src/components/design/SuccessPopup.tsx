@@ -32,13 +32,12 @@ export default function SuccessPopup({
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center px-4"
-      style={{ backgroundColor: 'rgba(30, 25, 20, 0.55)', backdropFilter: 'blur(2px)' }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center px-4 bg-scrim backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 flex flex-col items-center text-center">
+      <div className="bg-canvas rounded-2xl shadow-2xl w-full max-w-sm p-8 flex flex-col items-center text-center">
         {/* Green circle with checkmark */}
-        <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center mb-5">
+        <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center mb-5">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>

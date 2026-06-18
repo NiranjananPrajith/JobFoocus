@@ -54,11 +54,10 @@ export default function CategoryPopup({ isOpen, onClose, onSave, editCategory }:
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center px-4"
-      style={{ backgroundColor: 'rgba(30, 25, 20, 0.55)', backdropFilter: 'blur(2px)' }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center px-4 bg-scrim backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+      <div className="bg-canvas rounded-2xl shadow-2xl w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-[18px] font-semibold text-ink">
             {isEdit ? 'Edit Category' : 'Create New Category'}

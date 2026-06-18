@@ -54,7 +54,7 @@ export default function DeleteAccountButton() {
           />
 
           {/* Modal */}
-          <div className="relative bg-white rounded-xl shadow-lg border border-hairline-soft w-full max-w-[420px] mx-4 overflow-hidden">
+          <div className="relative bg-canvas rounded-xl shadow-lg border border-hairline-soft w-full max-w-[420px] mx-4 overflow-hidden">
             <div className="px-6 py-5">
               <h3 className="text-[18px] font-semibold text-ink mb-2">Delete your account?</h3>
               <p className="text-[14px] text-steel leading-relaxed mb-4">

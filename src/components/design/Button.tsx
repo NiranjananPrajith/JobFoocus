@@ -39,7 +39,7 @@ const Button = ({
     outline:
       'bg-transparent text-primary border border-primary hover:bg-primary/5',
     destructive:
-      'bg-red-600 text-white hover:bg-red-700 border border-red-700',
+      'bg-danger-bg text-danger-text hover:bg-danger-text hover:text-on-primary border border-danger-border',
     subtle:
       'bg-primary/10 text-primary hover:bg-primary/20 border border-transparent',
   };

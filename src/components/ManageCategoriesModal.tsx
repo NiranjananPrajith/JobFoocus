@@ -103,11 +103,10 @@ export default function ManageCategoriesModal({
   return (
     <>
       <div
-        className="fixed inset-0 z-[9999] flex items-center justify-center px-4"
-        style={{ backgroundColor: 'rgba(30, 25, 20, 0.55)', backdropFilter: 'blur(2px)' }}
+        className="fixed inset-0 z-[9999] flex items-center justify-center px-4 bg-scrim backdrop-blur-sm"
         onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       >
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+        <div className="bg-canvas rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
           <div className="flex items-center justify-between px-6 py-4 border-b border-hairline-soft">
             <h3 className="text-[18px] font-semibold text-ink">Manage Categories</h3>
             <button
@@ -221,11 +220,10 @@ export default function ManageCategoriesModal({
 
       {deletingCat && (
         <div
-          className="fixed inset-0 z-[10000] flex items-center justify-center px-4"
-          style={{ backgroundColor: 'rgba(30, 25, 20, 0.55)', backdropFilter: 'blur(2px)' }}
+          className="fixed inset-0 z-[10000] flex items-center justify-center px-4 bg-scrim backdrop-blur-sm"
           onClick={(e) => { if (e.target === e.currentTarget) handleDeleteCancel(); }}
         >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+          <div className="bg-canvas rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="text-[18px] font-semibold text-ink mb-2">Delete &quot;{deletingCat.name}&quot;?</h3>
             <p className="text-[14px] text-steel mb-4">
               {deletingCat.jobCount > 0 ? (

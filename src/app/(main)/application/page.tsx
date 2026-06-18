@@ -1073,7 +1073,7 @@ function ApplicationContent() {
                 onChange={(e) => setManualCompany(e.target.value)}
                 placeholder="e.g. Concentrix"
                 disabled={!missingCompany}
-                className="w-full px-4 py-3 rounded-md border border-hairline-strong bg-white text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-11 disabled:bg-canvas disabled:text-steel disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 rounded-md border border-hairline-strong bg-canvas text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-11 disabled:bg-canvas disabled:text-steel disabled:cursor-not-allowed"
               />
             </div>
             <div>
@@ -1087,7 +1087,7 @@ function ApplicationContent() {
                 onChange={(e) => setManualTitle(e.target.value)}
                 placeholder="e.g. Customer Service / Technical Support Rep"
                 disabled={!missingTitle}
-                className="w-full px-4 py-3 rounded-md border border-hairline-strong bg-white text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-11 disabled:bg-canvas disabled:text-steel disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 rounded-md border border-hairline-strong bg-canvas text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-11 disabled:bg-canvas disabled:text-steel disabled:cursor-not-allowed"
               />
             </div>
           </div>
@@ -1164,7 +1164,7 @@ function ApplicationContent() {
               }}
               rows={12}
               placeholder="Paste the full job posting here — include the job title, company name, responsibilities, and requirements..."
-              className="w-full px-4 py-3 rounded-xl border border-hairline-strong bg-white text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none placeholder:text-stone-400"
+              className="w-full px-4 py-3 rounded-xl border border-hairline-strong bg-canvas text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none placeholder:text-muted"
               autoFocus
             />
           </div>
@@ -1206,7 +1206,7 @@ function ApplicationContent() {
           {clarifyHistory.length > 0 && (
             <div className="mb-4 space-y-2">
               {clarifyHistory.map((h, i) => (
-                <div key={i} className="rounded-lg border border-hairline-strong bg-white p-3">
+                <div key={i} className="rounded-lg border border-hairline-strong bg-surface p-3">
                   <p className="text-[12px] text-steel font-medium mb-1">You said:</p>
                   <p className="text-[14px] text-ink">{h.answer}</p>
                 </div>
@@ -1218,7 +1218,7 @@ function ApplicationContent() {
             <summary className="text-[12px] text-steel cursor-pointer hover:text-ink transition-colors select-none">
               View original job description
             </summary>
-            <div className="mt-2 max-h-[200px] overflow-y-auto rounded-lg border border-hairline-strong bg-white p-3 text-[13px] text-ink leading-relaxed whitespace-pre-wrap">
+            <div className="mt-2 max-h-[200px] overflow-y-auto rounded-lg border border-hairline-strong bg-surface p-3 text-[13px] text-ink leading-relaxed whitespace-pre-wrap">
               {clarifyJdText}
             </div>
           </details>
@@ -1229,7 +1229,7 @@ function ApplicationContent() {
               onChange={(e) => setClarifyAnswer(e.target.value)}
               rows={3}
               placeholder="Type your answer here..."
-              className="w-full px-4 py-3 rounded-xl border border-hairline-strong bg-white text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none placeholder:text-stone-400"
+              className="w-full px-4 py-3 rounded-xl border border-hairline-strong bg-canvas text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none placeholder:text-muted"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -1413,7 +1413,7 @@ function ApplicationContent() {
               {(meta.location || meta.salary || meta.posted || meta.workType) && (
                 <div className="flex flex-wrap gap-2 mb-3">
                   {meta.location && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-stone-100 text-steel border border-stone-200">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-surface-elevated text-steel border border-hairline">
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                         <circle cx="12" cy="10" r="3" />
@@ -1422,7 +1422,7 @@ function ApplicationContent() {
                     </span>
                   )}
                   {meta.salary && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-stone-100 text-steel border border-stone-200">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-surface-elevated text-steel border border-hairline">
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                         <line x1="12" y1="1" x2="12" y2="23" />
                         <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
@@ -1431,7 +1431,7 @@ function ApplicationContent() {
                     </span>
                   )}
                   {meta.workType && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-stone-100 text-steel border border-stone-200">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-surface-elevated text-steel border border-hairline">
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                         <polyline points="9 22 9 12 15 12 15 22" />
@@ -1440,7 +1440,7 @@ function ApplicationContent() {
                     </span>
                   )}
                   {meta.posted && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-stone-100 text-steel border border-stone-200">
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-md bg-surface-elevated text-steel border border-hairline">
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                         <line x1="16" y1="2" x2="16" y2="6" />
@@ -1504,10 +1504,10 @@ function ApplicationContent() {
             )}
           </div>
           {(application.has_job_description || isNewFromExtension) && (
-            <div className="mt-4 pt-4 border-t border-stone-200">
+            <div className="mt-4 pt-4 border-t border-hairline">
               <button
                 onClick={() => setJobDescExpanded(!jobDescExpanded)}
-                className="w-full flex items-center justify-between text-left hover:bg-stone-100 rounded-lg px-3 py-2 -mx-3 transition-colors"
+                className="w-full flex items-center justify-between text-left hover:bg-surface-elevated rounded-lg px-3 py-2 -mx-3 transition-colors"
               >
                 <span className="text-[12px] uppercase tracking-wide text-steel font-semibold">Job Description</span>
                 <span className="flex items-center gap-2">
@@ -1532,7 +1532,7 @@ function ApplicationContent() {
               {jobDescExpanded && (
                 <div className="mt-2">
                   <div
-                    className="job-desc-content text-[13px] text-ink rounded-lg border border-stone-200 bg-canvas/50 p-4 max-h-[300px] overflow-y-auto"
+                    className="job-desc-content text-[13px] text-ink rounded-lg border border-hairline bg-canvas/50 p-4 max-h-[300px] overflow-y-auto"
                     dangerouslySetInnerHTML={{ __html: jobDescContent }}
                   />
                   <style>{`

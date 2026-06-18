@@ -163,7 +163,7 @@ export default function SupportPage() {
               >
                 <div
                   className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-[14px] font-semibold"
-                  style={{ backgroundColor: '#fa520f', color: '#ffffff' }}
+                  style={{ backgroundColor: 'var(--primary)', color: 'var(--on-primary)' }}
                 >
                   {item.step}
                 </div>
@@ -296,7 +296,7 @@ export default function SupportPage() {
 
               <div className="space-y-4">
                 <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-[13px] font-semibold" style={{ backgroundColor: '#fa520f', color: '#ffffff' }}>1</div>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-[13px] font-semibold" style={{ backgroundColor: 'var(--primary)', color: 'var(--on-primary)' }}>1</div>
                   <div>
                     <p className="text-[14px] font-semibold text-ink mb-1">Click the extension icon</p>
                     <p className="text-[13px] text-steel leading-relaxed">Navigate to any job posting, click the icon, and click &quot;Add Job&quot;.</p>
@@ -304,7 +304,7 @@ export default function SupportPage() {
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-[13px] font-semibold" style={{ backgroundColor: '#fa520f', color: '#ffffff' }}>2</div>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-[13px] font-semibold" style={{ backgroundColor: 'var(--primary)', color: 'var(--on-primary)' }}>2</div>
                   <div>
                     <p className="text-[14px] font-semibold text-ink mb-1">Right-click shortcut</p>
                     <p className="text-[13px] text-steel leading-relaxed">Right-click anywhere on the page, select &quot;Send page to Job Foocus&quot;.</p>
@@ -312,7 +312,7 @@ export default function SupportPage() {
                 </div>
 
                 <div className="flex items-start gap-4">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-[13px] font-semibold" style={{ backgroundColor: '#fa520f', color: '#ffffff' }}>3</div>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-[13px] font-semibold" style={{ backgroundColor: 'var(--primary)', color: 'var(--on-primary)' }}>3</div>
                   <div>
                     <p className="text-[14px] font-semibold text-ink mb-1">Keyboard shortcut</p>
                     <p className="text-[13px] text-steel leading-relaxed">
@@ -352,7 +352,7 @@ export default function SupportPage() {
                 </p>
                 <button
                   className="w-full py-2 rounded-md text-[12px] font-medium text-white"
-                  style={{ backgroundColor: '#fa520f' }}
+                  style={{ backgroundColor: 'var(--primary)' }}
                 >
                   Add Job
                 </button>
@@ -411,7 +411,7 @@ export default function SupportPage() {
                   {tier.featured && (
                     <span
                       className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[11px] font-semibold text-white"
-                      style={{ backgroundColor: '#fa520f' }}
+                      style={{ backgroundColor: 'var(--primary)' }}
                     >
                       Most Popular
                     </span>
@@ -495,7 +495,7 @@ export default function SupportPage() {
               <a
                 href="mailto:support@jobfoocus.com"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-[14px] font-medium text-white transition-colors"
-                style={{ backgroundColor: '#fa520f' }}
+                style={{ backgroundColor: 'var(--primary)' }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="2" y="4" width="20" height="16" rx="2" />

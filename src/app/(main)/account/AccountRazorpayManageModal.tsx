@@ -61,7 +61,7 @@ export default function AccountRazorpayManageModal({
 
       {/* Modal */}
       <div
-        className="relative bg-white rounded-xl shadow-xl max-w-[420px] w-full mx-4 p-6"
+        className="relative bg-canvas rounded-xl shadow-xl max-w-[420px] w-full mx-4 p-6"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}

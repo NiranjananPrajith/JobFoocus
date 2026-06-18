@@ -38,7 +38,7 @@ export default function CurrencyToggle({ value, onChange }: CurrencyToggleProps)
               className={[
                 'px-4 py-1.5 rounded-md text-[13px] font-semibold transition-all duration-150',
                 active
-                  ? 'bg-ink text-white dark:bg-white/10 dark:text-ink shadow-sm'
+                  ? 'bg-ink text-white dark:bg-surface-elevated/40 dark:text-ink shadow-sm'
                   : 'text-steel hover:text-ink',
               ].join(' ')}
             >

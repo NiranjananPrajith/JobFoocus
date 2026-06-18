@@ -111,7 +111,7 @@ const inputClass =
   'w-full px-4 py-3 rounded-md border border-hairline-strong bg-canvas text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-11';
 
 const inputClassPrivate =
-  'w-full px-4 py-3 rounded-md border border-blue-200 bg-white text-ink text-[14px] focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200 h-11';
+  'w-full px-4 py-3 rounded-md border border-blue-200 bg-canvas text-ink text-[14px] focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-200 h-11';
 
 // ---------------------------------------------------------------------------
 // Private Section Header
@@ -364,7 +364,7 @@ function MasterResumeContent() {
             />
             <label
               htmlFor="resume-file-input"
-              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-hairline-strong bg-white text-[14px] font-medium text-ink hover:bg-surface transition-colors cursor-pointer disabled:opacity-60"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-hairline-strong bg-surface text-[14px] font-medium text-ink hover:bg-surface transition-colors cursor-pointer disabled:opacity-60"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>

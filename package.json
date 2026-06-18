@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "npm run copy-pdf-worker && next dev",
-    "build": "npm run copy-pdf-worker && next build",
+    "build": "npm run lint:theme && npm run copy-pdf-worker && next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:theme": "node scripts/check-theme-tokens.mjs",
+    "lint:theme:json": "node scripts/check-theme-tokens.mjs --json",
     "build:extension": "node scripts/build-extension.mjs",
     "copy-pdf-worker": "node scripts/copy-pdf-worker.mjs"
   },

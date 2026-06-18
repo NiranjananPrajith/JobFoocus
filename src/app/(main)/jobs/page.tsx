@@ -274,7 +274,7 @@ function JobsContent() {
         trashed.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {trashed.map((app) => (
-              <div key={`${app.category}/${app.folder}`} className="bg-white rounded-xl border border-stone-200 overflow-hidden">
+              <div key={`${app.category}/${app.folder}`} className="bg-surface rounded-xl border border-hairline overflow-hidden">
                 <div className="flex items-start">
                   <div className="w-1 shrink-0" style={{ backgroundColor: app.category_color || '#888888' }} />
                   <div className="flex-1 min-w-0 px-4 py-4">
@@ -288,7 +288,7 @@ function JobsContent() {
                     <div className="flex items-center gap-2 mt-3">
                       <button
                         onClick={() => handleRestore(app.category, app.folder)}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-stone-200 text-steel hover:text-ink hover:border-stone-300 transition-all text-[12px] font-medium"
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-hairline text-steel hover:text-ink hover:border-hairline-strong transition-all text-[12px] font-medium"
                       >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="1 4 1 10 7 10"/>
@@ -387,7 +387,7 @@ function TabButton({
       <span
         className={[
           'px-2 py-0.5 rounded-full text-[12px] font-semibold min-w-[24px] text-center',
-          active ? 'bg-primary/10 text-primary' : 'bg-stone-100 text-steel',
+          active ? 'bg-primary/10 text-primary' : 'bg-surface-elevated text-steel',
         ].join(' ')}
       >
         {count}

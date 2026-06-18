@@ -106,7 +106,7 @@ export default function ApplicationCard({
   return (
     <a href={`/application?app=${id}`} className="block group">
       <div
-        className="bg-white rounded-xl border border-hairline-soft overflow-visible transition-all duration-200 group-hover:shadow-[0_4px_20px_rgba(0,0,0,0.08)] group-hover:border-hairline-strong"
+        className="bg-surface rounded-xl border border-hairline-soft overflow-visible transition-all duration-200 group-hover:shadow-[0_4px_20px_rgba(0,0,0,0.08)] group-hover:border-hairline-strong"
         style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
       >
         {/* Left category accent bar */}

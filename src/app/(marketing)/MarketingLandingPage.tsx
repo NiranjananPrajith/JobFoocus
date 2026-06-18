@@ -116,7 +116,7 @@ export default function MarketingLandingPage() {
           <div className="lg:col-span-6 xl:col-span-7 relative w-full flex justify-center">
             
             {/* Outer Browser Shell: Swaps colors based on system theme */}
-            <div className="relative w-full max-w-[580px] aspect-[1.4] bg-white dark:bg-surface border border-hairline dark:border-hairline rounded-xl overflow-hidden shadow-xl dark:shadow-2xl transition-colors duration-200">
+            <div className="relative w-full max-w-[580px] aspect-[1.4] bg-canvas border border-hairline dark:border-hairline rounded-xl overflow-hidden shadow-xl dark:shadow-2xl transition-colors duration-200">
               
               {/* Browser Controls */}
               <div className="flex items-center px-4 py-3 border-b border-hairline dark:border-hairline bg-surface dark:bg-canvas justify-between">
@@ -174,9 +174,9 @@ export default function MarketingLandingPage() {
 
                   <div className="space-y-4">
                     {/* Extraction Status Row */}
-                    <div className="p-3 rounded-lg flex items-center justify-between bg-white dark:bg-cream-light border border-beige-deep dark:border-hairline">
+                    <div className="p-3 rounded-lg flex items-center justify-between bg-surface border border-beige-deep dark:border-hairline">
                       <div className="flex items-center gap-3">
-                        <div className="w-5 h-5 rounded-full flex items-center justify-center text-green-600 bg-[#f0fdf4] dark:bg-[#1a2e1a]">
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center text-green-600 bg-info-bg">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg>
                         </div>
                         <div>
@@ -191,7 +191,7 @@ export default function MarketingLandingPage() {
                     </div>
 
                     {/* Tailored Cover Letter Generation Box */}
-                    <div className="rounded-lg p-3 bg-white dark:bg-cream-light border border-beige-deep dark:border-hairline">
+                    <div className="rounded-lg p-3 bg-surface border border-beige-deep dark:border-hairline">
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-[12px] font-semibold text-steel">Custom Cover Letter</p>
                         <span
@@ -302,13 +302,13 @@ export default function MarketingLandingPage() {
             <div className="relative w-full h-[400px] flex items-center justify-center">
 
               {/* Background decorative card */}
-              <div className="absolute right-0 top-4 w-3/4 bg-white border border-hairline-strong rounded-xl shadow-lg p-6 opacity-60 scale-95 origin-top-right">
+              <div className="absolute right-0 top-4 w-3/4 bg-surface border border-hairline-strong rounded-xl shadow-lg p-6 opacity-60 scale-95 origin-top-right">
                 <div className="h-4 w-1/3 bg-hairline-soft rounded mb-4" />
                 <div className="h-3 w-1/4 bg-hairline-soft rounded" />
               </div>
 
               {/* Foreground active card */}
-              <div className="relative z-10 w-[85%] bg-white border border-hairline-soft rounded-xl shadow-xl p-6">
+              <div className="relative z-10 w-[85%] bg-canvas border border-hairline-soft rounded-xl shadow-xl p-6">
                 <div className="flex justify-between items-start mb-6">
                   <div>
                     <h4 className="text-[18px] font-semibold text-ink">Senior UX Designer</h4>
@@ -338,7 +338,7 @@ export default function MarketingLandingPage() {
       {/* ------------------------------------------------------------------ */}
       <section id="privacy" className="py-24 px-6 max-w-[1280px] mx-auto">
         <Card variant="cream" className="p-12 md:p-16 text-center border-2 border-beige-deep shadow-sm">
-          <div className="w-16 h-16 mx-auto bg-white rounded-full flex items-center justify-center mb-6 shadow-sm border border-beige-deep">
+          <div className="w-16 h-16 mx-auto bg-canvas rounded-full flex items-center justify-center mb-6 shadow-sm border border-beige-deep">
             <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" className="text-primary"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
           </div>
           <h2

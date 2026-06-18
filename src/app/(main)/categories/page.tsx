@@ -88,8 +88,8 @@ export default function CategoriesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50">
-      <div className="bg-white border-b border-stone-200 px-6 py-5">
+    <div className="min-h-screen bg-canvas">
+      <div className="bg-canvas border-b border-hairline px-6 py-5">
         <div className="max-w-screen-xl mx-auto">
           <div className="flex items-center justify-between">
             <div>
@@ -108,7 +108,7 @@ export default function CategoriesPage() {
               </Button>
               <Link
                 href="/dashboard"
-                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-stone-200 text-steel hover:text-ink hover:border-stone-300 transition-all text-sm font-medium"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-hairline text-steel hover:text-ink hover:border-hairline-strong transition-all text-sm font-medium"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="19" y1="12" x2="5" y2="12"/>
@@ -153,7 +153,7 @@ export default function CategoriesPage() {
             {categories.map((cat) => {
               const isSystem = isSystemCategory(cat.name);
               return (
-                <div key={cat.name} className="bg-white rounded-xl border border-stone-200 overflow-hidden">
+                <div key={cat.name} className="bg-surface rounded-xl border border-hairline overflow-hidden">
                   <div className="flex items-center">
                     <div className="w-1.5 h-full shrink-0" style={{ backgroundColor: cat.color }} />
                     <div className="flex-1 min-w-0 px-5 py-4">
@@ -162,7 +162,7 @@ export default function CategoriesPage() {
                           <div className="flex items-center gap-2">
                             <h3 className="text-[15px] font-semibold text-ink truncate">{cat.name}</h3>
                             {isSystem && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-steel shrink-0">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-surface-elevated px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-steel shrink-0">
                                 System
                               </span>
                             )}
@@ -178,7 +178,7 @@ export default function CategoriesPage() {
                           <div className="flex items-center gap-2 shrink-0">
                             <button
                               onClick={() => handleEdit(cat)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-stone-200 text-steel hover:text-ink hover:border-stone-300 transition-all text-[13px] font-medium"
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-hairline text-steel hover:text-ink hover:border-hairline-strong transition-all text-[13px] font-medium"
                             >
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -217,11 +217,10 @@ export default function CategoriesPage() {
 
       {deletingCat && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center px-4"
-          style={{ backgroundColor: 'rgba(30, 25, 20, 0.55)', backdropFilter: 'blur(2px)' }}
+          className="fixed inset-0 z-[9999] flex items-center justify-center px-4 bg-scrim backdrop-blur-sm"
           onClick={(e) => { if (e.target === e.currentTarget) handleDeleteCancel(); }}
         >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+          <div className="bg-canvas rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="text-[18px] font-semibold text-ink mb-2">Delete &quot;{deletingCat.name}&quot;?</h3>
             <p className="text-[14px] text-steel mb-4">
               {deletingCat.jobCount > 0 ? (

@@ -31,7 +31,7 @@ const Card = ({
     'cream-soft': 'bg-surface-cream-soft',
     'feature-product':
       'bg-canvas border border-hairline-soft shadow-[rgba(0,0,0,0.04)_0px_4px_12px]',
-    glass: 'bg-white/40 backdrop-blur-md border border-white/50 rounded-xl',
+    glass: 'bg-canvas/60 backdrop-blur-md border border-hairline/50 rounded-xl',
     outlined: 'bg-transparent border border-hairline-soft',
     filled: 'bg-surface border border-hairline-soft',
   };

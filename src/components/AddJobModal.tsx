@@ -388,8 +388,7 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
 
   const content = (
     <div
-      className="fixed inset-0 z-[9999] flex items-start justify-center pt-16 px-4"
-      style={{ backgroundColor: 'rgba(30, 25, 20, 0.55)', backdropFilter: 'blur(2px)' }}
+      className="fixed inset-0 z-[9999] flex items-start justify-center pt-16 px-4 bg-scrim backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget && state !== 'processing') onClose(); }}
     >
       <div
@@ -400,7 +399,7 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
         {state !== 'processing' && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-9 h-9 rounded-lg flex items-center justify-center text-steel hover:bg-stone-100 hover:text-ink transition-colors"
+            className="absolute top-4 right-4 w-9 h-9 rounded-lg flex items-center justify-center text-steel hover:bg-surface-elevated hover:text-ink transition-colors"
             aria-label="Close"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -440,12 +439,12 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
                     How to Install
                   </Button>
                 </Link>
-                <p className="text-[11px] text-stone-400">Open the install guide</p>
+                <p className="text-[11px] text-muted">Open the install guide</p>
               </Card>
 
               {/* Right: Manual */}
               <Card variant="outlined" className="p-6 flex flex-col items-center text-center gap-4 border-dashed">
-                <div className="w-12 h-12 rounded-xl bg-stone-100 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-xl bg-surface flex items-center justify-center">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
@@ -531,7 +530,7 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
                 }}
                 placeholder="Paste the full job posting here — include the job title, company name, responsibilities, and requirements..."
                 rows={12}
-                className="w-full px-4 py-3 rounded-xl border border-hairline-strong bg-canvas text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none placeholder:text-stone-400"
+                className="w-full px-4 py-3 rounded-xl border border-hairline-strong bg-canvas text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none placeholder:text-muted"
                 autoFocus
               />
             </div>
@@ -594,7 +593,7 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
                   onChange={(e) => setManualCompany(e.target.value)}
                   placeholder="e.g. Concentrix"
                   disabled={!isUnknownValue(manualFillJD.company)}
-                  className="w-full px-4 py-3 rounded-md border border-hairline-strong bg-white text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-11 disabled:bg-canvas disabled:text-steel disabled:cursor-not-allowed"
+                  className="w-full px-4 py-3 rounded-md border border-hairline-strong bg-canvas text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-11 disabled:bg-canvas disabled:text-steel disabled:cursor-not-allowed"
                 />
               </div>
               <div>
@@ -608,7 +607,7 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
                   onChange={(e) => setManualTitle(e.target.value)}
                   placeholder="e.g. Customer Service / Technical Support Rep"
                   disabled={!isUnknownValue(manualFillJD.job_title)}
-                  className="w-full px-4 py-3 rounded-md border border-hairline-strong bg-white text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-11 disabled:bg-canvas disabled:text-steel disabled:cursor-not-allowed"
+                  className="w-full px-4 py-3 rounded-md border border-hairline-strong bg-canvas text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary h-11 disabled:bg-canvas disabled:text-steel disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -646,7 +645,7 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
               onChange={(e) => setClarifyAnswer(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleClarifySubmit(); }}
               placeholder="Type your answer here..."
-              className="w-full px-4 py-3 rounded-xl border border-hairline-strong bg-canvas text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-stone-400"
+              className="w-full px-4 py-3 rounded-xl border border-hairline-strong bg-canvas text-ink text-[14px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-muted"
               autoFocus
             />
 
@@ -655,7 +654,7 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
               <summary className="text-[12px] text-steel cursor-pointer select-none hover:text-ink transition-colors">
                 View original job description
               </summary>
-              <div className="mt-2 p-3 rounded-lg bg-stone-50 border border-hairline text-[12px] text-steel leading-relaxed max-h-40 overflow-y-auto whitespace-pre-wrap">
+              <div className="mt-2 p-3 rounded-lg bg-canvas border border-hairline text-[12px] text-steel leading-relaxed max-h-40 overflow-y-auto whitespace-pre-wrap">
                 {jdText}
               </div>
             </details>

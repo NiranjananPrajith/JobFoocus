@@ -141,7 +141,7 @@ export default function PricingClient({ defaultCurrency }: PricingClientProps) {
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span
                     className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-semibold text-white"
-                    style={{ backgroundColor: '#fa520f' }}
+                    style={{ backgroundColor: 'var(--primary)' }}
                   >
                     Most Popular
                   </span>

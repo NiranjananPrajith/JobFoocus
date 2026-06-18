@@ -151,7 +151,7 @@ export default function CategorySelector({
         {isOpen && (
           <div
             ref={dropdownRef}
-            className={`absolute z-50 left-0 right-0 bg-white rounded-lg border border-hairline-strong shadow-lg overflow-hidden ${
+            className={`absolute z-50 left-0 right-0 bg-canvas rounded-lg border border-hairline-strong shadow-lg overflow-hidden ${
               popoverDirection === 'up' ? 'bottom-full mb-1' : 'top-full mt-1'
             }`}
           >
@@ -159,7 +159,7 @@ export default function CategorySelector({
               {showSystemUncategorizedStub && (
                 <div className="px-4 py-2.5 text-[13px] text-steel bg-surface cursor-not-allowed flex items-center gap-2">
                   <span
-                    className="w-2.5 h-2.5 rounded-full bg-[#888888] shrink-0"
+                    className="w-2.5 h-2.5 rounded-full bg-steel shrink-0"
                   />
                   Uncategorized
                   <span className="text-[11px] text-steel ml-auto">(system)</span>

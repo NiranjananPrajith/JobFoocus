@@ -142,7 +142,7 @@ export default function AccountAutoRenewToggle({
             'relative inline-flex shrink-0 items-center',
             'w-11 h-6 rounded-full',
             'transition-colors duration-200',
-            enabled ? 'bg-primary' : 'bg-[#d4d4d4]',
+            enabled ? 'bg-primary' : 'bg-toggle-off',
             pending ? 'opacity-60 cursor-wait' : 'cursor-pointer',
             'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
             'disabled:cursor-not-allowed',

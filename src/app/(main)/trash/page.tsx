@@ -55,9 +55,9 @@ export default function TrashPage() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-canvas">
       {/* Header */}
-      <div className="bg-white border-b border-stone-200 px-6 py-5">
+      <div className="bg-canvas border-b border-hairline px-6 py-5">
         <div className="max-w-screen-xl mx-auto">
           <div className="flex items-center justify-between">
             <div>
@@ -66,7 +66,7 @@ export default function TrashPage() {
             </div>
             <Link
               href="/dashboard"
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-stone-200 text-steel hover:text-ink hover:border-stone-300 transition-all text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-hairline text-steel hover:text-ink hover:border-hairline-strong transition-all text-sm font-medium"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="19" y1="12" x2="5" y2="12"/>
@@ -109,7 +109,7 @@ export default function TrashPage() {
             {trashed.map(app => {
               const remaining = app.deleted_at ? daysUntilDeletion(app.deleted_at) : 30;
               return (
-                <div key={`${app.category}/${app.folder}`} className="bg-white rounded-xl border border-stone-200 overflow-hidden">
+                <div key={`${app.category}/${app.folder}`} className="bg-surface rounded-xl border border-hairline overflow-hidden">
                   <div className="flex items-center">
                     <div className="w-1 shrink-0" style={{ backgroundColor: app.category_color || '#888888' }} />
                     <div className="flex-1 min-w-0 px-4 py-4">
@@ -124,7 +124,7 @@ export default function TrashPage() {
                         <div className="flex items-center gap-2 shrink-0">
                           <button
                             onClick={() => handleRestore(app.category, app.folder)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-stone-200 text-steel hover:text-ink hover:border-stone-300 transition-all text-[13px] font-medium"
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-hairline text-steel hover:text-ink hover:border-hairline-strong transition-all text-[13px] font-medium"
                           >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <polyline points="1 4 1 10 7 10"/>

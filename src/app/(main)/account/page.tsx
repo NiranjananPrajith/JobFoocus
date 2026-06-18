@@ -273,15 +273,15 @@ function UsageBar({
       <div
         className="h-2 rounded-full overflow-hidden"
         style={{
-          backgroundColor: '#f3efe7',
-          border: '1px solid #e6d5a8',
+          backgroundColor: 'var(--cream-light)',
+          border: '1px solid var(--beige-deep)',
         }}
       >
         <div
           className="h-full rounded-full transition-all"
           style={{
             width: `${pct}%`,
-            backgroundColor: atCap ? '#dc2626' : '#fa520f',
+            backgroundColor: atCap ? 'var(--danger-text)' : 'var(--primary)',
           }}
         />
       </div>

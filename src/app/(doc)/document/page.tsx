@@ -202,20 +202,20 @@ function DocumentContent() {
   if (loading) {
     return (
       <div className="document-container">
-        <div className="document-header no-print bg-white border-b border-stone-200 px-6 py-5">
+        <div className="document-header no-print bg-surface border-b border-hairline px-6 py-5">
           <div className="document-header-inner flex items-center justify-between max-w-screen-xl mx-auto">
             <div className="document-header-left flex items-center gap-3">
-              <a href={backUrl} className="document-back group flex items-center gap-2 text-stone-500 hover:text-stone-800 transition-colors duration-200 text-sm font-medium">
+              <a href={backUrl} className="document-back group flex items-center gap-2 text-steel hover:text-stone-800 transition-colors duration-200 text-sm font-medium">
                 <svg className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>
                 <span>Back</span>
               </a>
-              <span className="document-type text-stone-400 text-sm font-medium">|</span>
-              <span className="document-type text-stone-500 uppercase tracking-wider text-xs font-semibold">{getDocLabel()}</span>
+              <span className="document-type text-steel text-sm font-medium">|</span>
+              <span className="document-type text-steel uppercase tracking-wider text-xs font-semibold">{getDocLabel()}</span>
             </div>
           </div>
         </div>
         <div className="document-page">
-          <p style={{ color: '#6a6a6a' }}>Loading...</p>
+          <p style={{ color: 'var(--steel)' }}>Loading...</p>
         </div>
       </div>
     );
@@ -224,15 +224,15 @@ function DocumentContent() {
   if (isEditing) {
     return (
       <div className="document-container">
-        <div className="document-header no-print bg-white border-b border-stone-200 px-6 py-5">
+        <div className="document-header no-print bg-surface border-b border-hairline px-6 py-5">
           <div className="document-header-inner flex items-center justify-between max-w-screen-xl mx-auto">
             <div className="document-header-left flex items-center gap-3">
-              <a href={backUrl} className="document-back group flex items-center gap-2 text-stone-500 hover:text-stone-800 transition-colors duration-200 text-sm font-medium">
+              <a href={backUrl} className="document-back group flex items-center gap-2 text-steel hover:text-stone-800 transition-colors duration-200 text-sm font-medium">
                 <svg className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>
                 <span>Back</span>
               </a>
-              <span className="document-type text-stone-400 text-sm font-medium">|</span>
-              <span className="document-type text-stone-500 uppercase tracking-wider text-xs font-semibold">{getDocLabel()}</span>
+              <span className="document-type text-steel text-sm font-medium">|</span>
+              <span className="document-type text-steel uppercase tracking-wider text-xs font-semibold">{getDocLabel()}</span>
             </div>
           </div>
         </div>
@@ -256,20 +256,20 @@ function DocumentContent() {
   if (error) {
     return (
       <div className="document-container">
-        <div className="document-header no-print bg-white border-b border-stone-200 px-6 py-5">
+        <div className="document-header no-print bg-surface border-b border-hairline px-6 py-5">
           <div className="document-header-inner flex items-center justify-between max-w-screen-xl mx-auto">
             <div className="document-header-left flex items-center gap-3">
-              <a href={backUrl} className="document-back group flex items-center gap-2 text-stone-500 hover:text-stone-800 transition-colors duration-200 text-sm font-medium">
+              <a href={backUrl} className="document-back group flex items-center gap-2 text-steel hover:text-stone-800 transition-colors duration-200 text-sm font-medium">
                 <svg className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>
                 <span>Back</span>
               </a>
-              <span className="document-type text-stone-400 text-sm font-medium">|</span>
-              <span className="document-type text-stone-500 uppercase tracking-wider text-xs font-semibold">{getDocLabel()}</span>
+              <span className="document-type text-steel text-sm font-medium">|</span>
+              <span className="document-type text-steel uppercase tracking-wider text-xs font-semibold">{getDocLabel()}</span>
             </div>
           </div>
         </div>
         <div className="document-page">
-          <p style={{ color: '#e74c3c' }}>{error}</p>
+          <p style={{ color: 'var(--danger-text)' }}>{error}</p>
         </div>
       </div>
     );
@@ -277,20 +277,20 @@ function DocumentContent() {
 
   return (
     <div className="document-container">
-      <div className="document-header no-print bg-white border-b border-stone-200 px-6 py-5 sticky top-0 z-10">
+      <div className="document-header no-print bg-surface border-b border-hairline px-6 py-5 sticky top-0 z-10">
         <div className="document-header-inner flex items-center justify-between max-w-screen-xl mx-auto">
           <div className="document-header-left flex items-center gap-3">
-            <a href={backUrl} className="document-back group flex items-center gap-2 text-stone-500 hover:text-stone-800 transition-colors duration-200 text-sm font-medium">
+            <a href={backUrl} className="document-back group flex items-center gap-2 text-steel hover:text-stone-800 transition-colors duration-200 text-sm font-medium">
               <svg className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"/></svg>
               <span>Back</span>
             </a>
-            <span className="document-type text-stone-400 text-sm font-medium">|</span>
-            <span className="document-type text-stone-500 uppercase tracking-wider text-xs font-semibold">{getDocLabel()}</span>
+            <span className="document-type text-steel text-sm font-medium">|</span>
+            <span className="document-type text-steel uppercase tracking-wider text-xs font-semibold">{getDocLabel()}</span>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={handlePrint}
-              className="document-print-btn bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-200 hover:border-stone-300 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-all duration-200 flex items-center gap-2"
+              className="document-print-btn bg-surface-elevated hover:bg-surface-elevated text-slate border border-hairline hover:border-hairline-strong px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-all duration-200 flex items-center gap-2"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
               <span>Print to PDF</span>
@@ -310,9 +310,9 @@ function DocumentContent() {
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-20">
           <div
             className="rounded-2xl px-5 py-4 shadow-xl border"
-            style={{ backgroundColor: '#fff8e0', borderColor: '#e6d5a8' }}
+            style={{ backgroundColor: 'var(--cream)', borderColor: 'var(--beige-deep)' }}
           >
-            <p className="text-[13px] font-semibold mb-3" style={{ color: '#fa520f' }}>Want to make a change?</p>
+            <p className="text-[13px] font-semibold mb-3" style={{ color: 'var(--primary)' }}>Want to make a change?</p>
             <div className="flex items-stretch gap-3">
               <textarea
                 value={editingMessage}
@@ -425,15 +425,15 @@ function DocumentContent() {
 function LoadingFallback() {
   return (
     <div className="document-container">
-      <div className="document-header no-print bg-white border-b border-stone-200 px-6 py-5">
+      <div className="document-header no-print bg-surface border-b border-hairline px-6 py-5">
         <div className="document-header-inner flex items-center justify-between max-w-screen-xl mx-auto">
           <div className="document-header-left flex items-center gap-3">
-            <span className="text-stone-500 uppercase tracking-wider text-xs font-semibold">Loading...</span>
+            <span className="text-steel uppercase tracking-wider text-xs font-semibold">Loading...</span>
           </div>
         </div>
       </div>
       <div className="document-page">
-        <p style={{ color: '#6a6a6a' }}>Loading...</p>
+        <p style={{ color: 'var(--steel)' }}>Loading...</p>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -24,12 +25,10 @@ const config: Config = {
         "cream-light": "var(--cream-light)",
         "cream-deeper": "var(--cream-deeper)",
         "beige-deep": "var(--beige-deep)",
-        "block-5": "#ffe295",
-        "block-6": "#ffd900",
-        "block-7": "#ff8105",
         // Surface
         canvas: "var(--canvas)",
         surface: "var(--surface)",
+        "surface-elevated": "var(--surface-elevated)",
         "surface-cream": "var(--surface-cream)",
         "surface-cream-soft": "var(--surface-cream-soft)",
         "surface-code": "var(--surface-code)",
@@ -51,6 +50,21 @@ const config: Config = {
         "on-cream": "var(--on-cream)",
         "footer-cream": "var(--footer-cream)",
         link: "var(--link)",
+        scrim: "var(--scrim)",
+        "input-bg": "var(--input-bg)",
+        "toggle-off": "var(--toggle-off)",
+        // Info / Blue (PII indicators, info panels)
+        "info-bg": "var(--info-bg)",
+        "info-bg-strong": "var(--info-bg-strong)",
+        "info-border": "var(--info-border)",
+        "info-border-strong": "var(--info-border-strong)",
+        "info-text": "var(--info-text)",
+        "info-text-strong": "var(--info-text-strong)",
+        // Danger / Red (delete buttons, error containers)
+        "danger-bg": "var(--danger-bg)",
+        "danger-border": "var(--danger-border)",
+        "danger-border-strong": "var(--danger-border-strong)",
+        "danger-text": "var(--danger-text)",
       },
       borderRadius: {
         xs: "4px",
