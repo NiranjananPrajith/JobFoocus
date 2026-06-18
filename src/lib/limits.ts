@@ -10,6 +10,8 @@
 // tier mapping lives here too so the server can resolve tier from a
 // subscription row without re-reading the env every time.
 
+import type { Currency } from '@/lib/region';
+
 export type Tier = 'free' | 'pro' | 'max';
 
 export interface TierLimits {
@@ -39,18 +41,42 @@ export const TIER_PRICE_USD: Record<Tier, number> = {
   max:  12,
 };
 
-/** Monthly price in whole Indian Rupees, for UI badges. */
+/** Monthly price in Euro, for UI badges. */
+export const TIER_PRICE_EUR: Record<Tier, number> = {
+  free: 0,
+  pro:  4.5,
+  max:  11,
+};
+
+/** Monthly price in Indian Rupees, for UI badges. */
 export const TIER_PRICE_INR: Record<Tier, number> = {
   free: 0,
   pro:  500,
   max:  1250,
 };
 
-/** Format a tier price for display. Returns "₹500" or "$5". */
-export function formatTierPrice(tier: Tier, region: 'IN' | 'OTHER'): string {
-  if (tier === 'free') return region === 'IN' ? '₹0' : '$0';
-  const price = region === 'IN' ? TIER_PRICE_INR[tier] : TIER_PRICE_USD[tier];
-  return region === 'IN' ? `₹${price}` : `$${price}`;
+/**
+ * Format a tier price for display by currency. Returns "$5", "€4.5",
+ * or "₹500".
+ */
+export function formatTierPriceCurrency(tier: Tier, currency: Currency): string {
+  if (tier === 'free') {
+    return currency === 'INR' ? '₹0' : `${currency === 'USD' ? '$' : '€'}0`;
+  }
+  const price =
+    currency === 'INR' ? TIER_PRICE_INR[tier]
+    : currency === 'EUR' ? TIER_PRICE_EUR[tier]
+    : TIER_PRICE_USD[tier];
+  return currency === 'INR' ? `₹${price}` : `${currency === 'USD' ? '$' : '€'}${price}`;
+}
+
+/**
+ * Legacy wrapper — used by NavBar and account page for backward compat.
+ * Delegates to formatTierPriceCurrency.
+ */
+export function formatTierPrice(tier: Tier, region: 'IN' | 'OTHER' | 'EEA'): string {
+  const currency: Currency = region === 'IN' ? 'INR' : region === 'EEA' ? 'EUR' : 'USD';
+  return formatTierPriceCurrency(tier, currency);
 }
 
 /**
@@ -58,16 +84,21 @@ export function formatTierPrice(tier: Tier, region: 'IN' | 'OTHER'): string {
  * on the subscriptions row, so this is the inverse — given a price ID,
  * what tier is the user on?
  *
- * Reads the env at call time so the function works in dev (no env =
- * always free) and in prod. We import this from server-only code, so
- * reading process.env here is fine.
+ * Checks both USD and EUR price IDs. Reads the env at call time so the
+ * function works in dev (no env = always free) and in prod.
  */
 export function tierFromPriceId(priceId: string | null | undefined): Tier {
   if (!priceId) return 'free';
-  const pro = process.env.STRIPE_PRICE_ID_PRO;
-  const max = process.env.STRIPE_PRICE_ID_MAX;
-  if (pro && priceId === pro) return 'pro';
-  if (max && priceId === max) return 'max';
+  // USD price IDs
+  const proUsd = process.env.STRIPE_PRICE_ID_PRO;
+  const maxUsd = process.env.STRIPE_PRICE_ID_MAX;
+  if (proUsd && priceId === proUsd) return 'pro';
+  if (maxUsd && priceId === maxUsd) return 'max';
+  // EUR price IDs
+  const proEur = process.env.STRIPE_PRICE_ID_PRO_EUR;
+  const maxEur = process.env.STRIPE_PRICE_ID_MAX_EUR;
+  if (proEur && priceId === proEur) return 'pro';
+  if (maxEur && priceId === maxEur) return 'max';
   return 'free';
 }
 

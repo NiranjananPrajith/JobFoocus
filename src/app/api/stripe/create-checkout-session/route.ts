@@ -1,9 +1,12 @@
 // POST /api/stripe/create-checkout-session
 //
 // Creates a Stripe Checkout Session in subscription mode for one of our
-// two price IDs. The user clicks "Upgrade to Pro" on /pricing, the
-// client POSTs `{ priceId }` (or, by tier name), and we return a URL
-// that the client should redirect to.
+// price IDs. The user clicks "Upgrade to Pro" on /pricing, the
+// client POSTs `{ tier, currency }`, and we return a URL that the
+// client should redirect to.
+//
+// Supports USD and EUR via separate Stripe products per currency.
+// Currency defaults to 'USD' for backward compatibility with old callers.
 //
 // Auth required: the session's `customer` is keyed to the logged-in
 // user via `stripe_customer_id` on the `subscriptions` row (created
@@ -16,14 +19,14 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-utils/server';
 import { createServiceClient } from '@/lib/supabase-utils/service';
-import { getStripe, priceIdForTier } from '@/lib/stripe';
+import { getStripe, stripePriceIdForTier } from '@/lib/stripe';
 
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  let body: { priceId?: string; tier?: 'pro' | 'max' } = {};
+  let body: { priceId?: string; tier?: 'pro' | 'max'; currency?: 'USD' | 'EUR' } = {};
   try {
     body = await request.json();
   } catch {
@@ -32,13 +35,15 @@ export async function POST(request: Request) {
 
   // Resolve the price ID. Accept either an explicit `priceId` (advanced
   // path — useful for A/B testing or future A/B pricing) or a `tier`
-  // name (the simple path the UI uses).
+  // name (the simple path the UI uses). If tier is used, the currency
+  // selects the right Stripe product.
+  const currency = body.currency === 'EUR' ? 'EUR' : 'USD';
   let priceId: string;
   try {
     if (body.priceId) {
       priceId = body.priceId;
     } else if (body.tier === 'pro' || body.tier === 'max') {
-      priceId = priceIdForTier(body.tier);
+      priceId = stripePriceIdForTier(body.tier, currency);
     } else {
       return NextResponse.json(
         { error: 'Body must include { tier: "pro" | "max" } or { priceId }' },

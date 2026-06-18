@@ -177,6 +177,15 @@ async function handleSubscriptionUpsert(
     .cancel_at;
   const isScheduledToCancel = cancelAtPeriodEnd || cancelAtUnix != null;
 
+  // Read the currency from the Stripe price object and normalize to
+  // uppercase. Store it so the /account page can display the price
+  // in the right currency.
+  const rawCurrency = (item?.price as any)?.currency as string | undefined;
+  const currency: 'USD' | 'EUR' | null =
+    rawCurrency === 'usd' ? 'USD'
+    : rawCurrency === 'eur' ? 'EUR'
+    : null;
+
   const { error } = await service.from('subscriptions').upsert(
     {
       user_id: userId,
@@ -186,6 +195,7 @@ async function handleSubscriptionUpsert(
       status: sub.status,
       current_period_end: currentPeriodEnd,
       cancel_at_period_end: isScheduledToCancel,
+      currency,
       updated_at: new Date().toISOString(),
     },
     { onConflict: 'user_id' }

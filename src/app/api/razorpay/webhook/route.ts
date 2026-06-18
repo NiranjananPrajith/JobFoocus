@@ -142,6 +142,7 @@ async function handleSubscriptionUpsert(
       status,
       current_period_end: currentPeriodEnd,
       cancel_at_period_end: isScheduledToCancel,
+      currency: 'INR',
       updated_at: new Date().toISOString(),
     },
     { onConflict: 'user_id' }

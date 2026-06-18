@@ -20,8 +20,8 @@ import {
   type SubscriptionRow,
 } from '@/lib/subscription';
 import { getTodayUsageReadOnly } from '@/lib/usage';
-import { tierFromSubscription, TIER_LIMITS, TIER_LABEL, formatTierPrice } from '@/lib/limits';
-import { getRegion } from '@/lib/region';
+import { tierFromSubscription, TIER_LIMITS, TIER_LABEL, formatTierPriceCurrency } from '@/lib/limits';
+import { getRegion, defaultCurrencyForRegion, type Currency } from '@/lib/region';
 import { timeUntilReset } from '@/lib/usage-utils';
 import Card from '@/components/design/Card';
 import AccountManageButton from './AccountManageButton';
@@ -101,7 +101,10 @@ export default async function AccountPage() {
 
   const isPaid = tier !== 'free';
   const tierName = TIER_LABEL[tier];
-  const tierPrice = formatTierPrice(tier, region);
+  // Use the currency from the subscription row (what they're actually
+  // paying), falling back to the region's default currency.
+  const subCurrency: Currency = (subscription?.currency as Currency) ?? defaultCurrencyForRegion(region);
+  const tierPrice = formatTierPriceCurrency(tier, subCurrency);
 
   // Status pill text. We don't surface 'past_due' / 'incomplete'
   // details here — the user already gets those via the Stripe

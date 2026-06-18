@@ -34,7 +34,7 @@ export function getStripe(): Stripe {
   return cached;
 }
 
-/** Resolve the configured Stripe price ID for a given tier. */
+/** Resolve the configured Stripe price ID for a given tier (USD). */
 export function priceIdForTier(tier: 'pro' | 'max'): string {
   const id =
     tier === 'pro'
@@ -44,4 +44,28 @@ export function priceIdForTier(tier: 'pro' | 'max'): string {
     throw new Error(`STRIPE_PRICE_ID_${tier.toUpperCase()} is not set in .env`);
   }
   return id;
+}
+
+/**
+ * Resolve the configured Stripe price ID for a given tier + currency.
+ * Stripe requires separate products for each currency, so USD and EUR
+ * have distinct env vars.
+ */
+export function stripePriceIdForTier(
+  tier: 'pro' | 'max',
+  currency: 'USD' | 'EUR',
+): string {
+  if (currency === 'EUR') {
+    const id =
+      tier === 'pro'
+        ? process.env.STRIPE_PRICE_ID_PRO_EUR
+        : process.env.STRIPE_PRICE_ID_MAX_EUR;
+    if (!id) {
+      throw new Error(
+        `STRIPE_PRICE_ID_${tier.toUpperCase()}_EUR is not set in .env`
+      );
+    }
+    return id;
+  }
+  return priceIdForTier(tier);
 }

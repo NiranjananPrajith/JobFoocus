@@ -140,11 +140,15 @@ and caches the client. `apiVersion` is pinned to `'2026-05-27.dahlia'`
 with an `as any` cast — see the file's comment for why (the SDK
 doesn't re-export the narrow type from the root namespace).
 
+Stripe has separate products for each currency. `stripePriceIdForTier(tier, currency)`
+resolves the right env var: `STRIPE_PRICE_ID_PRO` / `STRIPE_PRICE_ID_MAX` for USD,
+`STRIPE_PRICE_ID_PRO_EUR` / `STRIPE_PRICE_ID_MAX_EUR` for EUR.
+
 | Route                                       | Purpose                          |
 | ------------------------------------------- | -------------------------------- |
-| `POST /api/stripe/create-checkout-session`  | Resolve/create customer, build Checkout Session in `mode: 'subscription'`, return `{ url }` |
+| `POST /api/stripe/create-checkout-session`  | Resolve/create customer, build Checkout Session in `mode: 'subscription'`, return `{ url }`. Accepts `{ tier, currency }` body. |
 | `POST /api/stripe/create-portal-session`    | Look up `stripe_customer_id`, open a Customer Portal session |
-| `POST /api/stripe/webhook`                  | Verify signature against `STRIPE_WEBHOOK_SECRET`, upsert `subscriptions` |
+| `POST /api/stripe/webhook`                  | Verify signature against `STRIPE_WEBHOOK_SECRET`, upsert `subscriptions`. Stores `currency` from the price object. |
 
 Webhook contract:
 
@@ -156,6 +160,8 @@ Webhook contract:
   `invoice.payment_failed`.
 - Upserts the `subscriptions` row by `user_id` (PK). Idempotency comes
   from the PK + the natural Stripe subscription ID — replays are safe.
+- Reads `item.price.currency` and stores `currency: 'USD' | 'EUR'` on
+  the row (used by the /account page to display the right price).
 
 `payment_method_types` is **intentionally omitted** from the checkout
 session. Stripe picks the eligible methods dynamically from the
@@ -171,7 +177,11 @@ singleton pattern.
 
 Indian visitors (detected via Vercel geo headers in middleware, stored
 in `x-jf-region` header and `jf-region` cookie) are routed to Razorpay
-for checkout. Everyone else uses Stripe.
+for checkout. Everyone else uses Stripe. The middleware now also detects
+EEA (European Economic Area) visitors — see §2.9.
+
+The Razorpay webhook hardcodes `currency: 'INR'` on the subscription row
+since Razorpay is always INR.
 
 | Route                                       | Purpose                          |
 | ------------------------------------------- | -------------------------------- |
@@ -267,7 +277,7 @@ Four things it does:
 4. Sets the **region** for geo-based payment routing:
    - Reads `request.geo.country` (Vercel Edge Network) or falls back
      to `NEXT_PUBLIC_DEV_REGION` in local dev.
-   - Sets `x-jf-region: 'IN' | 'OTHER'` header for server components
+   - Sets `x-jf-region: 'IN' | 'EEA' | 'OTHER'` header for server components
      and API routes.
    - Sets `jf-region` cookie for client components (NavBar, PricingCTA).
 
@@ -333,12 +343,15 @@ type (e.g. a new font), update the matcher.
 ### 3.4 Adding a new tier (or changing limits)
 
 1. Edit `TIER_LIMITS` in `src/lib/limits.ts`.
-2. Add a matching `STRIPE_PRICE_ID_<NAME>` env var.
-3. Add a matching `RAZORPAY_PLAN_ID_<NAME>` env var.
-4. Add cases to `tierFromPriceId` and `tierFromRazorpayPlanId`.
-5. Update the marketing copy in `src/app/(main)/pricing/page.tsx` and
-   the `TIER_LABEL` / `TIER_PRICE_USD` / `TIER_PRICE_INR` maps in `limits.ts`.
-6. New migration to add any new schema (probably none for limit
+2. Add a matching `STRIPE_PRICE_ID_<NAME>` env var (USD).
+3. Add a matching `STRIPE_PRICE_ID_<NAME>_EUR` env var (EUR).
+4. Add a matching `RAZORPAY_PLAN_ID_<NAME>` env var.
+5. Add cases to `tierFromPriceId`, `tierFromRazorpayPlanId`, and
+   `stripePriceIdForTier`.
+6. Update the marketing copy in `src/app/(main)/pricing/page.tsx` and
+   the `TIER_LABEL` / `TIER_PRICE_USD` / `TIER_PRICE_EUR` / `TIER_PRICE_INR`
+   maps in `limits.ts`.
+7. New migration to add any new schema (probably none for limit
    changes — limits are constants in code).
 
 ---

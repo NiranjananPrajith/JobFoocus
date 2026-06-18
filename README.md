@@ -58,7 +58,7 @@ any job board.
 | Framework        | Next.js 14.2.29 (App Router) + React 18 + TypeScript |
 | Database         | Supabase Postgres with RLS                          |
 | Auth             | Supabase Auth (email + Google OAuth)                |
-| Payments         | Stripe (USD) + Razorpay Subscriptions (INR) + webhooks |
+| Payments         | Stripe (USD/EUR) + Razorpay Subscriptions (INR) + webhooks |
 | AI               | DeepSeek V4 Flash Free via OpenCode ZEN (OpenAI-compatible) |
 | PDF rendering    | `pdfjs-dist` (worker copied to `public/pdf-worker/`) |
 | Styling          | Tailwind CSS                                        |
@@ -102,8 +102,10 @@ Stripe and Supabase keys are sensitive.
 | `SUPABASE_SERVICE_ROLE_KEY`             | yes      | Supabase project settings (service role, secret) |
 | `STRIPE_SECRET_KEY`                     | yes      | Stripe dashboard → Developers → API keys       |
 | `STRIPE_WEBHOOK_SECRET`                 | yes      | Stripe dashboard → Webhooks → endpoint signing secret |
-| `STRIPE_PRICE_ID_PRO`                   | yes      | Stripe dashboard → Products → Pro price ID     |
-| `STRIPE_PRICE_ID_MAX`                   | yes      | Stripe dashboard → Products → Max price ID     |
+| `STRIPE_PRICE_ID_PRO`                   | yes      | Stripe dashboard → Products → Pro price ID (USD) |
+| `STRIPE_PRICE_ID_MAX`                   | yes      | Stripe dashboard → Products → Max price ID (USD) |
+| `STRIPE_PRICE_ID_PRO_EUR`              | yes      | Stripe dashboard → Products → Pro price ID (EUR) |
+| `STRIPE_PRICE_ID_MAX_EUR`              | yes      | Stripe dashboard → Products → Max price ID (EUR) |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`    | yes      | Stripe dashboard → Developers → API keys       |
 | `RAZORPAY_KEY_ID`                      | yes      | Razorpay dashboard → Settings → API Keys       |
 | `RAZORPAY_KEY_SECRET`                  | yes      | Razorpay dashboard → Settings → API Keys       |
@@ -246,8 +248,35 @@ returns an error.
 ### Local dev
 
 Set `NEXT_PUBLIC_DEV_REGION=IN` in your `.env` to simulate an Indian
-visitor in local dev (where Vercel geo headers aren't available). Omit
-or set to `OTHER` to test the Stripe path.
+visitor in local dev (where Vercel geo headers aren't available). Use
+`EEA` to simulate a European visitor (EUR default). Omit or set to
+`OTHER` to test the USD path.
+
+---
+
+## Stripe setup (USD + EUR)
+
+You need four products in the Stripe dashboard (two per currency):
+
+| Product            | Currency | Monthly price | What it's for                   |
+| ------------------ | -------- | ------------- | ------------------------------- |
+| Pro (`price_…`)    | USD      | $5            | 25 jobs/day, 150 edits/day      |
+| Max (`price_…`)    | USD      | $12           | 250 jobs/day, 500 edits/day     |
+| Pro (`price_…`)    | EUR      | €4.50         | 25 jobs/day, 150 edits/day      |
+| Max (`price_…`)    | EUR      | €11           | 250 jobs/day, 500 edits/day     |
+
+For each product, copy the recurring price's `price_…` ID and put it
+into the matching env var (`STRIPE_PRICE_ID_PRO`, `STRIPE_PRICE_ID_MAX`,
+`STRIPE_PRICE_ID_PRO_EUR`, `STRIPE_PRICE_ID_MAX_EUR`).
+
+### Webhook
+
+1. Stripe dashboard → Developers → Webhooks → **Add endpoint**.
+2. Endpoint URL: `https://<your-domain>/api/stripe/webhook`.
+3. Listen for: `checkout.session.completed`,
+   `customer.subscription.created`, `customer.subscription.updated`,
+   `customer.subscription.deleted`, `invoice.payment_failed`.
+4. Copy the signing secret into `STRIPE_WEBHOOK_SECRET`.
 
 ---
 

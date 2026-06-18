@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { isEEACountry } from '@/lib/region'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -74,7 +75,16 @@ export async function middleware(request: NextRequest) {
   // in local dev it's undefined, so we fall back to NEXT_PUBLIC_DEV_REGION.
   const country = request.geo?.country;
   const devRegion = process.env.NEXT_PUBLIC_DEV_REGION;
-  const region = country === 'IN' || devRegion === 'IN' ? 'IN' : 'OTHER';
+
+  let region: string;
+  if (country === 'IN' || devRegion === 'IN') {
+    region = 'IN';
+  } else if (isEEACountry(country) || devRegion === 'EEA') {
+    region = 'EEA';
+  } else {
+    region = 'OTHER';
+  }
+
   supabaseResponse.headers.set('x-jf-region', region);
 
   // Also set a cookie so client components can read the region.

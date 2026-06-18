@@ -10,6 +10,7 @@ import { createServiceClient } from '@/lib/supabase-utils/service';
 import { getStripe } from '@/lib/stripe';
 import { getRazorpay } from '@/lib/razorpay';
 import { tierFromSubscription, type Tier, type TierLimits, TIER_LIMITS } from '@/lib/limits';
+import type { Currency } from '@/lib/region';
 
 export interface SubscriptionRow {
   user_id: string;
@@ -22,6 +23,7 @@ export interface SubscriptionRow {
   status: string | null;
   current_period_end: string | null;
   cancel_at_period_end: boolean;
+  currency: Currency | null;
   updated_at: string;
 }
 
@@ -174,6 +176,11 @@ export async function refreshSubscriptionFromStripe(
   // canonical writer and this function is a self-heal reader.
   const item = sub.items.data[0];
   const priceId = item?.price.id ?? null;
+  const rawCurrency = (item?.price as any)?.currency as string | undefined;
+  const currency: 'USD' | 'EUR' | null =
+    rawCurrency === 'usd' ? 'USD'
+    : rawCurrency === 'eur' ? 'EUR'
+    : null;
   const periodEndUnix =
     (item as unknown as { current_period_end?: number })?.current_period_end ??
     (sub as unknown as { current_period_end?: number }).current_period_end;
@@ -230,10 +237,8 @@ export async function refreshSubscriptionFromStripe(
         stripe_price_id: priceId,
         status: sub.status,
         current_period_end: currentPeriodEnd,
-        // Write the combined signal so the page condition
-        // (`cancel_at_period_end ? 'Expires on' : 'Renews on'`)
-        // fires whichever Stripe flag the cancel was set via.
         cancel_at_period_end: isScheduledToCancel,
+        currency,
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'user_id' }
@@ -317,6 +322,7 @@ export async function refreshSubscriptionFromRazorpay(
         status,
         current_period_end: currentPeriodEnd,
         cancel_at_period_end: isScheduledToCancel,
+        currency: 'INR',
         updated_at: new Date().toISOString(),
       },
       { onConflict: 'user_id' }

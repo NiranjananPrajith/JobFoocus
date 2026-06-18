@@ -3,8 +3,8 @@
 // PricingCTAButtons — client component that handles the three CTA
 // modes on the pricing page:
 //   - 'signup'   → just routes to /signup
-//   - 'checkout' → POSTs to /api/stripe/create-checkout-session (OTHER)
-//                  or /api/razorpay/create-subscription (IN), then
+//   - 'checkout' → POSTs to /api/stripe/create-checkout-session (USD/EUR)
+//                  or /api/razorpay/create-subscription (INR), then
 //                  window.location's to the returned URL
 //   - 'manage'   → routes to /account (used elsewhere, not on /pricing)
 //
@@ -15,14 +15,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/design/Button';
-import type { Region } from '@/lib/region';
+import type { Currency } from '@/lib/region';
 
 interface PricingCTAButtonsProps {
   cta: string;
   ctaVariant: 'primary' | 'outline' | 'dark';
   mode: 'signup' | 'checkout';
   tier?: 'pro' | 'max';
-  region?: Region;
+  currency?: Currency;
 }
 
 export default function PricingCTAButtons({
@@ -30,7 +30,7 @@ export default function PricingCTAButtons({
   ctaVariant,
   mode,
   tier,
-  region = 'OTHER',
+  currency = 'USD',
 }: PricingCTAButtonsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -48,15 +48,22 @@ export default function PricingCTAButtons({
     setLoading(true);
     setError(null);
     try {
-      // Route to Razorpay for IN, Stripe for everyone else.
-      const endpoint = region === 'IN'
-        ? '/api/razorpay/create-subscription'
-        : '/api/stripe/create-checkout-session';
+      // Route to Razorpay for INR, Stripe for USD and EUR.
+      let endpoint: string;
+      let body: Record<string, string>;
+
+      if (currency === 'INR') {
+        endpoint = '/api/razorpay/create-subscription';
+        body = { tier };
+      } else {
+        endpoint = '/api/stripe/create-checkout-session';
+        body = { tier, currency };
+      }
 
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tier }),
+        body: JSON.stringify(body),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.url) {

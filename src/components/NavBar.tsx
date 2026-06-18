@@ -6,13 +6,19 @@ import AddJobModal from '@/components/AddJobModal'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useTheme } from '@/lib/theme-context'
 import { createClient } from '@/lib/supabase/client'
-import { TIER_LABEL, TIER_PRICE_USD, TIER_PRICE_INR, type Tier } from '@/lib/limits'
+import { TIER_LABEL, TIER_PRICE_USD, TIER_PRICE_INR, TIER_PRICE_EUR, type Tier } from '@/lib/limits'
+import type { Currency } from '@/lib/region'
 
-/** Read the region cookie set by middleware. */
-function getRegionFromCookie(): 'IN' | 'OTHER' {
-  if (typeof document === 'undefined') return 'OTHER';
-  const match = document.cookie.match(/(?:^|;\s*)jf-region=([^;]*)/);
-  return match?.[1] === 'IN' ? 'IN' : 'OTHER';
+/** Read the currency cookie set by the pricing page toggle. */
+function getCurrencyFromCookie(): Currency {
+  if (typeof document === 'undefined') return 'USD';
+  const match = document.cookie.match(/(?:^|;\s*)jf-currency=([^;]*)/);
+  const v = match?.[1];
+  if (v === 'USD' || v === 'EUR' || v === 'INR') return v;
+  // Fall back to region cookie.
+  const regionMatch = document.cookie.match(/(?:^|;\s*)jf-region=([^;]*)/);
+  if (regionMatch?.[1] === 'IN') return 'INR';
+  return 'USD';
 }
 import { timeUntilReset } from '@/lib/usage-utils'
 import type { User } from '@supabase/supabase-js'
@@ -522,9 +528,11 @@ function BillingPopdown({
                   {isPaid && (
                     <span className="text-[13px] text-steel">
                       {(() => {
-                        const r = getRegionFromCookie();
-                        const price = r === 'IN' ? TIER_PRICE_INR[state.tier!] : TIER_PRICE_USD[state.tier!];
-                        return r === 'IN' ? `₹${price}` : `$${price}`;
+                        const c = getCurrencyFromCookie();
+                        const price = c === 'INR' ? TIER_PRICE_INR[state.tier!]
+                          : c === 'EUR' ? TIER_PRICE_EUR[state.tier!]
+                          : TIER_PRICE_USD[state.tier!];
+                        return c === 'INR' ? `₹${price}` : `${c === 'USD' ? '$' : '€'}${price}`;
                       })()}/mo
                     </span>
                   )}
