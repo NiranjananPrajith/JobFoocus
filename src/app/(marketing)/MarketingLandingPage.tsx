@@ -44,7 +44,7 @@ export default function MarketingLandingPage() {
       {/* ------------------------------------------------------------------ */}
       {/* 2. Responsive Light/Dark Hero Section */}
       {/* ------------------------------------------------------------------ */}
-      <section className="relative w-full overflow-hidden bg-canvas dark:bg-canvas pt-16 pb-24 lg:pt-24 lg:pb-36 px-6 border-b border-hairline dark:border-hairline transition-colors duration-200">
+      <section className="relative w-full overflow-hidden bg-canvas pt-16 pb-24 lg:pt-24 lg:pb-36 px-6 border-b border-hairline transition-colors duration-200">
         
         {/* Light Mode Glow - Warm golden aura behind mockup */}
         <div
@@ -74,13 +74,13 @@ export default function MarketingLandingPage() {
             </span>
             
             <h1
-              className="text-[52px] sm:text-[64px] lg:text-[76px] text-ink dark:text-ink leading-[1.05] tracking-[-1.5px] mb-6"
+              className="text-[52px] sm:text-[64px] lg:text-[76px] text-ink leading-[1.05] tracking-[-1.5px] mb-6"
               style={{ fontFamily: '"PP Editorial Old", "Times New Roman", Georgia, serif' }}
             >
               Your job hunt.<br />Beautifully organized.
             </h1>
             
-            <p className="text-[17px] sm:text-[18px] text-slate dark:text-slate leading-[1.50] mb-8 font-sans">
+            <p className="text-[17px] sm:text-[18px] text-slate leading-[1.50] mb-8 font-sans">
               Spreadsheets belong in finance, not your career. Create your private dashboard in 30 seconds to instantly track applications, sync across devices, and draft custom cover letters.
             </p>
             
@@ -99,14 +99,14 @@ export default function MarketingLandingPage() {
                 <a href="#features">
                   <Button
                     variant="secondary"
-                    className="text-[15px] px-8 py-3.5 border-hairline-strong text-ink hover:bg-black/5 dark:text-ink dark:border-hairline-strong dark:hover:bg-surface flex items-center justify-center transition-all"
+                    className="text-[15px] px-8 py-3.5 border-hairline-strong text-ink hover:bg-black/5 flex items-center justify-center transition-all"
                   >
                     See how it works
                   </Button>
                 </a>
               </div>
               {/* Friction-reducing micro-copy */}
-              <span className="text-[12px] text-steel dark:text-steel font-sans pl-1">
+              <span className="text-[12px] text-steel font-sans pl-1">
                 ⚡ Sets up your custom dashboard instantly. No credit card required.
               </span>
             </div>
@@ -116,16 +116,16 @@ export default function MarketingLandingPage() {
           <div className="lg:col-span-6 xl:col-span-7 relative w-full flex justify-center">
             
             {/* Outer Browser Shell: Swaps colors based on system theme */}
-            <div className="relative w-full max-w-[580px] aspect-[1.4] bg-canvas border border-hairline dark:border-hairline rounded-xl overflow-hidden shadow-xl dark:shadow-2xl transition-colors duration-200">
+            <div className="relative w-full max-w-[580px] aspect-[1.4] bg-canvas border border-hairline rounded-xl overflow-hidden shadow-xl dark:shadow-2xl transition-colors duration-200">
               
               {/* Browser Controls */}
-              <div className="flex items-center px-4 py-3 border-b border-hairline dark:border-hairline bg-surface dark:bg-canvas justify-between">
+              <div className="flex items-center px-4 py-3 border-b border-hairline bg-surface justify-between">
                 <div className="flex space-x-2">
                   <div className="w-3 h-3 rounded-full bg-red-500/80" />
                   <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
                   <div className="w-3 h-3 rounded-full bg-green-500/80" />
                 </div>
-                <div className="bg-canvas dark:bg-canvas rounded px-6 py-0.5 text-[10px] text-steel dark:text-steel font-mono select-none border border-hairline-soft dark:border-hairline">
+                <div className="bg-canvas rounded px-6 py-0.5 text-[10px] text-steel font-mono select-none border border-hairline-soft">
                   naukri.com/job/google-ux-designer
                 </div>
                 <div className="w-12" />
@@ -138,21 +138,21 @@ export default function MarketingLandingPage() {
                 <div className="opacity-45" style={{ filter: 'blur(0.3px)' }}>
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <div className="h-6 w-32 bg-hairline dark:bg-hairline-strong rounded mb-2" />
-                      <div className="h-4 w-48 bg-hairline-soft dark:bg-hairline rounded" />
+                      <div className="h-6 w-32 bg-hairline rounded mb-2" />
+                      <div className="h-4 w-48 bg-hairline-soft rounded" />
                     </div>
-                    <div className="h-10 w-24 bg-hairline-soft dark:bg-hairline rounded-md" />
+                    <div className="h-10 w-24 bg-hairline-soft rounded-md" />
                   </div>
                   <div className="space-y-3">
-                    <div className="h-3 w-full bg-hairline-soft dark:bg-hairline rounded" />
-                    <div className="h-3 w-[90%] bg-hairline-soft dark:bg-hairline rounded" />
-                    <div className="h-3 w-[95%] bg-hairline-soft dark:bg-hairline rounded" />
+                    <div className="h-3 w-full bg-hairline-soft rounded" />
+                    <div className="h-3 w-[90%] bg-hairline-soft rounded" />
+                    <div className="h-3 w-[95%] bg-hairline-soft rounded" />
                   </div>
                 </div>
 
                 {/* Overlapping Extension UI Panel — Fully theme-aware */}
                 <div
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%] w-[90%] sm:w-[380px] rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.12)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-6 bg-cream dark:bg-cream border border-beige-deep dark:border-hairline-strong"
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%] w-[90%] sm:w-[380px] rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.12)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-6 bg-cream border border-beige-deep dark:border-hairline-strong"
                 >
                   <div className="flex justify-between items-center mb-4">
                     <div className="flex items-center gap-2">

@@ -22,7 +22,7 @@ export default function CurrencyToggle({ value, onChange }: CurrencyToggleProps)
   return (
     <div className="flex items-center justify-center mb-10">
       <div
-        className="inline-flex items-center rounded-lg border border-hairline-soft dark:border-hairline bg-cream dark:bg-surface p-1"
+        className="inline-flex items-center rounded-lg border border-hairline bg-surface p-1"
         role="radiogroup"
         aria-label="Currency"
       >
@@ -38,8 +38,8 @@ export default function CurrencyToggle({ value, onChange }: CurrencyToggleProps)
               className={[
                 'px-4 py-1.5 rounded-md text-[13px] font-semibold transition-all duration-150',
                 active
-                  ? 'bg-ink text-white dark:bg-surface-elevated/40 dark:text-ink shadow-sm'
-                  : 'text-steel hover:text-ink',
+                  ? 'bg-active-bg text-active-text shadow-sm'
+                  : 'text-steel hover:text-ink hover:bg-hover-bg',
               ].join(' ')}
             >
               {opt.label}

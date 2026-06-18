@@ -43,6 +43,35 @@ const INLINE_ALLOWLIST = [
 // PATTERNS TO FLAG
 // ============================================
 
+// ============================================
+// DARK MODE OVERRIDE RULE
+// ============================================
+
+// Flags `dark:bg-*`, `dark:text-*`, `dark:border-*` Tailwind overrides.
+// These are almost always redundant when using the CSS variable system
+// (e.g. bg-cream auto-switches via var(--cream)). Legitimate exceptions
+// (dark:shadow-*, dark:hidden, dark:lg:block, dark:hover:*) are allowlisted.
+const DARK_OVERRIDE_PATTERN = /\bdark:(bg|text|border)-[a-z]/;
+const DARK_OVERRIDE_ALLOWLIST = [
+  // Visibility toggles — show element only in one theme
+  { pattern: /dark:hidden/, reason: "visibility toggle" },
+  { pattern: /dark:block/, reason: "visibility toggle" },
+  { pattern: /dark:lg:block/, reason: "responsive visibility toggle" },
+  // Shadows — no CSS variable, different depth per theme
+  { pattern: /dark:shadow-/, reason: "shadow depth override — no CSS variable" },
+  // Hover states — separate interaction, not a theme override
+  { pattern: /dark:hover:/, reason: "hover state — separate concern" },
+  // Intentional border contrast adjustments in dark mode
+  { pattern: /dark:border-hairline-strong/, reason: "intentional stronger border in dark mode" },
+  { pattern: /dark:border-hairline[^-]/, reason: "intentional border contrast in dark mode" },
+  // Intentional color shifts for better dark-mode contrast (e.g. primary → sunshine)
+  { pattern: /dark:text-sunshine/, reason: "intentional color shift for dark-mode contrast" },
+];
+
+// ============================================
+// PATTERNS TO FLAG
+// ============================================
+
 const RULES = [
   {
     name: "bg-white",
@@ -185,6 +214,28 @@ for (const filePath of files) {
         message: rule.message,
         snippet: line.trim().slice(0, 120),
       });
+    }
+
+    // Dark mode override check — flag dark:bg-*, dark:text-*, dark:border-*
+    // that should be replaced with semantic CSS variables.
+    if (DARK_OVERRIDE_PATTERN.test(line)) {
+      let darkAllowlisted = false;
+      for (const ex of DARK_OVERRIDE_ALLOWLIST) {
+        if (ex.pattern.test(line)) {
+          darkAllowlisted = true;
+          break;
+        }
+      }
+      if (!darkAllowlisted) {
+        violations.push({
+          file: relPath,
+          line: lineNum,
+          rule: "dark-override",
+          message:
+            "Redundant dark: override. Use a semantic CSS variable that auto-switches (e.g. bg-cream, text-ink, border-hairline) instead of dark:bg-*, dark:text-*, dark:border-*.",
+          snippet: line.trim().slice(0, 120),
+        });
+      }
     }
   }
 }

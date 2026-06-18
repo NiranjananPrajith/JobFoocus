@@ -53,6 +53,10 @@ const config: Config = {
         scrim: "var(--scrim)",
         "input-bg": "var(--input-bg)",
         "toggle-off": "var(--toggle-off)",
+        // Interactive states
+        "active-bg": "var(--active-bg)",
+        "active-text": "var(--active-text)",
+        "hover-bg": "var(--hover-bg)",
         // Info / Blue (PII indicators, info panels)
         "info-bg": "var(--info-bg)",
         "info-bg-strong": "var(--info-bg-strong)",
