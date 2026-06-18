@@ -69,6 +69,22 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Set the region header for downstream server components and API
+  // routes. request.geo.country is populated by Vercel's Edge Network;
+  // in local dev it's undefined, so we fall back to NEXT_PUBLIC_DEV_REGION.
+  const country = request.geo?.country;
+  const devRegion = process.env.NEXT_PUBLIC_DEV_REGION;
+  const region = country === 'IN' || devRegion === 'IN' ? 'IN' : 'OTHER';
+  supabaseResponse.headers.set('x-jf-region', region);
+
+  // Also set a cookie so client components can read the region.
+  supabaseResponse.cookies.set('jf-region', region, {
+    path: '/',
+    httpOnly: false,
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 30, // 30 days
+  });
+
   return supabaseResponse
 }
 

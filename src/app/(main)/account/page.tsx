@@ -12,9 +12,16 @@
 // the cookie store is mid-refresh.
 
 import { createClient } from '@/lib/supabase-utils/server';
-import { getSubscription, refreshSubscriptionFromStripe, type SubscriptionRow } from '@/lib/subscription';
+import {
+  getSubscription,
+  refreshSubscriptionFromStripe,
+  refreshSubscriptionFromRazorpay,
+  subscriptionProvider,
+  type SubscriptionRow,
+} from '@/lib/subscription';
 import { getTodayUsageReadOnly } from '@/lib/usage';
-import { tierFromSubscription, TIER_LIMITS, TIER_LABEL, TIER_PRICE_USD } from '@/lib/limits';
+import { tierFromSubscription, TIER_LIMITS, TIER_LABEL, formatTierPrice } from '@/lib/limits';
+import { getRegion } from '@/lib/region';
 import { timeUntilReset } from '@/lib/usage-utils';
 import Card from '@/components/design/Card';
 import AccountManageButton from './AccountManageButton';
@@ -50,20 +57,27 @@ export default async function AccountPage() {
     );
   }
 
-  // Reconcile the subscription with Stripe on every /account load.
-  // The webhook that writes `cancel_at_period_end` is fire-and-forget
-  // — it can be delayed or missed, which leaves the DB showing
-  // "Renews on" for a user who has actually cancelled. Pulling from
-  // Stripe here closes that gap: the page always reflects the truth
-  // and the DB heals itself as a side effect. If the Stripe call
-  // throws (network blip, API down), we fall back to the local row
-  // so the page still renders. We don't use `getEffectiveTier` here
-  // because that function is the enforcement path for the API
-  // routes — adding a Stripe round-trip to it would slow every
-  // /api/usage/* call, not just /account.
+  // Reconcile the subscription with the payment provider on every
+  // /account load. The webhook that writes `cancel_at_period_end` is
+  // fire-and-forget — it can be delayed or missed. Pulling from the
+  // PSP here closes that gap: the page always reflects the truth and
+  // the DB heals itself as a side effect.
+  //
+  // We check which provider the user is on by inspecting the row.
+  // Razorpay users are reconciled against Razorpay; Stripe users
+  // against Stripe. If reconciliation fails we fall back to the
+  // local DB row.
   let subscription: SubscriptionRow | null = null;
   try {
-    subscription = await refreshSubscriptionFromStripe(user.id);
+    const row = await getSubscription(user.id);
+    const provider = subscriptionProvider(row);
+    if (provider === 'razorpay') {
+      subscription = await refreshSubscriptionFromRazorpay(user.id);
+    } else if (provider === 'stripe') {
+      subscription = await refreshSubscriptionFromStripe(user.id);
+    } else {
+      subscription = row;
+    }
   } catch (err) {
     console.error('[account] subscription reconcile failed, falling back to DB:', err);
     subscription = await getSubscription(user.id);
@@ -71,13 +85,12 @@ export default async function AccountPage() {
   const tier = tierFromSubscription(subscription);
   const limits = TIER_LIMITS[tier];
   const usage = await getTodayUsageReadOnly(user.id);
+  const region = await getRegion();
+  const provider = subscriptionProvider(subscription);
 
   // Diagnostic: log the post-reconcile state we actually render from.
-  // Combined with the [subscription-reconcile] line above, this lets
-  // us see the full pipeline: what Stripe returned → what got
-  // upserted → what the page is rendering.
   console.log(
-    `[account] user=${user.id} tier=${tier} ` +
+    `[account] user=${user.id} tier=${tier} provider=${provider ?? 'none'} ` +
       `subStatus=${subscription?.status ?? 'null'} ` +
       `cancelAtPeriodEnd=${subscription?.cancel_at_period_end ?? 'null'} ` +
       `periodEnd=${subscription?.current_period_end ?? 'null'}`
@@ -88,7 +101,7 @@ export default async function AccountPage() {
 
   const isPaid = tier !== 'free';
   const tierName = TIER_LABEL[tier];
-  const tierPrice = TIER_PRICE_USD[tier];
+  const tierPrice = formatTierPrice(tier, region);
 
   // Status pill text. We don't surface 'past_due' / 'incomplete'
   // details here — the user already gets those via the Stripe
@@ -147,7 +160,10 @@ export default async function AccountPage() {
             )}
           </div>
           {isPaid ? (
-            <AccountManageButton />
+            <AccountManageButton
+              provider={provider}
+              currentPeriodEnd={periodEnd}
+            />
           ) : (
             <AccountUpgradeButton />
           )}
@@ -175,6 +191,7 @@ export default async function AccountPage() {
               <AccountAutoRenewToggle
                 initialEnabled={!cancelAtPeriodEnd}
                 initialPeriodEnd={periodEnd}
+                provider={provider}
               />
             </div>
           </>

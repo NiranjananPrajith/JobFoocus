@@ -92,15 +92,15 @@ const faqData = [
     items: [
       {
         question: 'How do I upgrade my plan?',
-        answer: 'Click the credit card icon in the top-right navigation, then click "Upgrade." You\'ll be taken to Stripe Checkout to complete the payment. No credit card is required for the free plan.',
+        answer: 'Click the credit card icon in the top-right navigation, then click "Upgrade." You\'ll be taken to Checkout to complete the payment. No credit card is required for the free plan.',
       },
       {
         question: 'How do I cancel my subscription?',
-        answer: 'Click the credit card icon → "Manage Subscription" → cancel from the Stripe Customer Portal. Your access continues until the end of your current billing period.',
+        answer: 'Click the credit card icon → "Manage Subscription" and use the auto-renew toggle, or open the billing portal. Your access continues until the end of your current billing period.',
       },
       {
         question: 'Is my payment information secure?',
-        answer: 'All payments are processed through Stripe, a PCI Level 1 certified payment processor. Job Foocus never stores your credit card information — it\'s handled entirely by Stripe.',
+        answer: 'All payments are processed through Stripe (USD) or Razorpay (INR), both PCI Level 1 certified payment processors. Job Foocus never stores your credit card information — it\'s handled entirely by the payment provider.',
       },
     ],
   },

@@ -3,8 +3,9 @@
 // PricingCTAButtons — client component that handles the three CTA
 // modes on the pricing page:
 //   - 'signup'   → just routes to /signup
-//   - 'checkout' → POSTs to /api/stripe/create-checkout-session, then
-//                  window.location's to the returned Stripe URL
+//   - 'checkout' → POSTs to /api/stripe/create-checkout-session (OTHER)
+//                  or /api/razorpay/create-subscription (IN), then
+//                  window.location's to the returned URL
 //   - 'manage'   → routes to /account (used elsewhere, not on /pricing)
 //
 // We split this out from the (server) page so the click handler is
@@ -14,12 +15,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/design/Button';
+import type { Region } from '@/lib/region';
 
 interface PricingCTAButtonsProps {
   cta: string;
   ctaVariant: 'primary' | 'outline' | 'dark';
   mode: 'signup' | 'checkout';
   tier?: 'pro' | 'max';
+  region?: Region;
 }
 
 export default function PricingCTAButtons({
@@ -27,6 +30,7 @@ export default function PricingCTAButtons({
   ctaVariant,
   mode,
   tier,
+  region = 'OTHER',
 }: PricingCTAButtonsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -44,7 +48,12 @@ export default function PricingCTAButtons({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/stripe/create-checkout-session', {
+      // Route to Razorpay for IN, Stripe for everyone else.
+      const endpoint = region === 'IN'
+        ? '/api/razorpay/create-subscription'
+        : '/api/stripe/create-checkout-session';
+
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tier }),
@@ -59,7 +68,7 @@ export default function PricingCTAButtons({
         }
         throw new Error(data?.error || 'Failed to start checkout');
       }
-      // Full page navigation so the Stripe-hosted page can take over.
+      // Full page navigation so the PSP-hosted page can take over.
       window.location.href = data.url;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');

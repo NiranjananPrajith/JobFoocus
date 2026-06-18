@@ -58,7 +58,7 @@ any job board.
 | Framework        | Next.js 14.2.29 (App Router) + React 18 + TypeScript |
 | Database         | Supabase Postgres with RLS                          |
 | Auth             | Supabase Auth (email + Google OAuth)                |
-| Payments         | Stripe Checkout + Customer Portal + webhooks        |
+| Payments         | Stripe (USD) + Razorpay Subscriptions (INR) + webhooks |
 | AI               | DeepSeek V4 Flash Free via OpenCode ZEN (OpenAI-compatible) |
 | PDF rendering    | `pdfjs-dist` (worker copied to `public/pdf-worker/`) |
 | Styling          | Tailwind CSS                                        |
@@ -105,6 +105,12 @@ Stripe and Supabase keys are sensitive.
 | `STRIPE_PRICE_ID_PRO`                   | yes      | Stripe dashboard → Products → Pro price ID     |
 | `STRIPE_PRICE_ID_MAX`                   | yes      | Stripe dashboard → Products → Max price ID     |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`    | yes      | Stripe dashboard → Developers → API keys       |
+| `RAZORPAY_KEY_ID`                      | yes      | Razorpay dashboard → Settings → API Keys       |
+| `RAZORPAY_KEY_SECRET`                  | yes      | Razorpay dashboard → Settings → API Keys       |
+| `RAZORPAY_WEBHOOK_SECRET`              | yes      | Razorpay dashboard → Webhooks → signing secret  |
+| `RAZORPAY_PLAN_ID_PRO`                 | yes      | Razorpay dashboard → Subscriptions → Plans → Pro plan ID |
+| `RAZORPAY_PLAN_ID_MAX`                 | yes      | Razorpay dashboard → Subscriptions → Plans → Max plan ID |
+| `NEXT_PUBLIC_RAZORPAY_KEY_ID`          | yes      | Razorpay dashboard → Settings → API Keys (publishable) |
 | `NEXT_PUBLIC_SITE_URL`                  | optional | Canonical site URL, used for Stripe `success_url` / `cancel_url` fallbacks |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID`          | yes      | Google Cloud Console → OAuth client ID         |
 | `ONEDRIVE_CLIENT_ID`                    | yes      | Azure App Registrations                        |
@@ -131,6 +137,8 @@ The schema lives in `supabase/migrations/`, applied in numeric order.
 | `003_user_categories.sql`                 | User-defined categories table                 |
 | `004_category_uuid_storage_key.sql`       | `applications.category_id` FK to categories  |
 | `005_subscriptions_and_usage.sql`         | Stripe subscription mirror + atomic daily usage counters |
+| `006_auto_create_uncategorized.sql`       | Auto-create `Uncategorized` category for new users |
+| `007_razorpay_columns.sql`               | Razorpay subscription columns on `subscriptions` table |
 
 To apply a fresh migration:
 
@@ -199,6 +207,47 @@ permissions are:
 - **Billing Portal Sessions**: write
 - **Subscriptions**: read
 - **All other resources**: none
+
+---
+
+## Razorpay setup (India / INR)
+
+Indian visitors (detected via Vercel's geo headers) see prices in INR and
+are routed to Razorpay instead of Stripe. Everyone else uses Stripe as
+before.
+
+You need two subscription plans in the Razorpay dashboard:
+
+| Plan              | Monthly price | What it's for                   |
+| ----------------- | ------------- | ------------------------------- |
+| Pro (`plan_…`)    | ₹500          | 25 jobs/day, 150 edits/day      |
+| Max (`plan_…`)    | ₹1,250        | 250 jobs/day, 500 edits/day     |
+
+For each plan, copy the plan's `plan_…` ID and put it into the matching
+`RAZORPAY_PLAN_ID_PRO` / `RAZORPAY_PLAN_ID_MAX` env var.
+
+### Webhook
+
+1. Razorpay dashboard → Settings → Webhooks → **Add new webhook**.
+2. Webhook URL: `https://<your-domain>/api/razorpay/webhook`.
+3. Subscribe to: `subscription.authenticated`,
+   `subscription.activated`, `subscription.charged`,
+   `subscription.cancelled`, `subscription.completed`,
+   `subscription.halted`, `subscription.resumed`.
+4. Copy the webhook signing secret into `RAZORPAY_WEBHOOK_SECRET`.
+
+### Mode consistency
+
+When you flip Razorpay from test to live (or vice versa), swap all three
+env vars in lockstep: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`,
+`RAZORPAY_WEBHOOK_SECRET`. A test-mode key with a live-mode plan ID
+returns an error.
+
+### Local dev
+
+Set `NEXT_PUBLIC_DEV_REGION=IN` in your `.env` to simulate an Indian
+visitor in local dev (where Vercel geo headers aren't available). Omit
+or set to `OTHER` to test the Stripe path.
 
 ---
 
@@ -312,6 +361,7 @@ against a custom domain, update `DASHBOARD_URL` in
 │   │       ├── ai/             # edit-document AI + bare /ai proxy
 │   │       ├── db/             # applications, documents, categories, …
 │   │       ├── stripe/         # checkout, portal, webhook
+│   │       ├── razorpay/       # create-subscription, cancel, reactivate, webhook
 │   │       └── usage/          # check, increment
 │   ├── components/             # AddJobModal, UpgradePromptModal, NavBar, …
 │   └── lib/
@@ -322,6 +372,8 @@ against a custom domain, update `DASHBOARD_URL` in
 │       ├── formatting-guides.json
 │       ├── limits.ts           # single source of truth: tier → limits
 │       ├── pii-utils.ts        # mask/demask
+│       ├── razorpay.ts         # server-side Razorpay SDK singleton
+│       ├── region.ts           # geo-based region detection (IN / OTHER)
 │       ├── resume-parser.ts
 │       ├── storage-adapter.ts  # all client→server data flow
 │       ├── stripe.ts           # server-side Stripe SDK singleton

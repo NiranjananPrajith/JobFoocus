@@ -8,6 +8,7 @@
 
 import { createServiceClient } from '@/lib/supabase-utils/service';
 import { getStripe } from '@/lib/stripe';
+import { getRazorpay } from '@/lib/razorpay';
 import { tierFromSubscription, type Tier, type TierLimits, TIER_LIMITS } from '@/lib/limits';
 
 export interface SubscriptionRow {
@@ -15,10 +16,27 @@ export interface SubscriptionRow {
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   stripe_price_id: string | null;
+  razorpay_customer_id: string | null;
+  razorpay_subscription_id: string | null;
+  razorpay_plan_id: string | null;
   status: string | null;
   current_period_end: string | null;
   cancel_at_period_end: boolean;
   updated_at: string;
+}
+
+/**
+ * Infer which payment provider owns this subscription row. Razorpay
+ * is identified by the presence of razorpay_subscription_id; Stripe
+ * is the legacy default.
+ */
+export function subscriptionProvider(
+  row: SubscriptionRow | null
+): 'stripe' | 'razorpay' | null {
+  if (!row) return null;
+  if (row.razorpay_subscription_id) return 'razorpay';
+  if (row.stripe_subscription_id) return 'stripe';
+  return null;
 }
 
 /**
@@ -226,6 +244,87 @@ export async function refreshSubscriptionFromStripe(
   if (upsertError) {
     throw upsertError;
   }
+
+  return updated as SubscriptionRow;
+}
+
+/**
+ * Pull the latest subscription state from Razorpay and mirror it
+ * into the local DB. Mirror of refreshSubscriptionFromStripe but for
+ * Razorpay subscriptions. Only runs if the user has a razorpay_customer_id.
+ */
+export async function refreshSubscriptionFromRazorpay(
+  userId: string
+): Promise<SubscriptionRow | null> {
+  console.log(`[subscription-reconcile-razorpay] entering user=${userId}`);
+
+  const supabase = createServiceClient();
+
+  const { data: existing, error: existingError } = await supabase
+    .from('subscriptions')
+    .select('razorpay_customer_id, razorpay_subscription_id')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (existingError) throw existingError;
+
+  const razorpaySubId = existing?.razorpay_subscription_id;
+  if (!razorpaySubId) return null;
+
+  const razorpay = getRazorpay();
+  let sub: any;
+  try {
+    sub = await razorpay.subscriptions.fetch(razorpaySubId);
+  } catch (err) {
+    console.error('[subscription-reconcile-razorpay] fetch failed:', err);
+    return null;
+  }
+
+  // Map Razorpay status to our status vocabulary.
+  const statusMap: Record<string, string> = {
+    active: 'active',
+    authenticated: 'trialing',
+    created: 'incomplete',
+    completed: 'canceled',
+    cancelled: 'canceled',
+    halted: 'past_due',
+    paused: 'past_due',
+  };
+  const status = statusMap[sub.status as string] ?? sub.status ?? 'active';
+
+  const periodEndUnix = sub.current_end;
+  const currentPeriodEnd = periodEndUnix
+    ? new Date(periodEndUnix * 1000).toISOString()
+    : null;
+
+  const isScheduledToCancel = sub.cancel_at_cycle_end === 1;
+
+  console.log(
+    `[subscription-reconcile-razorpay] user=${userId} ` +
+      `subId=${razorpaySubId} status=${sub.status} ` +
+      `cancel_at_cycle_end=${sub.cancel_at_cycle_end} ` +
+      `current_period_end=${currentPeriodEnd}`
+  );
+
+  const { data: updated, error: upsertError } = await supabase
+    .from('subscriptions')
+    .upsert(
+      {
+        user_id: userId,
+        razorpay_customer_id: existing?.razorpay_customer_id ?? null,
+        razorpay_subscription_id: razorpaySubId,
+        razorpay_plan_id: sub.plan_id ?? null,
+        status,
+        current_period_end: currentPeriodEnd,
+        cancel_at_period_end: isScheduledToCancel,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id' }
+    )
+    .select()
+    .single();
+
+  if (upsertError) throw upsertError;
 
   return updated as SubscriptionRow;
 }

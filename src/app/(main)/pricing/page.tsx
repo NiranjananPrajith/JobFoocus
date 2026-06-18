@@ -1,83 +1,90 @@
 import Card from '@/components/design/Card';
 import Button from '@/components/design/Button';
 import PricingCTAButtons from './PricingCTAButtons';
+import { getRegion, type Region } from '@/lib/region';
+import { formatTierPrice } from '@/lib/limits';
+
+export const dynamic = 'force-dynamic'; // geo-aware, can't be SSG'd
 
 export const metadata = {
   title: 'Pricing — Job Foocus',
 };
 
 // Plan limits (mirrors src/lib/limits.ts). We re-declare the numbers
-// here so the static page can be SSG'd without importing a server-side
-// module. If the limits change, update both files.
+// here so the static page can import a server-side module. If the
+// limits change, update both files.
 const PLAN_LIMITS = {
   free: { jobs: 5,   edits: 25 },
   pro:  { jobs: 25,  edits: 150 },
   max:  { jobs: 250, edits: 500 },
 };
 
-const plans = [
-  {
-    name: 'Free',
-    price: '$0',
-    period: 'forever',
-    description: 'Get started with basic job tracking at no cost.',
-    highlight: false,
-    features: [
-      `Add up to ${PLAN_LIMITS.free.jobs} jobs per day`,
-      `Up to ${PLAN_LIMITS.free.edits} document edits per day`,
-      'Track unlimited total applications',
-      'Generate tailored resumes & cover letters',
-      'Basic job categorization',
-      'Browser extension for easy importing',
-    ],
-    cta: 'Get Started',
-    ctaVariant: 'outline' as const,
-    ctaMode: 'signup' as const,
-  },
-  {
-    name: 'Pro',
-    price: '$5',
-    period: 'per month',
-    description: 'More jobs and edits for an active job search.',
-    highlight: true,
-    features: [
-      `Add up to ${PLAN_LIMITS.pro.jobs} jobs per day`,
-      `Up to ${PLAN_LIMITS.pro.edits} document edits per day`,
-      'Everything in Free',
-      'Smart follow-up reminders when employers go quiet',
-      'Priority AI document generation',
-      'Extended application history',
-    ],
-    cta: 'Upgrade to Pro',
-    ctaVariant: 'primary' as const,
-    ctaMode: 'checkout' as const,
-    ctaTier: 'pro' as const,
-  },
-  {
-    name: 'Max',
-    price: '$12',
-    period: 'per month',
-    description: 'Highest caps for power users and active searchers.',
-    highlight: false,
-    features: [
-      `Add up to ${PLAN_LIMITS.max.jobs} jobs per day`,
-      `Up to ${PLAN_LIMITS.max.edits} document edits per day`,
-      'Everything in Pro',
-      'Job Foocus Assistant writes follow-up responses for you',
-      'Pre-written, ready-to-send follow-up messages',
-      'Dedicated priority support',
-    ],
-    // Marketing copy: "unlimited" — but the actual cap is 250 / 500 to
-    // prevent abuse. The bullet makes the cap explicit so users
-    // aren't surprised. The subtitle clarifies further.
-    cta: 'Get Max',
-    ctaVariant: 'dark' as const,
-    ctaMode: 'checkout' as const,
-    ctaTier: 'max' as const,
-  },
-];
+function getPlans(region: Region) {
+  return [
+    {
+      name: 'Free',
+      price: formatTierPrice('free', region),
+      period: 'forever',
+      description: 'Get started with basic job tracking at no cost.',
+      highlight: false,
+      features: [
+        `Add up to ${PLAN_LIMITS.free.jobs} jobs per day`,
+        `Up to ${PLAN_LIMITS.free.edits} document edits per day`,
+        'Track unlimited total applications',
+        'Generate tailored resumes & cover letters',
+        'Basic job categorization',
+        'Browser extension for easy importing',
+      ],
+      cta: 'Get Started',
+      ctaVariant: 'outline' as const,
+      ctaMode: 'signup' as const,
+    },
+    {
+      name: 'Pro',
+      price: formatTierPrice('pro', region),
+      period: 'per month',
+      description: 'More jobs and edits for an active job search.',
+      highlight: true,
+      features: [
+        `Add up to ${PLAN_LIMITS.pro.jobs} jobs per day`,
+        `Up to ${PLAN_LIMITS.pro.edits} document edits per day`,
+        'Everything in Free',
+        'Smart follow-up reminders when employers go quiet',
+        'Priority AI document generation',
+        'Extended application history',
+      ],
+      cta: 'Upgrade to Pro',
+      ctaVariant: 'primary' as const,
+      ctaMode: 'checkout' as const,
+      ctaTier: 'pro' as const,
+    },
+    {
+      name: 'Max',
+      price: formatTierPrice('max', region),
+      period: 'per month',
+      description: 'Highest caps for power users and active searchers.',
+      highlight: false,
+      features: [
+        `Add up to ${PLAN_LIMITS.max.jobs} jobs per day`,
+        `Up to ${PLAN_LIMITS.max.edits} document edits per day`,
+        'Everything in Pro',
+        'Job Foocus Assistant writes follow-up responses for you',
+        'Pre-written, ready-to-send follow-up messages',
+        'Dedicated priority support',
+      ],
+      cta: 'Get Max',
+      ctaVariant: 'dark' as const,
+      ctaMode: 'checkout' as const,
+      ctaTier: 'max' as const,
+    },
+  ];
+}
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const region = await getRegion();
+  const plans = getPlans(region);
+  const isIN = region === 'IN';
+
   return (
     <div className="max-w-[1024px] mx-auto">
       {/* Header */}
@@ -161,6 +168,7 @@ export default function PricingPage() {
               ctaVariant={plan.ctaVariant}
               mode={plan.ctaMode}
               tier={plan.ctaTier}
+              region={region}
             />
           </Card>
         ))}
@@ -175,7 +183,10 @@ export default function PricingPage() {
           </div>
           <div>
             <p className="text-[28px] font-semibold text-ink mb-1">Secure payments</p>
-            <p className="text-[14px] text-steel">All transactions are encrypted and handled securely by Stripe.</p>
+            <p className="text-[14px] text-steel">
+              All transactions are encrypted and handled securely by{' '}
+              {isIN ? 'Razorpay' : 'Stripe'}.
+            </p>
           </div>
           <div>
             <p className="text-[28px] font-semibold text-ink mb-1">Money-back guarantee</p>

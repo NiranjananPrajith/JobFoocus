@@ -2,15 +2,12 @@
 
 // Autorenew toggle on /account. A single iOS-style switch that flips
 // the subscription between "will renew" and "scheduled to cancel at
-// period end". Replaces the prior "Manage Subscription" + "Don't
-// cancel my subscription" two-step flow for the binary on/off case
-// (the Manage button still exists for payment method, invoice
-// history, etc.).
+// period end". Branches on provider to call the correct API endpoint.
 //
 // Flow:
 //   - User clicks the toggle → optimistic flip in the UI.
-//   - We POST to /api/stripe/cancel-subscription (going off) or
-//     /api/stripe/reactivate-subscription (going on).
+//   - We POST to /api/{provider}/cancel-subscription (going off) or
+//     /api/{provider}/reactivate-subscription (going on).
 //   - On success: keep the optimistic state, show a green
 //     checkmark + confirmation message that auto-dismisses after
 //     ~4s, and call router.refresh() so the server component re-runs
@@ -26,6 +23,8 @@ interface AccountAutoRenewToggleProps {
   initialEnabled: boolean;
   /** Current period end (ISO string) for the confirmation copy. */
   initialPeriodEnd: string | null;
+  /** Payment provider — determines which API endpoints to call. */
+  provider?: 'stripe' | 'razorpay' | null;
 }
 
 type Feedback =
@@ -44,23 +43,16 @@ function formatPeriodEnd(iso: string | null): string | null {
 export default function AccountAutoRenewToggle({
   initialEnabled,
   initialPeriodEnd,
+  provider = null,
 }: AccountAutoRenewToggleProps) {
   const router = useRouter();
-  // The visible state. Starts at the server-supplied value and is
-  // updated optimistically on click. We also keep a ref to the
-  // "expected" state so the error path can snap back without
-  // re-reading `enabled` (which is stale by the time the catch
-  // runs).
   const [enabled, setEnabled] = useState(initialEnabled);
   const expectedRef = useRef(initialEnabled);
   const [pending, setPending] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
-  // Tracks which side the user just flipped to, so the auto-dismiss
-  // timer can clear it without needing to introspect the message.
   const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    // Clean up the dismiss timer if the component unmounts mid-flight.
     return () => {
       if (dismissTimer.current) clearTimeout(dismissTimer.current);
     };
@@ -74,8 +66,6 @@ export default function AccountAutoRenewToggle({
     const expectedBefore = enabled;
     expectedRef.current = next;
 
-    // Optimistic UI: flip immediately so the user sees the
-    // transition even before the network round-trip completes.
     setEnabled(next);
     setPending(true);
     setFeedback(null);
@@ -84,9 +74,11 @@ export default function AccountAutoRenewToggle({
       dismissTimer.current = null;
     }
 
+    // Route to the correct provider endpoints.
+    const prefix = provider === 'razorpay' ? 'razorpay' : 'stripe';
     const endpoint = goingOn
-      ? '/api/stripe/reactivate-subscription'
-      : '/api/stripe/cancel-subscription';
+      ? `/api/${prefix}/reactivate-subscription`
+      : `/api/${prefix}/cancel-subscription`;
 
     try {
       const res = await fetch(endpoint, { method: 'POST' });
@@ -98,9 +90,6 @@ export default function AccountAutoRenewToggle({
         );
       }
 
-      // Success: keep the optimistic state, build the message,
-      // and revalidate the server component so the period-end
-      // line updates to match the new state.
       const formatted = formatPeriodEnd(initialPeriodEnd);
       let message: string;
       if (goingOn) {
@@ -113,26 +102,13 @@ export default function AccountAutoRenewToggle({
           : 'Auto-renew is off.';
       }
       setFeedback({ type: 'success', message });
-      // Soft refresh: re-runs the server component (which calls
-      // refreshSubscriptionFromStripe) without a full page reload.
-      // The reconcile will pull the new state from Stripe and the
-      // page will flip between "Renews on" and "Expires on".
       router.refresh();
 
-      // Auto-dismiss the success message after 4s. We don't need
-      // to be precise — the user reading the message for 2s is
-      // the same outcome as reading it for 4s.
       dismissTimer.current = setTimeout(() => {
         setFeedback(null);
         dismissTimer.current = null;
       }, 4000);
     } catch (err) {
-      // Error: snap the toggle back to its pre-click state and
-      // surface the error inline. We do NOT call router.refresh()
-      // — the server component is still rendering the pre-click
-      // state, so the page would briefly disagree with the toggle
-      // for a refresh cycle. We keep them in sync by simply not
-      // revalidating.
       setEnabled(expectedBefore);
       expectedRef.current = expectedBefore;
       setFeedback({
@@ -162,11 +138,6 @@ export default function AccountAutoRenewToggle({
           aria-label="Toggle auto-renew"
           onClick={onClick}
           disabled={pending}
-          // Track: 44×24, rounded-full. Knob: 20px circle. The
-          // knob starts at left:2 and we translate it 20px to the
-          // right when on. `transition-transform` on the knob
-          // gives the slide, `transition-colors` on the track
-          // gives the color swap.
           className={[
             'relative inline-flex shrink-0 items-center',
             'w-11 h-6 rounded-full',
@@ -188,11 +159,6 @@ export default function AccountAutoRenewToggle({
         </button>
       </div>
 
-      {/*
-        Feedback slot. We always render the wrapper so the card
-        height is stable — the message just appears/disappears
-        inside it.
-      */}
       <div className="min-h-[20px] mt-2 flex items-start gap-1.5">
         {feedback && feedback.type === 'success' && (
           <p className="flex items-start gap-1.5 text-[13px] text-green-700 animate-[fadeIn_150ms_ease-out]">
@@ -236,13 +202,6 @@ export default function AccountAutoRenewToggle({
         )}
       </div>
 
-      {/*
-        The fadeIn keyframes used by the success animation. We
-        define them inline so we don't have to add a global
-        animation for one call site. Tailwind's animate-* utility
-        requires the keyframes to be in the config; the arbitrary
-        `[fadeIn_150ms_ease-out]` syntax references this name.
-      */}
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(-2px); }

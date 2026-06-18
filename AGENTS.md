@@ -163,7 +163,46 @@ Dashboard's payment-method configuration. The platform best-practices
 doc forbids passing this parameter except for Terminal (in-person)
 integrations.
 
-### 2.6 Usage cap enforcement
+### 2.6 Razorpay: `src/lib/razorpay.ts` + five routes
+
+`getRazorpay()` is a lazy singleton that reads `RAZORPAY_KEY_ID` and
+`RAZORPAY_KEY_SECRET` once and caches the client. Mirrors the Stripe
+singleton pattern.
+
+Indian visitors (detected via Vercel geo headers in middleware, stored
+in `x-jf-region` header and `jf-region` cookie) are routed to Razorpay
+for checkout. Everyone else uses Stripe.
+
+| Route                                       | Purpose                          |
+| ------------------------------------------- | -------------------------------- |
+| `POST /api/razorpay/create-subscription`    | Resolve/create Razorpay customer, create subscription with plan, return `{ url }` (short_url) |
+| `POST /api/razorpay/cancel-subscription`    | Cancel at cycle end via `subscriptions.cancel(id, 1)` |
+| `POST /api/razorpay/reactivate-subscription`| Undo cancel at cycle end via `subscriptions.update(id, { cancel_at_cycle_end: 0 })` |
+| `POST /api/razorpay/get-update-card-link`   | Return `short_url` for payment method update |
+| `POST /api/razorpay/webhook`                | Verify HMAC SHA-256 signature, upsert `subscriptions` |
+
+Webhook contract:
+
+- Reads the **raw body** via `request.text()` (not `request.json()`).
+- `export const dynamic = 'force-dynamic'`.
+- Verifies HMAC SHA-256 against `x-razorpay-signature` header.
+- Handles: `subscription.authenticated`, `subscription.activated`,
+  `subscription.charged`, `subscription.cancelled`,
+  `subscription.completed`, `subscription.halted`, `subscription.resumed`.
+- Upserts the `subscriptions` row by `user_id` (PK). The `user_id` is
+  resolved from `notes.user_id` set at subscription creation.
+
+**Razorpay SDK type gaps.** The npm `razorpay` package's TypeScript
+types are incomplete — `customer_id` is missing from the create body,
+`cancel_at_cycle_end` is missing from the update body. We use `as any`
+casts with comments explaining why. The values are validated
+server-side by Razorpay.
+
+**Provider inference.** The "provider" for a subscription row is
+inferred at read time: if `razorpay_subscription_id IS NOT NULL` it's
+Razorpay; otherwise Stripe. No stored `provider` column.
+
+### 2.7 Usage cap enforcement
 
 | File                                  | Role                                          |
 | ------------------------------------- | --------------------------------------------- |
@@ -193,7 +232,7 @@ webhook fires `customer.subscription.deleted` and the row updates to
 `status: 'canceled'` (which `tierFromSubscription` then resolves to
 `free`).
 
-### 2.7 Browser extension: `extension/`
+### 2.8 Browser extension: `extension/`
 
 - `manifest.json` — MV3, declares both `background.service_worker`
   and `background.scripts` (the latter is for Firefox MV3).
@@ -213,9 +252,9 @@ webhook fires `customer.subscription.deleted` and the row updates to
 `extension/background.js`, then `npm run build:extension`. The
 `/extension-install` page downloads the rebuilt zip.
 
-### 2.8 Middleware: `src/middleware.ts`
+### 2.9 Middleware: `src/middleware.ts`
 
-Three things it does:
+Four things it does:
 
 1. Refreshes the Supabase session cookie on every request (the
    `getAll` / `setAll` dance).
@@ -225,6 +264,12 @@ Three things it does:
 3. Exempts `/api/*` and a hard-coded public-route list
    (`/`, `/features`, `/pricing`, `/privacy-policy`,
    `/terms-of-service`, `/extension-install`).
+4. Sets the **region** for geo-based payment routing:
+   - Reads `request.geo.country` (Vercel Edge Network) or falls back
+     to `NEXT_PUBLIC_DEV_REGION` in local dev.
+   - Sets `x-jf-region: 'IN' | 'OTHER'` header for server components
+     and API routes.
+   - Sets `jf-region` cookie for client components (NavBar, PricingCTA).
 
 The `matcher` regex at the bottom is a denylist of static asset
 extensions — those never hit the middleware. When you add a new file
@@ -240,7 +285,7 @@ type (e.g. a new font), update the matcher.
   documented reason (the `apiVersion` cast in `src/lib/stripe.ts` is
   the canonical example).
 - **No `console.log` in server code paths you don't own** — log
-  prefixes: `[stripe-webhook]`, `[usage]`, `[subscription]`, `[AI]`.
+  prefixes: `[stripe-webhook]`, `[razorpay-webhook]`, `[usage]`, `[subscription]`, `[AI]`.
   Operators grep by these.
 - **Comments are first-class.** The codebase is heavily commented
   because the *why* is often non-obvious. Match the surrounding
@@ -289,10 +334,11 @@ type (e.g. a new font), update the matcher.
 
 1. Edit `TIER_LIMITS` in `src/lib/limits.ts`.
 2. Add a matching `STRIPE_PRICE_ID_<NAME>` env var.
-3. Add a case to `tierFromPriceId`.
-4. Update the marketing copy in `src/app/(main)/pricing/page.tsx` and
-   the `TIER_LABEL` / `TIER_PRICE_USD` maps in `limits.ts`.
-5. New migration to add any new schema (probably none for limit
+3. Add a matching `RAZORPAY_PLAN_ID_<NAME>` env var.
+4. Add cases to `tierFromPriceId` and `tierFromRazorpayPlanId`.
+5. Update the marketing copy in `src/app/(main)/pricing/page.tsx` and
+   the `TIER_LABEL` / `TIER_PRICE_USD` / `TIER_PRICE_INR` maps in `limits.ts`.
+6. New migration to add any new schema (probably none for limit
    changes — limits are constants in code).
 
 ---
@@ -336,12 +382,14 @@ change:
 3. For Stripe changes: use the Stripe CLI to forward webhooks
    (`stripe listen --forward-to localhost:3000/api/stripe/webhook`)
    and the test-mode dashboard.
-4. For extension changes: rebuild the zip, load the unpacked
+4. For Razorpay changes: set `NEXT_PUBLIC_DEV_REGION=IN` in `.env`,
+   use Razorpay test mode, and test against `/api/razorpay/webhook`.
+5. For extension changes: rebuild the zip, load the unpacked
    extension from `extension/`, click around on a few real job
    boards, watch the popdown for the heuristic-fail inline error.
 
 The Vercel runtime logs are the source of truth for what the
-deployed app actually did. Filter by `[stripe-webhook]`, `[usage]`,
+deployed app actually did. Filter by `[stripe-webhook]`, `[razorpay-webhook]`, `[usage]`,
 `[subscription]`, `[AI]` to find specific subsystem traces.
 
 ---

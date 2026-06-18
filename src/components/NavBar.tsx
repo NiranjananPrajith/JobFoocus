@@ -6,7 +6,14 @@ import AddJobModal from '@/components/AddJobModal'
 import ThemeToggle from '@/components/ThemeToggle'
 import { useTheme } from '@/lib/theme-context'
 import { createClient } from '@/lib/supabase/client'
-import { TIER_LABEL, TIER_PRICE_USD, type Tier } from '@/lib/limits'
+import { TIER_LABEL, TIER_PRICE_USD, TIER_PRICE_INR, type Tier } from '@/lib/limits'
+
+/** Read the region cookie set by middleware. */
+function getRegionFromCookie(): 'IN' | 'OTHER' {
+  if (typeof document === 'undefined') return 'OTHER';
+  const match = document.cookie.match(/(?:^|;\s*)jf-region=([^;]*)/);
+  return match?.[1] === 'IN' ? 'IN' : 'OTHER';
+}
 import { timeUntilReset } from '@/lib/usage-utils'
 import type { User } from '@supabase/supabase-js'
 
@@ -514,7 +521,11 @@ function BillingPopdown({
                   </span>
                   {isPaid && (
                     <span className="text-[13px] text-steel">
-                      ${TIER_PRICE_USD[state.tier!]}/mo
+                      {(() => {
+                        const r = getRegionFromCookie();
+                        const price = r === 'IN' ? TIER_PRICE_INR[state.tier!] : TIER_PRICE_USD[state.tier!];
+                        return r === 'IN' ? `₹${price}` : `$${price}`;
+                      })()}/mo
                     </span>
                   )}
                 </div>
