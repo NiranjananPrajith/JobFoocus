@@ -35,5 +35,9 @@ tsconfig.tsbuildinfo
 # HyperFrames video compositions
 /video/
 
+# Media assets (promo videos, rendered MP4s, project sources)
+# Each video lives in its own subfolder, e.g. /media/ad002_privacy-promo/
+/media/
+
 # Claude
 .claude
