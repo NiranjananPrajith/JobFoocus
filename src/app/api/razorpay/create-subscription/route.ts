@@ -71,6 +71,7 @@ export async function POST(request: Request) {
       const customer = await razorpay.customers.create({
         name: user.email ?? undefined,
         email: user.email ?? undefined,
+        contact: '+919999999999',
         notes: { user_id: user.id },
       });
       razorpayCustomerId = customer.id;
