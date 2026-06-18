@@ -112,7 +112,6 @@ Stripe and Supabase keys are sensitive.
 | `RAZORPAY_WEBHOOK_SECRET`              | yes      | Razorpay dashboard → Webhooks → signing secret  |
 | `RAZORPAY_PLAN_ID_PRO`                 | yes      | Razorpay dashboard → Subscriptions → Plans → Pro plan ID |
 | `RAZORPAY_PLAN_ID_MAX`                 | yes      | Razorpay dashboard → Subscriptions → Plans → Max plan ID |
-| `NEXT_PUBLIC_RAZORPAY_KEY_ID`          | yes      | Razorpay dashboard → Settings → API Keys (publishable) |
 | `NEXT_PUBLIC_SITE_URL`                  | optional | Canonical site URL, used for Stripe `success_url` / `cancel_url` fallbacks |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID`          | yes      | Google Cloud Console → OAuth client ID         |
 | `ONEDRIVE_CLIENT_ID`                    | yes      | Azure App Registrations                        |
