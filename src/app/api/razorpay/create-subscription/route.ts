@@ -46,7 +46,24 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   const razorpay = getRazorpay();
-  let razorpayCustomerId = subRow?.razorpay_customer_id;
+  let razorpayCustomerId: string | undefined;
+
+  // If we have a stored customer ID, verify it still exists in Razorpay.
+  // A stale ID (e.g. from a previous test-mode session, or a wiped Razorpay
+  // account) would cause "The id provided does not exist" downstream when
+  // we try to subscribe. Clearing it here lets the create-new-customer
+  // block below handle the recovery transparently.
+  if (subRow?.razorpay_customer_id) {
+    try {
+      await razorpay.customers.fetch(subRow.razorpay_customer_id);
+      razorpayCustomerId = subRow.razorpay_customer_id;
+    } catch {
+      await service
+        .from('subscriptions')
+        .update({ razorpay_customer_id: null, updated_at: new Date().toISOString() })
+        .eq('user_id', user.id);
+    }
+  }
 
   // Create a Razorpay customer if one doesn't exist yet.
   if (!razorpayCustomerId) {
