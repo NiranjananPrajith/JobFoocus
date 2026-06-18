@@ -185,7 +185,7 @@ since Razorpay is always INR.
 
 | Route                                       | Purpose                          |
 | ------------------------------------------- | -------------------------------- |
-| `POST /api/razorpay/create-subscription`    | Resolve/create Razorpay customer, create subscription with plan, return `{ url }` (short_url) |
+| `POST /api/razorpay/create-subscription`    | Create subscription with plan + notes.user_id, return `{ url }` (short_url). Razorpay auto-creates the customer on payment; the webhook mirrors the IDs. |
 | `POST /api/razorpay/cancel-subscription`    | Cancel at cycle end via `subscriptions.cancel(id, 1)` |
 | `POST /api/razorpay/reactivate-subscription`| Undo cancel at cycle end via `subscriptions.update(id, { cancel_at_cycle_end: 0 })` |
 | `POST /api/razorpay/get-update-card-link`   | Return `short_url` for payment method update |
@@ -203,10 +203,9 @@ Webhook contract:
   resolved from `notes.user_id` set at subscription creation.
 
 **Razorpay SDK type gaps.** The npm `razorpay` package's TypeScript
-types are incomplete — `customer_id` is missing from the create body,
-`cancel_at_cycle_end` is missing from the update body. We use `as any`
-casts with comments explaining why. The values are validated
-server-side by Razorpay.
+types are incomplete — `cancel_at_cycle_end` is missing from the
+update body. We use an `as any` cast with a comment explaining why.
+The values are validated server-side by Razorpay.
 
 **Provider inference.** The "provider" for a subscription row is
 inferred at read time: if `razorpay_subscription_id IS NOT NULL` it's

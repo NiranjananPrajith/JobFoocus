@@ -256,7 +256,8 @@ export async function refreshSubscriptionFromStripe(
 /**
  * Pull the latest subscription state from Razorpay and mirror it
  * into the local DB. Mirror of refreshSubscriptionFromStripe but for
- * Razorpay subscriptions. Only runs if the user has a razorpay_customer_id.
+ * Razorpay subscriptions. Only runs if the user has a razorpay_subscription_id
+ * (set by the webhook on the first subscription.* event).
  */
 export async function refreshSubscriptionFromRazorpay(
   userId: string
