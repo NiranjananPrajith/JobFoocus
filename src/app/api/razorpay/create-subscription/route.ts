@@ -110,7 +110,6 @@ export async function POST(request: Request) {
       plan_id: planId,
       total_count: 120,
       notes: { user_id: user.id },
-      customer_id: razorpayCustomerId,
     } as any);
 
     // short_url is the hosted payment page where the user enters their
