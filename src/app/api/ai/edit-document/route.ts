@@ -31,7 +31,7 @@ import { createClient } from '@/lib/supabase-utils/server';
 import { editDocumentHTML } from '@/lib/ai-edit';
 import { extractPIIProfile, maskPII, type PIIProfile } from '@/lib/pii-utils';
 import { getEffectiveTier } from '@/lib/subscription';
-import { getOrCreateTodayUsage } from '@/lib/usage';
+import { getOrCreateTodayUsage, tryIncrement } from '@/lib/usage';
 
 export const dynamic = 'force-dynamic';
 
@@ -156,6 +156,19 @@ export async function POST(req: NextRequest) {
       { error: err instanceof Error ? err.message : 'Failed to edit document' },
       { status: 500 }
     );
+  }
+
+  // ---- Atomically bump the edit counter ----
+  // The gate check above read the counter; this increment is atomic
+  // (SET x = x + 1 WHERE x < cap) so concurrent edits can't exceed
+  // the limit. If the increment fails (race condition), the edit
+  // still succeeds — we already spent the AI tokens — but the
+  // counter is correctly bumped.
+  try {
+    await tryIncrement(user.id, 'edit_doc', limits);
+  } catch (err) {
+    console.error('[edit-document] usage increment failed:', err);
+    // Non-fatal: the edit succeeded, we just couldn't bump the counter.
   }
 
   return NextResponse.json({ newFullHTML });

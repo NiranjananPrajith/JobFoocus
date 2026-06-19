@@ -161,7 +161,8 @@ function ApplicationContent() {
   const [pipelineRetryToken, setPipelineRetryToken] = useState(0);
   // Manual-fill form state. Populated when the AI returns an empty /
   // "Unknown Company" / missing job_title. The user fills in the
-  // missing field(s) and the pipeline resumes from `saveApplication`.
+  // missing field(s) and the pipeline resumes from the server-side
+  // /api/jobs/add endpoint.
   const [manualFill, setManualFill] = useState<ManualFillPayload | null>(null);
   const [manualCompany, setManualCompany] = useState('');
   const [manualTitle, setManualTitle] = useState('');
@@ -369,8 +370,8 @@ function ApplicationContent() {
   //      already attached.
 
   // The shared pipeline core (ensureUncategorizedCategory →
-  // formatJobDescription → required-field gate → saveApplication →
-  // saveDocumentHTML → generateMaskedDocumentsForExistingJob). Used
+  // formatJobDescription → required-field gate → /api/jobs/add).
+  // Used
   // by BOTH the auto-pipeline effect and the jd-retry button handler.
   // Returns a discriminated outcome so the caller can dispatch to the
   // right UI state.
@@ -504,52 +505,46 @@ function ApplicationContent() {
 
     const folder = 'job-' + Date.now();
 
-    // 3d. Save application.
+    // 3d. Call the server-side pipeline. The gate check and usage
+    // increment are atomic — the server bumps the counter before
+    // running the pipeline, so there's no race condition or bypass.
     try {
-      await saveApplication('Uncategorized', folder, {
-        company: formattedJD.company,
-        job_title: formattedJD.job_title,
-        date_applied: '',
-        status: 'prospect',
-        response_date: null,
-        notes: '',
-        contact_name: null,
-        contact_email: null,
-        source: extractDomain(extUrl || ''),
-        documents: [],
-        job_url: extUrl || null,
+      const res = await fetch('/api/jobs/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jdText,
+          category: 'Uncategorized',
+          source: extractDomain(extUrl || ''),
+          jobUrl: extUrl || null,
+          formattedJD,
+          folder,
+        }),
       });
+
+      if (res.status === 402) {
+        const body = await res.json().catch(() => ({}));
+        return {
+          kind: 'limit-blocked',
+          tier: body.tier ?? 'free',
+          jobsUsed: 0,
+          jobsLimit: body.jobsLimit ?? 0,
+          editsUsed: 0,
+          editsLimit: body.editsLimit ?? 0,
+        };
+      }
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        return { kind: 'other-fail', message: err.error || 'Could not save the application.' };
+      }
+
+      if (cancelled.current) return { kind: 'other-fail', message: 'Cancelled' };
+
+      return { kind: 'success', folder };
     } catch (err) {
       return { kind: 'other-fail', message: err instanceof Error ? err.message : 'Could not save the application.' };
     }
-    if (cancelled.current) return { kind: 'other-fail', message: 'Cancelled' };
-
-    // 3e. Save JD HTML.
-    try {
-      const jdHTML = buildJobDescriptionHTML(formattedJD, jdText);
-      await saveDocumentHTML('Uncategorized', folder, 'job_description', jdHTML);
-    } catch (err) {
-      return { kind: 'other-fail', message: err instanceof Error ? err.message : 'Could not save the job description.' };
-    }
-    if (cancelled.current) return { kind: 'other-fail', message: 'Cancelled' };
-
-    // 3f. Generate resume + cover letter.
-    try {
-      await generateMaskedDocumentsForExistingJob(
-        'Uncategorized',
-        folder,
-        jdText,
-        (step) => {
-          if (cancelled.current) return;
-          setPipelineStep(step);
-        }
-      );
-    } catch (err) {
-      return { kind: 'other-fail', message: err instanceof Error ? err.message : 'Could not generate the resume or cover letter.' };
-    }
-    if (cancelled.current) return { kind: 'other-fail', message: 'Cancelled' };
-
-    return { kind: 'success', folder };
   }
 
   useEffect(() => {
@@ -653,13 +648,6 @@ function ApplicationContent() {
           if (cancelled) return;
           setPipelineMode(null);
           router.replace(destination);
-          // Bump the daily counter. Fire-and-forget — the navigation
-          // already happened. Same shape as AddJobModal.
-          void fetch('/api/usage/increment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'add_job' }),
-          }).catch((err) => console.warn('[extension pipeline] usage increment failed:', err));
           return;
         }
       }
@@ -677,10 +665,8 @@ function ApplicationContent() {
 
   // Called from the manual-fill form when the user submits the
   // missing company / job title. Re-uses the stashed formatted JD +
-  // folder from `manualFill` (so we don't re-run formatJobDescription)
-  // and falls through to the same saveApplication → saveDocumentHTML
-  // → generateMaskedDocumentsForExistingJob → router.replace sequence
-  // the auto pipeline uses.
+  // folder from `manualFill` and calls /api/jobs/add (server-side
+  // pipeline with atomic gate + increment).
   const handleManualFillSubmit = async () => {
     if (!manualFill) return;
 
@@ -696,12 +682,8 @@ function ApplicationContent() {
       return;
     }
 
-    let cancelled = false;
     setManualFillError(null);
     setPipelineMode('processing');
-    // The analyzing step already ran (that's how we got here). Start
-    // the stepper at 'resume' so the visible progress matches what's
-    // actually about to happen.
     setPipelineStep('resume');
 
     try {
@@ -717,49 +699,43 @@ function ApplicationContent() {
         job_title: finalTitle,
       };
 
-      await saveApplication('Uncategorized', manualFill.folder, {
-        company: finalCompany,
-        job_title: finalTitle,
-        date_applied: '',
-        status: 'prospect',
-        response_date: null,
-        notes: '',
-        contact_name: null,
-        contact_email: null,
-        source: extractDomain(extUrl || ''),
-        documents: [],
-        job_url: extUrl || null,
+      // Call the server-side pipeline. The gate check and usage
+      // increment are atomic.
+      const res = await fetch('/api/jobs/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jdText: manualFill.jobDescription,
+          category: 'Uncategorized',
+          source: extractDomain(extUrl || ''),
+          jobUrl: extUrl || null,
+          formattedJD: finalFormattedJD,
+          folder: manualFill.folder,
+        }),
       });
-      if (cancelled) return;
 
-      const jdHTML = buildJobDescriptionHTML(finalFormattedJD, manualFill.jobDescription);
-      await saveDocumentHTML('Uncategorized', manualFill.folder, 'job_description', jdHTML);
-      if (cancelled) return;
+      if (res.status === 402) {
+        const body = await res.json().catch(() => ({}));
+        setLimitBlock({
+          tier: body.tier ?? 'free',
+          used: body.jobsUsed ?? 0,
+          limit: body.jobsLimit ?? 0,
+          editsUsed: body.editsUsed ?? 0,
+          editsLimit: body.editsLimit ?? 0,
+        });
+        setPipelineMode(null);
+        setManualFill(null);
+        return;
+      }
 
-      // Same intent as the auto pipeline: the stepper reuses the
-      // existing analyzing→resume→cover_letter→done UI, but the
-      // analyzing step has effectively already happened (we know
-      // the JD format, the user just supplied the missing fields).
-      // We pass an onStep that ignores the redundant 'analyzing'
-      // event so the stepper stays on 'resume' until the AI resumes
-      // generation actually starts.
-      await generateMaskedDocumentsForExistingJob(
-        'Uncategorized',
-        manualFill.folder,
-        manualFill.jobDescription,
-        (step) => {
-          if (cancelled) return;
-          if (step === 'analyzing') return; // already done
-          setPipelineStep(step);
-        }
-      );
-      if (cancelled) return;
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to save this job.');
+      }
 
       const destination = `/application?app=Uncategorized/${encodeURIComponent(manualFill.folder)}`;
       setPipelineDestination(destination);
-      // Same 700ms celebration pause as the auto pipeline.
       await new Promise((r) => setTimeout(r, 700));
-      if (cancelled) return;
       setPipelineMode(null);
       setManualFill(null);
       router.replace(destination);

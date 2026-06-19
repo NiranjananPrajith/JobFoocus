@@ -9,7 +9,7 @@ import Button from '@/components/design/Button';
 import CategorySelector from '@/components/CategorySelector';
 import ManageCategoriesModal from '@/components/ManageCategoriesModal';
 import AddJobStepper, { type AddJobStep } from '@/components/AddJobStepper';
-import { isMasterResumeBlank, formatJobDescription, conversationalParseJD, generateMaskedJobEntryAndDocuments } from '@/lib/ai-generation';
+import { isMasterResumeBlank, formatJobDescription, conversationalParseJD } from '@/lib/ai-generation';
 import { ensureUncategorizedCategory, getUserCategories, saveCategory, type UserCategory } from '@/lib/storage-adapter';
 import UpgradePromptModal from '@/components/UpgradePromptModal';
 import type { FormattedJD, ClarifyResult } from '@/lib/ai-generation';
@@ -285,6 +285,9 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
 
   // Shared pipeline runner used by handleSubmitJD, handleManualFillSave,
   // Accepts a pre-formatted JD to avoid a second AI call.
+  // The entire pipeline runs server-side via /api/jobs/add — the gate
+  // check and usage increment are atomic, so the counter is always
+  // correct and can't be bypassed.
   async function runFullPipeline(alreadyFormatted: FormattedJD) {
     setProcessingStep('analyzing');
     setState('processing');
@@ -300,15 +303,44 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
         }
       }
 
-      const result = await generateMaskedJobEntryAndDocuments(jdText, selectedCategory, (step) => {
-        setProcessingStep(step);
-      }, alreadyFormatted);
+      setProcessingStep('resume');
+
+      const res = await fetch('/api/jobs/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jdText,
+          category: selectedCategory,
+          formattedJD: alreadyFormatted,
+        }),
+      });
+
+      if (res.status === 402) {
+        const body = await res.json().catch(() => ({}));
+        setLimitBlock({
+          tier: body.tier ?? 'free',
+          used: body.jobsUsed ?? 0,
+          limit: body.jobsLimit ?? 0,
+          editsUsed: body.editsUsed ?? 0,
+          editsLimit: body.editsLimit ?? 0,
+        });
+        setState('paste_jd');
+        setProcessingStep('analyzing');
+        return;
+      }
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to process job.');
+      }
+
+      const result = await res.json();
 
       // Surface the AI-extracted header on the processing view so the
       // user can verify the right posting was pulled.
       setResultHeader({
         company: result.company || 'This job',
-        jobTitle: result.job_title || '',
+        jobTitle: result.jobTitle || '',
       });
 
       // Build the saved-app URL and let the useEffect above handle
@@ -317,15 +349,6 @@ export default function AddJobModal({ isOpen, onClose, onJobAdded }: AddJobModal
       setDestination(appUrl);
       setProcessingStep('done');
       onJobAdded?.();
-
-      // Bump the daily counter. Fire-and-forget — the user is about
-      // to be redirected to the new app, so we don't need to wait
-      // for the round-trip or surface an error if it fails.
-      void fetch('/api/usage/increment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'add_job' }),
-      }).catch((err) => console.warn('[AddJobModal] usage increment failed:', err));
     } catch (err) {
       console.error('[AddJobModal] Failed to process job:', err);
       const raw = err instanceof Error ? err.message : '';

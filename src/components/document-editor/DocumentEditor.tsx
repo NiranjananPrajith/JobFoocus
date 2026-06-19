@@ -277,13 +277,6 @@ export default function DocumentEditor() {
           console.error('[document-editor] save after AI edit failed:', err);
           setSaveStatus('error');
         }
-
-        // Bump counter (fire-and-forget).
-        void fetch('/api/usage/increment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'edit_doc' }),
-        }).catch((err) => console.warn('[document-editor] usage increment failed:', err));
       } catch (err) {
         console.error('Smart edit failed:', err);
         alert(err instanceof Error ? err.message : 'Failed to apply edit. Please try again.');

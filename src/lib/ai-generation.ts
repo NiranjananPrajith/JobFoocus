@@ -217,7 +217,7 @@ export async function conversationalParseJD(
 // AI Classification: Assign job to category
 // ---------------------------------------------------------------------------
 
-async function classifyJobToCategory(
+export async function classifyJobToCategory(
   jd: FormattedJD,
   categories: UserCategory[]
 ): Promise<string> {
@@ -266,7 +266,7 @@ Respond with ONLY the category name, or "Uncategorized" if none clearly fit.`;
 // AI Step 2: Generate resume HTML (server-safe — receives masked text only)
 // ---------------------------------------------------------------------------
 
-async function generateResumeHTML(maskedMasterResume: string, jd: FormattedJD): Promise<string> {
+export async function generateResumeHTML(maskedMasterResume: string, jd: FormattedJD): Promise<string> {
   console.log('[AI] Step 2: Generating resume HTML');
   const guide = formattingGuides.resume;
   const system = 'You are an expert resume writer. Output ONLY valid HTML for the resume body — NO <html>, <head>, or <body> tags.\n\n' + guide.ai_instructions + '\n\n---\nRESUME FORMATTING GUIDE (reference only — do not output this):\n' + JSON.stringify(guide, null, 2);
@@ -306,7 +306,7 @@ Key Requirements: ${(jd.requirements || []).join(', ')}`;
 // AI Step 3: Generate cover letter HTML (server-safe — receives masked text only)
 // ---------------------------------------------------------------------------
 
-async function generateCoverLetterHTML(maskedMasterResume: string, jd: FormattedJD): Promise<string> {
+export async function generateCoverLetterHTML(maskedMasterResume: string, jd: FormattedJD): Promise<string> {
   console.log('[AI] Step 3: Generating cover letter HTML');
   const guide = formattingGuides.cover_letter;
   const system = 'You are an expert cover letter writer. Output plain text paragraphs only — no HTML tags, no structural elements. The cover letter WRAPPER handles all formatting.\n\n' + guide.ai_instructions;
@@ -466,7 +466,7 @@ export function buildJobDescriptionHTML(jd: FormattedJD, rawJD: string): string 
   return '<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>Job Description - ' + jd.job_title + '</title>\n    <style>\n        @page { size: A4; margin: 15mm; }\n        @media print {\n            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n        }\n        body { font-family: \'Helvetica Neue\', Helvetica, Arial, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 0; }\n        h1 { font-size: 24px; margin-bottom: 5px; }\n        .meta { color: #666; margin-bottom: 20px; }\n\th2 { font-size: 18px; margin-top: 25px; border-bottom: 1px solid #ccc; padding-bottom: 5px; }\n        ul { padding-left: 20px; }\n        li { margin-bottom: 8px; }\n        .section { margin-bottom: 20px; }\n    </style>\n</head>\n<body>\n    <h1>' + jd.job_title + '</h1>\n    <div class="meta">\n        <p>' + jd.company + ' &bull; ' + (jd.location || 'Location not specified') + ' &bull; ' + (jd.employment_type || 'Full-time') + '</p>\n    </div>\n\n    <h2>About the Role</h2>\n    <div class="section">\n        <p>' + (jd.summary || 'No summary available.') + '</p>\n    </div>\n\n    ' + responsibilitiesHTML + '\n    ' + requirementsHTML + '\n\n    <h2>Application Details</h2>\n    <p><em>Job Description saved on ' + today + '</em></p>\n</body>\n</html>';
 }
 
-function buildResumeFullHTML(masterResume: any, tailoredBodyHTML: string, jd?: FormattedJD): string {
+export function buildResumeFullHTML(masterResume: any, tailoredBodyHTML: string, jd?: FormattedJD): string {
   const name = masterResume.name || '';
   const phone = masterResume.phone || '';
   const email = masterResume.email || '';
