@@ -11,6 +11,7 @@ import DocumentIframe, { DocumentIframeHandle, EditorHandle } from './DocumentIf
 import EditorToolbar from './EditorToolbar';
 import SmartEditPanel from './SmartEditPanel';
 import PrintGuide from './PrintGuide';
+import AiEditProgressOverlay from './AiEditProgressOverlay';
 import LoadingScreen from '@/components/LoadingScreen';
 import UpgradePromptModal from '@/components/UpgradePromptModal';
 import { exportDocumentPdf } from '@/lib/export-pdf';
@@ -379,18 +380,7 @@ export default function DocumentEditor() {
         <EditorToolbar handle={handle} />
       </div>
 
-      {isAiEditing && (
-        <div
-          className="fixed inset-0 z-30 flex items-center justify-center no-print"
-          style={{ backgroundColor: 'var(--scrim)' }}
-        >
-          <div className="bg-surface border border-hairline rounded-2xl shadow-2xl px-8 py-6 flex flex-col items-center gap-3">
-            <div className="w-10 h-10 border-[3px] border-hairline border-t-primary rounded-full animate-spin" />
-            <p className="text-[15px] text-ink font-semibold">Applying your changes…</p>
-            <p className="text-[12px] text-steel">The AI is editing your document. This can take a few seconds.</p>
-          </div>
-        </div>
-      )}
+      <AiEditProgressOverlay active={isAiEditing} />
 
       <div className="document-canvas">
         {/* The key remounts the iframe when switching documents (different appId/docType) */}
@@ -430,7 +420,7 @@ export default function DocumentEditor() {
       {/* Print/screen styles. The iframe auto-resizes to its content so
           no fixed height is needed. The whole page scrolls as one. */}
       <style>{`
-        @page { size: A4; margin: 0; }
+        @page { size: A4; margin: 15mm; }
         .document-canvas {
           background: #ffffff;
         }

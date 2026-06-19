@@ -1,14 +1,14 @@
 // Server-only: AI document editing.
 //
 // This module is intentionally separate from ai-generation.ts so the
-// edit prompt + PRINT_SAFE_CSS_GUIDE string don't get bundled into the
-// client. ai-generation.ts is imported client-side by AddJobModal and
-// the application page; this module is imported only by the
+// edit prompt + ATS guide strings don't get bundled into the client.
+// ai-generation.ts is imported client-side by AddJobModal and the
+// application page; this module is imported only by the
 // /api/ai/edit-document route (server).
 
 import { zenChat } from '@/lib/ai-generation';
 import { demaskPII, maskPIIInHTML, type PIIProfile } from '@/lib/pii-utils';
-import { PRINT_SAFE_CSS_GUIDE } from '@/lib/print-safe-css';
+import { ATS_RESUME_GUIDE, COVER_LETTER_PRINT_GUIDE } from '@/lib/print-safe-css';
 
 export interface EditContext {
   maskedCurrentHTML: string;
@@ -22,30 +22,36 @@ async function editDocumentFullHTML(
   docType: 'resume' | 'cover_letter',
   userMessage: string
 ): Promise<string> {
-  const system = docType === 'resume'
-    ? `You are an expert resume designer and writer. You are editing an existing resume that the user wants to change. The user's PII (name, phone, email, socials, portfolio) is wrapped in XML-style tags like <PII_NAME>…</PII_NAME> — you MUST preserve these tags exactly as they appear. Treat <PII_NAME>John Smith</PII_NAME> as if it were literally the candidate's name; do not invent different values. Return the complete edited resume as a valid <!DOCTYPE html>…</html> document.
+  const isResume = docType === 'resume';
+  const guide = isResume ? ATS_RESUME_GUIDE : COVER_LETTER_PRINT_GUIDE;
 
-${PRINT_SAFE_CSS_GUIDE}`
-    : `You are an expert cover letter designer and writer. You are editing an existing cover letter. The user's PII (name, phone, email) is wrapped in XML-style tags like <PII_NAME>…</PII_NAME> — preserve these tags exactly. Return the complete edited cover letter as a valid <!DOCTYPE html>…</html> document.
+  const system = isResume
+    ? `You are an expert resume editor. You are editing an existing resume. The user's PII (name, phone, email, socials, portfolio) is wrapped in XML-style tags like <PII_NAME>…</PII_NAME> — you MUST preserve these tags exactly as they appear. Return the complete edited resume as a valid <!DOCTYPE html>…</html> document.
 
-${PRINT_SAFE_CSS_GUIDE}`;
+${ATS_RESUME_GUIDE}
+
+STRICT CONSTRAINTS FOR RESUME EDITS:
+- You may edit text content: rephrase, shorten, expand, reorganize sections,
+  add/remove bullet points, fix typos, improve clarity.
+- You may NOT introduce multi-column layouts, sidebars, colored backgrounds,
+  colored text, tables for layout, graphics, icons, flex layouts, or any
+  non-ATS-compliant styling.
+- You may NOT add borders, colored section headers, background colors,
+  decorative elements, or images.
+- You may NOT use text-align: justify on the body (ATS parsers may break
+  hyphenated words).
+- Keep the document single-column, left-aligned, black text on white
+  background, with standard semantic headings (h1, h2, p, ul/li).
+- The MASTER RESUME (below) is the source of truth for the candidate's
+  background. You may draw new phrasing or reorder content from it, but
+  do not invent facts (no fake employers, degrees, or metrics).`
+    : `You are an expert cover letter editor. You are editing an existing cover letter. The user's PII (name, phone, email) is wrapped in XML-style tags like <PII_NAME>…</PII_NAME> — preserve these tags exactly. Return the complete edited cover letter as a valid <!DOCTYPE html>…</html> document.
+
+${COVER_LETTER_PRINT_GUIDE}`;
 
   const { maskedCurrentHTML, maskedMasterResume, jdContext } = context;
 
-  const prompt = `Edit the following ${docType === 'resume' ? 'resume' : 'cover letter'} according to the user's request.
-
-You have full creative freedom:
-- You may make small text edits (rewording, fixing typos, shortening).
-- You may restructure sections, reorder content, or add new sections.
-- You may completely REDESIGN the document with new layouts, colors, fonts,
-  sidebars, two-column layouts, dividers, icon accents, or any other visual
-  change — as long as you follow the print-safe CSS guide.
-- You may NOT remove or change any <PII_NAME>, <PII_PHONE>, <PII_EMAIL>,
-  <PII_LINKEDIN>, <PII_GITHUB>, <PII_PORTFOLIO> tag content. Treat each tag
-  as opaque and pass it through unchanged.
-- The MASTER RESUME (below) is the source of truth for the candidate's
-  background. You may draw new phrasing or reorder content from it, but
-  do not invent facts (no fake employers, degrees, or metrics).
+  const prompt = `Edit the following ${isResume ? 'resume' : 'cover letter'} according to the user's request.
 
 USER'S REQUEST:
 "${userMessage}"
@@ -64,7 +70,7 @@ Key requirements: ${jdContext.requirements.join(', ') || '(not extracted)'}
 OUTPUT:
 - Return ONLY the complete edited <!DOCTYPE html>…</html> document.
 - Do not add commentary, explanation, or text outside the HTML.
-- Apply the print-safe CSS guide from the system prompt.
+- Apply the ATS compliance rules from the system prompt.
 - Preserve every <PII_*>…</PII_*> tag exactly as it appears in the current document.`;
 
   const raw = await zenChat(prompt, system);

@@ -50,9 +50,21 @@ export function recombineDocument(prefix: string, newBodyHTML: string, suffix: s
   return prefix + newBodyHTML + suffix;
 }
 
-// Normalize old stored docs that targeted US Letter to A4 so the
-// on-screen A4 page sheets match the printed page size. Only rewrites
-// the @page size; doesn't touch other styles.
+// Normalize stored docs for consistent print output:
+// 1. US Letter → A4
+// 2. @page margin: 0 → margin: 15mm (per-page margins on every page)
+// 3. Strip body padding (15mm/20mm/other) → padding: 0 (let @page handle margins)
+//
+// The on-screen editor overrides body padding via @media screen in
+// the injected surface CSS, so stripping padding here only affects
+// the print output (which is what we want).
 export function normalizePageSizeToA4(fullHTML: string): string {
-  return fullHTML.replace(/@page\s*\{\s*size\s*:\s*letter\s*;?/i, '@page { size: A4;');
+  let result = fullHTML;
+  // 1. Letter → A4
+  result = result.replace(/@page\s*\{\s*size\s*:\s*letter\s*;?/i, '@page { size: A4;');
+  // 2. @page margin: 0 → margin: 15mm (handles legacy docs with zero page margins)
+  result = result.replace(/(@page\s*\{[^}]*margin\s*:\s*)0(\s*;?)/i, '$115mm$2');
+  // 3. Strip body padding — let @page handle the margins per page
+  result = result.replace(/(body\s*\{[^}]*padding\s*:\s*)\d+(mm|pt|px)([^}]*\})/i, '$10$3');
+  return result;
 }

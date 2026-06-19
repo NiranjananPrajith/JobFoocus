@@ -31,13 +31,15 @@ export async function exportDocumentPdf({ html, filename }: ExportPdfArgs): Prom
   printWindow.document.write(normalized);
   printWindow.document.close();
 
-  // Inject a belt-and-braces zero-margin style so Chrome and Firefox
-  // disable "Headers and footers" automatically (they have no @page
-  // margin area to render them in). The document's own <style> already
-  // has @page { margin: 0 }, but the explicit override here prevents
-  // any UA default body margin from sneaking in.
+  // Inject a style that forces per-page A4 margins via @page (applied by
+  // the browser's print engine to EVERY page, not just the first/last) and
+  // removes the body's own padding so it doesn't double the margin.
+  // @page { margin: 15mm } is the single source of truth for print margins.
+  // Headers and footers are disabled automatically (no @page margin area
+  // for the browser to render them in).
   const fixStyle = printWindow.document.createElement('style');
-  fixStyle.textContent = '@page { size: A4; margin: 0; } html, body { margin: 0 !important; }';
+  fixStyle.textContent =
+    '@page { size: A4; margin: 15mm; } html, body { margin: 0 !important; padding: 0 !important; }';
   printWindow.document.head?.appendChild(fixStyle);
 
   // Set the document title so the browser pre-fills the "Save as PDF"

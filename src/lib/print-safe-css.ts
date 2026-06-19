@@ -1,66 +1,110 @@
-// Print-safe CSS compatibility guide for the AI.
+// ATS-compliant resume guide and print-safe cover letter guide for the AI.
 //
-// The user can save documents to PDF via the browser's "Save as PDF" print
-// dialog (we don't have a server-side renderer on Vercel Hobby). The AI
-// therefore must produce HTML/CSS that Chrome/Edge print engines handle well.
+// Resumes MUST be ATS-compliant: single-column, black text, no colors,
+// no sidebars, no flex layout, standard semantic HTML. Applicant Tracking
+// Systems parse resumes top-to-bottom; non-standard layouts scramble the
+// text order and lose content.
 //
-// This string is appended to every resume/cover-letter generation prompt
-// and to every NL edit prompt so the AI never produces layouts that break
-// in browser print.
+// Cover letters are read by humans, not ATS, but must still print cleanly:
+// single-column, no colors, no sidebars.
 
-export const PRINT_SAFE_CSS_GUIDE = `
-PRINT-SAFE CSS COMPATIBILITY GUIDE (REQUIRED — your output is rendered to PDF
-via the browser's print engine, so follow these rules exactly):
+export const ATS_RESUME_GUIDE = `
+ATS-COMPLIANT RESUME RULES (REQUIRED — your output is parsed by Applicant
+Tracking Systems AND printed to PDF via the browser's print engine):
+
+LAYOUT
+- Single-column ONLY. NO sidebars, NO two-column layouts, NO flexbox for
+  layout, NO CSS multi-column, NO tables for layout.
+- Content flows top-to-bottom in natural reading order.
+- Use normal document flow (block elements stacking vertically).
+
+STYLING
+- Black text (#000 or #222) on white background ONLY.
+- NO colored text, NO colored backgrounds, NO colored borders.
+- NO graphics, icons, images, or decorative elements.
+- Standard web-safe fonts only: Helvetica, Arial, Georgia, or Times New Roman.
+- Bold/italic for emphasis on job titles and company names only.
+- Left-aligned text. NO text-align: justify. NO center alignment (except
+  the candidate name at the top if desired).
+
+SEMANTIC HTML (critical for ATS parsing)
+- <h1> for the candidate name (top of document)
+- <h2> for section headers (Professional Summary, Skills, Experience,
+  Education, Certifications)
+- <p> for paragraphs, summary, company lines, job titles
+- <ul><li> for bullet lists (skills, achievements)
+- Do NOT use <div> for text that should be a paragraph or heading.
 
 PAGE SETUP
-- @page { size: A4; margin: 0; } — do NOT set a margin on @page; instead bake
-  print margins into the body padding (so the dialog's margin setting matters
-  less). A safe body padding is 15mm on all sides.
-- Wrap the entire body in a single <div> (e.g. <div class="page">) so the
-  page layout is self-contained.
+- @page { size: A4; margin: 15mm; } — margin on @page, NOT body padding.
+- body { margin: 0; padding: 0; } — let @page handle per-page margins.
+- page-break-inside: avoid on job entries and education entries.
 
 ALLOWED CSS
-- Single <style> block in <head>, or inline styles. No <link rel="stylesheet">.
-- Flexbox and simple CSS grid for multi-column layouts (e.g. sidebar + main).
-- Standard typography: font-family (web-safe: Helvetica, Arial, Georgia, Times,
-  "Inter"), font-size (in pt or px), font-weight, color, background-color,
-  text-align, line-height, margin, padding, border, border-radius,
-  box-shadow, opacity.
-- All elements that have a background color MUST also have
-  style="print-color-adjust: exact; -webkit-print-color-adjust: exact;"
-  so colored backgrounds render in the browser's "Save as PDF" output even
-  when the user's "Background graphics" toggle is off.
-- Use page-break-inside: avoid on blocks that must not split (job entries,
-  signature block, sidebar sections).
-- @media print may be used to refine styles for print.
+- Single <style> block in <head>. No <link rel="stylesheet">.
+- Standard typography: font-family, font-size (in pt or px), font-weight,
+  font-style, color, text-align, line-height, margin, padding.
+- page-break-inside: avoid on blocks that must not split.
 
-FORBIDDEN (will break in browser print)
-- <script> tags. No JavaScript of any kind.
-- position: fixed or position: sticky. These repeat on every printed page.
-- CSS multi-column layout: do NOT use column-count, column-gap, column-fill,
-  columns. Use flex/grid instead.
-- Viewport units: vh, vw, vmin, vmax, svh, dvh. Use mm, pt, px, or %.
-- CSS transforms used for layout (transform: translate/rotate to position
-  content). Decorative transforms on a single element are fine.
-- @import, url() in CSS, external resources.
-- @font-face that loads a file (data: URIs are fine for one-off icons).
-- position: absolute for major layout sections (use flex/grid).
+FORBIDDEN (will break ATS parsing or browser print)
+- <script> tags. No JavaScript.
+- position: fixed/sticky/absolute for layout.
+- flexbox for layout (flex reorders DOM, confusing ATS parsers).
+- CSS multi-column: column-count, column-gap, columns.
+- Viewport units: vh, vw, vmin, vmax.
+- @font-face, external resources, @import.
+- CSS transforms for layout.
+- display: none, visibility: hidden (hides content from ATS).
+- Colored backgrounds, colored text, colored borders.
+- Tables for layout (only for actual tabular data).
 - CSS animations, transitions (print is a static snapshot).
+- Background images.
 
 SIZING
-- Content width is 210mm minus body padding (so 180mm at 15mm padding).
-- A4 page height is 297mm. Plan for ~267mm of vertical content per page
-  (297mm - 30mm body padding). Add page-break-inside: avoid to large blocks.
-
-TABLES
-- For data tables, use <table> with width: 100%, table-layout: fixed.
-- For two-column resumes (e.g. left sidebar, right main), use a flex
-  container: <div style="display: flex; gap: 16px;">
-    <div style="width: 70mm; flex-shrink: 0;">…sidebar…</div>
-    <div style="flex: 1; min-width: 0;">…main…</div>
-  </div>
+- Body text: 10-11pt. Name (h1): 16-18pt. Section headers (h2): 12-13pt.
+- Line-height: 1.4-1.5.
+- Content width: 210mm minus 30mm @page margin = 180mm.
 
 OUTPUT
 - Return a complete <!DOCTYPE html><html><head>…</head><body>…</body></html>
   document. Do not omit the structure.
+`;
+
+export const COVER_LETTER_PRINT_GUIDE = `
+PRINT-SAFE COVER LETTER RULES (REQUIRED — your output is printed to PDF
+via the browser's print engine):
+
+LAYOUT
+- Single-column flow. NO sidebars, NO two-column layouts.
+- Content flows top-to-bottom.
+
+STYLING
+- Black text (#000 or #222) on white background.
+- NO colored backgrounds, NO colored borders.
+- Standard web-safe fonts: Helvetica, Arial, Georgia, or Times New Roman.
+- Bold for emphasis on sender name and subject line only.
+
+PAGE SETUP
+- @page { size: A4; margin: 15mm; } — margin on @page, NOT body padding.
+- body { margin: 0; padding: 0; } — let @page handle per-page margins.
+- page-break-inside: avoid on the signature block.
+
+ALLOWED CSS
+- Single <style> block in <head>. No <link rel="stylesheet">.
+- Standard typography: font-family, font-size, font-weight, text-align,
+  line-height, margin, padding.
+- text-align: justify is allowed for paragraph body text.
+
+FORBIDDEN
+- <script> tags. No JavaScript.
+- position: fixed/sticky/absolute for layout.
+- flexbox or CSS multi-column for layout.
+- Viewport units (vh, vw).
+- @font-face, external resources.
+- Colored backgrounds, colored text.
+- Tables for layout.
+
+OUTPUT
+- Return a complete <!DOCTYPE html><html><head>…</head><body>…</body></html>
+  document.
 `;

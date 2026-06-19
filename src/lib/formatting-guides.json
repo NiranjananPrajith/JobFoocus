@@ -49,27 +49,26 @@
     "ai_instructions": "Parse the raw job posting text into the sections above. Extract: job title, company name, location, employment type, a 2-3 sentence summary, 4-8 key responsibilities as bullet points, and 4-8 requirements as bullet points. Use text-align: left for body text."
   },
   "resume": {
-    "description": "Generate a print-ready ATS-optimized resume tailored to the target job.",
+    "description": "Generate an ATS-compliant, print-ready resume tailored to the target job.",
     "required_css_classes": [
-      "h1 — candidate full name, centered, uppercase, 22pt",
-      ".contact-info — centered contact meta (phone, email, socials)",
-      "h2 — section headers, uppercase, border-bottom, 11pt",
-      ".summary p — professional summary paragraph",
-      "ul.skills-list — list with 3-4 <li><strong>Category</strong>: skills... entries",
+      "h1 — candidate full name, left-aligned, 18pt, bold, black",
+      ".contact-info — left-aligned contact meta (phone | email | socials), 10pt, #333",
+      "h2 — section headers, 13pt, bold, black, no border, no uppercase",
+      ".summary p — professional summary paragraph, left-aligned, 10.5pt",
+      "ul.skills-list — standard bullet list with <li><strong>Category</strong>: skills... entries",
       ".job-entry — wrapper for each job (page-break-inside: avoid)",
-      ".job-header — wrapper inside job-entry",
-      ".job-title-row — flex row with company-name left, job-title right italic",
-      ".company-name — bold 11pt",
-      ".job-title — italic 11pt, right-aligned, gray",
-      ".job-date-location — normal 9.5pt, gray, block",
-      "ul.achievements — achievement bullet list",
+      ".job-company — bold 11pt, black: 'Company Name — Date Range'",
+      ".job-title-text — italic 11pt, #333, on its own line",
+      "ul.achievements — achievement bullet list, 10.5pt",
       "ul.achievements li — each achievement bullet",
-      ".edu-entry — education entry with job-date-location, company-name, job-title",
-      ".cert-entry — conditional certifications (SafeCheck only for kitchen/cook roles)"
+      ".edu-entry — education entry wrapper",
+      ".edu-course — bold 11pt, black",
+      ".edu-institution — 10.5pt, #333",
+      ".edu-dates — 9.5pt, #666"
     ],
     "sections_order": [
-      "H1: Candidate Full Name (uppercase)",
-      ".contact-info: Phone · Email · [Social links]",
+      "H1: Candidate Full Name (left-aligned, bold)",
+      ".contact-info: Phone | Email | [Social links] (left-aligned, pipe-separated)",
       "h2: Professional Summary → .summary p",
       "h2: Skills → ul.skills-list (3-4 <li><strong>Category</strong>: skills...)",
       "h2: Professional Experience → .job-entry blocks (1-3 most relevant)",
@@ -77,16 +76,18 @@
       "h2: Certifications → .cert-entry (only for kitchen/cook category, SafeCheck only)"
     ],
     "ats_notes": [
-      "Do NOT use text-align: justify on resume elements except .summary p and ul.achievements li",
-      "Do NOT use flex-direction column-reverse, CSS multi-columns, or complex grid",
-      "Use -webkit-print-color-adjust: exact on body for print",
+      "Single-column ONLY — NO sidebars, NO two-column layouts, NO flexbox for layout",
+      "Black text (#000 or #222) on white background — NO colored text, NO colored backgrounds",
+      "Left-aligned text — NO text-align: justify on any resume elements",
+      "Use standard semantic HTML: h1 for name, h2 for sections, p for text, ul/li for bullets",
+      "Content flows top-to-bottom in reading order — NO flex reorder, NO tables for layout",
+      "NO position: fixed/sticky/absolute, NO CSS multi-columns, NO vh/vw units, NO JavaScript",
+      "NO graphics, icons, images, or decorative elements",
+      "@page { size: A4; margin: 15mm } — let @page handle per-page margins, NOT body padding",
       "Include SafeCheck Advanced Food Safety Certification ONLY when category includes food-handling duties",
-      "Tailor skills to match keywords from the job description",
-      "Target A4 page size — do not assume US Letter",
-      "Avoid position: fixed/sticky, CSS multi-columns, vh/vw units, JavaScript",
-      "All colored elements must have print-color-adjust: exact"
+      "Tailor skills to match keywords from the job description"
     ],
-    "ai_instructions": "Using the MASTER DATA and TARGET JOB provided, generate the resume HTML body (no <html>, <head>, or <body> tags). Fill in the Professional Summary with 3-4 sentences tailored to the job. Extract 3-4 Skills categories with relevant skills. For Professional Experience, select the 1-3 most relevant past jobs and tailor their achievement bullets to match the job requirements — use concrete metrics where available. For Education, list 1-2 most relevant entries. Do NOT invent content not in the master data. Follow the PRINT-SAFE CSS COMPATIBILITY GUIDE in src/lib/print-safe-css.ts — the output is rendered to PDF via the browser's print engine."
+    "ai_instructions": "Using the MASTER DATA and TARGET JOB provided, generate the resume HTML body (no <html>, <head>, or <body> tags). Fill in the Professional Summary with 3-4 sentences tailored to the job. Extract 3-4 Skills categories with relevant skills. For Professional Experience, select the 1-3 most relevant past jobs and tailor their achievement bullets to match the job requirements — use concrete metrics where available. For Education, list 1-2 most relevant entries. Do NOT invent content not in the master data. Follow the ATS_RESUME_GUIDE in src/lib/print-safe-css.ts — the output must be ATS-compliant (single-column, black text, left-aligned, standard semantic HTML, no colors, no sidebars, no flex layouts)."
   },
   "cover_letter": {
     "description": "Generate a print-ready cover letter tailored to the target job and company.",
