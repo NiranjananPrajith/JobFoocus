@@ -1749,7 +1749,8 @@ function ApplicationContent() {
                 className="flex items-center justify-between p-4 rounded-lg border border-primary bg-primary/5 hover:bg-primary/10 transition-colors"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-ink">View & Print to PDF</p>
+                  <p className="font-medium text-ink">Open in Editor</p>
+                  <p className="text-[12px] text-steel">Edit, restyle, and export as PDF</p>
                 </div>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary shrink-0">
                   <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -1815,7 +1816,8 @@ function ApplicationContent() {
                 className="flex items-center justify-between p-4 rounded-lg border border-primary bg-primary/5 hover:bg-primary/10 transition-colors"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-ink">View & Print to PDF</p>
+                  <p className="font-medium text-ink">Open in Editor</p>
+                  <p className="text-[12px] text-steel">Edit, restyle, and export as PDF</p>
                 </div>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary shrink-0">
                   <path d="M5 12h14M12 5l7 7-7 7"/>

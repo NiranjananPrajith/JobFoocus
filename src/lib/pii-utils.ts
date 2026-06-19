@@ -136,3 +136,81 @@ export function demaskPII(text: string, profile: PIIProfile): string {
 
   return result;
 }
+
+// ---------------------------------------------------------------------------
+// HTML PII masking (for document edits — masks real PII in stored HTML)
+// ---------------------------------------------------------------------------
+//
+// Stored documents (resumes, cover letters) already contain the candidate's
+// real name, phone, email, and links injected by the wrappers. We need to
+// mask these before sending the HTML to the LLM, then demask after.
+//
+// We walk text nodes and attribute values via a regex pass on the full HTML,
+// matching the exact PII strings from the profile. A DOM parser is overkill
+// here — the values are concrete (a specific phone number, a specific email)
+// and unlikely to collide with HTML structure. We deliberately skip <script>,
+// <style>, and the entire <head> so we don't disturb page metadata.
+
+const HEAD_SPLIT_RE = /(<head[^>]*>[\s\S]*?<\/head>)/i;
+
+function maskString(html: string, value: string, tag: string): string {
+  if (!value) return html;
+  // Escape regex special chars in the value (e.g. + in phone numbers, . in email)
+  const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // Match the value as a whole word/identifier, case-sensitive.
+  // Use lookarounds to avoid matching inside other identifiers.
+  const re = new RegExp(`(?<![A-Za-z0-9_@./-])${escaped}(?![A-Za-z0-9_@./-])`, 'g');
+  return html.replace(re, `<${tag}>${value}</${tag}>`);
+}
+
+function maskAttributeHrefs(html: string, profile: PIIProfile): string {
+  let result = html;
+  // Mask email inside mailto: and tel: hrefs
+  if (profile.email) {
+    const escaped = profile.email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    result = result.replace(
+      new RegExp(`(mailto:${escaped})`, 'gi'),
+      `mailto:<${PII_TAGS.EMAIL}>${profile.email}</${PII_TAGS.EMAIL}>`
+    );
+  }
+  if (profile.phone) {
+    const escaped = profile.phone.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    result = result.replace(
+      new RegExp(`(tel:${escaped})`, 'gi'),
+      `tel:<${PII_TAGS.PHONE}>${profile.phone}</${PII_TAGS.PHONE}>`
+    );
+  }
+  return result;
+}
+
+// Mask PII in an HTML document string. Walks <body> text and attribute values.
+// Leaves <head> untouched (no user PII lives there). Leaves <script> and <style>
+// content untouched.
+export function maskPIIInHTML(html: string, profile: PIIProfile): string {
+  if (!html) return html;
+
+  // Split into [pre-head, head, post-head] so we can mask only the body portion.
+  const headMatch = html.match(HEAD_SPLIT_RE);
+  if (!headMatch) {
+    // No <head> — mask the whole thing (very old stored docs).
+    return maskPIIInBody(html, profile);
+  }
+  const before = html.slice(0, headMatch.index!);
+  const head = headMatch[0];
+  const after = html.slice(headMatch.index! + head.length);
+  return before + head + maskPIIInBody(after, profile);
+}
+
+function maskPIIInBody(html: string, profile: PIIProfile): string {
+  let result = html;
+  // Order matters: mask longer / more specific values first so we don't double-mask.
+  result = maskString(result, profile.email, PII_TAGS.EMAIL);
+  result = maskString(result, profile.phone, PII_TAGS.PHONE);
+  result = maskString(result, profile.name, PII_TAGS.NAME);
+  result = maskString(result, profile.linkedIn || '', PII_TAGS.LINKEDIN);
+  result = maskString(result, profile.github || '', PII_TAGS.GITHUB);
+  result = maskString(result, profile.portfolio || '', PII_TAGS.PORTFOLIO);
+  // Mask email/phone inside mailto:/tel: hrefs.
+  result = maskAttributeHrefs(result, profile);
+  return result;
+}

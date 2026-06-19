@@ -1,7 +1,8 @@
 import { saveApplication, saveDocumentHTML, getMasterResume, updateApplicationDocFlags, getUserCategories, assignJobToCategory, type UserCategory } from '@/lib/storage-adapter';
-import { maskPII, demaskPII, type PIIProfile } from '@/lib/pii-utils';
+import { maskPII, demaskPII, maskPIIInHTML, type PIIProfile } from '@/lib/pii-utils';
 import type { CategoryKey, StatusKey } from '@/lib/storage-adapter';
 import formattingGuides from './formatting-guides.json';
+import { PRINT_SAFE_CSS_GUIDE } from './print-safe-css';
 
 // ---------------------------------------------------------------------------
 // JobFoocus AI (internal model)
@@ -361,7 +362,7 @@ export function wrapResumeHTML(name: string, phone: string, email: string, socia
     ? '<span>' + socials.map(function(s: any) { return s.name + ': ' + s.url; }).join(' · ') + '</span>'
     : '';
 
-  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <title>Resume - ' + name + '</title>\n    <style>\n        @page { size: letter; margin: 0.6in; }\n        @media print {\n            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n        }\n        body { font-family: \'Helvetica Neue\', Helvetica, Arial, sans-serif; color: #222222; line-height: 1.5; font-size: 11pt; margin: 0; padding: 0; }\n        h1 { font-size: 22pt; text-align: center; margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }\n        .contact-info { text-align: center; font-size: 10pt; color: #555555; margin-bottom: 24px; line-height: 1.6; }\n        h2 { font-size: 11pt; border-bottom: 1.5px solid #222222; margin: 24px 0 12px 0; padding-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }\n        .summary { margin-bottom: 20px; }\n        .summary p { margin: 0; text-align: justify; font-size: 10.5pt; line-height: 1.6; color: #333333; }\n        ul.achievements { margin: 0; padding-left: 18px; }\n        ul.achievements li { margin-bottom: 5px; text-align: justify; font-size: 10.5pt; line-height: 1.5; }\n        .job-entry { margin-bottom: 18px; page-break-inside: avoid; }\n        .job-header { margin-bottom: 8px; display: block; position: relative; }\n        .job-title-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }\n        .company-name { font-weight: 700; font-size: 11pt; color: #111111; }\n        .job-date-location { display: block; font-weight: normal; font-style: normal; color: #666666; font-size: 9.5pt; margin-top: 2px; }\n        .job-title { font-style: italic; font-weight: 500; color: #333333; text-align: right; flex-shrink: 0; }\n        ul.skills-list { margin: 0 0 20px 0; padding: 0; list-style: none; }\n        ul.skills-list li { margin-bottom: 6px; font-size: 10.5pt; }\n        ul.skills-list li strong { color: #111111; font-weight: 600; }\n        .edu-entry { margin-bottom: 10px; page-break-inside: avoid; font-size: 10.5pt; }\n        .edu-entry .job-date-location { float: none; display: block; margin-bottom: 2px; }\n        .edu-entry .company-name { font-weight: 600; }\n        .edu-entry .job-title { font-style: normal; color: #444444; }\n    </style>\n</head>\n<body>\n    <h1>' + name + '</h1>\n    <div class="contact-info">\n        ' + phone + ' &bull; ' + email + (socialsHTML ? ' &bull; ' + socialsHTML : '') + '\n    </div>\n    ' + bodyHTML + '\n</body>\n</html>';
+  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <title>Resume - ' + name + '</title>\n    <style>\n        @page { size: A4; margin: 0; }\n        @media print {\n            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n        }\n        *, *::before, *::after { box-sizing: border-box; }\n        body { font-family: \'Helvetica Neue\', Helvetica, Arial, sans-serif; color: #222222; line-height: 1.5; font-size: 11pt; margin: 0; padding: 15mm; background: #ffffff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n        h1 { font-size: 22pt; text-align: center; margin: 0 0 6px 0; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }\n        .contact-info { text-align: center; font-size: 10pt; color: #555555; margin-bottom: 24px; line-height: 1.6; }\n        h2 { font-size: 11pt; border-bottom: 1.5px solid #222222; margin: 24px 0 12px 0; padding-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }\n        .summary { margin-bottom: 20px; }\n        .summary p { margin: 0; text-align: justify; font-size: 10.5pt; line-height: 1.6; color: #333333; }\n        ul.achievements { margin: 0; padding-left: 18px; }\n        ul.achievements li { margin-bottom: 5px; text-align: justify; font-size: 10.5pt; line-height: 1.5; }\n        .job-entry { margin-bottom: 18px; page-break-inside: avoid; }\n        .job-header { margin-bottom: 8px; display: block; position: relative; }\n        .job-title-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }\n        .company-name { font-weight: 700; font-size: 11pt; color: #111111; }\n        .job-date-location { display: block; font-weight: normal; font-style: normal; color: #666666; font-size: 9.5pt; margin-top: 2px; }\n        .job-title { font-style: italic; font-weight: 500; color: #333333; text-align: right; flex-shrink: 0; }\n        ul.skills-list { margin: 0 0 20px 0; padding: 0; list-style: none; }\n        ul.skills-list li { margin-bottom: 6px; font-size: 10.5pt; }\n        ul.skills-list li strong { color: #111111; font-weight: 600; }\n        .edu-entry { margin-bottom: 10px; page-break-inside: avoid; font-size: 10.5pt; }\n        .edu-entry .job-date-location { float: none; display: block; margin-bottom: 2px; }\n        .edu-entry .company-name { font-weight: 600; }\n        .edu-entry .job-title { font-style: normal; color: #444444; }\n    </style>\n</head>\n<body>\n    <h1>' + name + '</h1>\n    <div class="contact-info">\n        ' + phone + ' &bull; ' + email + (socialsHTML ? ' &bull; ' + socialsHTML : '') + '\n    </div>\n    ' + bodyHTML + '\n</body>\n</html>';
 }
 
 // ---------------------------------------------------------------------------
@@ -371,7 +372,7 @@ export function wrapResumeHTML(name: string, phone: string, email: string, socia
 export function wrapCoverLetterHTML(name: string, phone: string, email: string, jd: FormattedJD, bodyHTML: string): string {
   const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
-  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <title>Cover Letter - ' + name + '</title>\n    <style>\n        @page { size: letter; margin: 1.0in; }\n        @media print {\n            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n        }\n        body { font-family: \'Helvetica Neue\', Helvetica, Arial, sans-serif; color: #222222; line-height: 1.5; font-size: 11pt; margin: 0; padding: 0; }\n        .sender-block { margin-bottom: 28px; }\n        .sender-name { font-size: 16pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; color: #111111; }\n        .sender-meta { color: #555555; font-size: 10pt; line-height: 1.5; }\n        .date-block { margin-bottom: 22px; font-size: 10.5pt; }\n        .recipient-block { margin-bottom: 28px; }\n        .recipient-block strong { font-size: 11pt; color: #111111; }\n        .subject-block { font-weight: 700; margin-bottom: 24px; text-transform: uppercase; font-size: 10.5pt; letter-spacing: 0.5px; color: #111111; }\n        p { margin: 0 0 16px 0; text-align: justify; font-size: 11pt; line-height: 1.6; }\n        .signature-space { margin-top: 40px; page-break-inside: avoid; }\n        .signature-space strong { font-weight: 600; }\n    </style>\n</head>\n<body>\n    <div class="sender-block">\n        <div class="sender-name">' + name + '</div>\n        <div class="sender-meta">' + phone + ' | ' + email + '</div>\n    </div>\n    <div class="date-block">' + today + '</div>\n    <div class="recipient-block">\n        Hiring Selection Team<br>\n        <strong>' + jd.company + '</strong><br>\n    </div>\n    <div class="subject-block">RE: Application for the position of ' + jd.job_title + '</div>\n    ' + bodyHTML + '\n    <div class="signature-space">\n        Sincerely,<br><br><br>\n        <strong>' + name + '</strong>\n    </div>\n</body>\n</html>';
+  return '<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <title>Cover Letter - ' + name + '</title>\n    <style>\n        @page { size: A4; margin: 0; }\n        @media print {\n            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n        }\n        *, *::before, *::after { box-sizing: border-box; }\n        body { font-family: \'Helvetica Neue\', Helvetica, Arial, sans-serif; color: #222222; line-height: 1.5; font-size: 11pt; margin: 0; padding: 20mm; background: #ffffff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }\n        .sender-block { margin-bottom: 28px; }\n        .sender-name { font-size: 16pt; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; color: #111111; }\n        .sender-meta { color: #555555; font-size: 10pt; line-height: 1.5; }\n        .date-block { margin-bottom: 22px; font-size: 10.5pt; }\n        .recipient-block { margin-bottom: 28px; }\n        .recipient-block strong { font-size: 11pt; color: #111111; }\n        .subject-block { font-weight: 700; margin-bottom: 24px; text-transform: uppercase; font-size: 10.5pt; letter-spacing: 0.5px; color: #111111; }\n        p { margin: 0 0 16px 0; text-align: justify; font-size: 11pt; line-height: 1.6; }\n        .signature-space { margin-top: 40px; page-break-inside: avoid; }\n        .signature-space strong { font-weight: 600; }\n    </style>\n</head>\n<body>\n    <div class="sender-block">\n        <div class="sender-name">' + name + '</div>\n        <div class="sender-meta">' + phone + ' | ' + email + '</div>\n    </div>\n    <div class="date-block">' + today + '</div>\n    <div class="recipient-block">\n        Hiring Selection Team<br>\n        <strong>' + jd.company + '</strong><br>\n    </div>\n    <div class="subject-block">RE: Application for the position of ' + jd.job_title + '</div>\n    ' + bodyHTML + '\n    <div class="signature-space">\n        Sincerely,<br><br><br>\n        <strong>' + name + '</strong>\n    </div>\n</body>\n</html>';
 }
 
 // ---------------------------------------------------------------------------
@@ -587,32 +588,77 @@ export async function generateMaskedDocumentsForExistingJob(
 // ---------------------------------------------------------------------------
 // Edit existing document with user change request
 // ---------------------------------------------------------------------------
+//
+// Full-context, masked, unrestricted edit. The caller (the API route) is
+// responsible for:
+//   1. Fetching the master resume and the job description (JD).
+//   2. Building a PII profile from the master resume.
+//   3. Masking the current HTML and the master resume with that profile.
+//   4. Passing all three (masked currentHTML, masked master resume, JD
+//      context) into this function.
+//
+// The AI may make ANY change to the HTML — text edits, restructuring, full
+// redesigns, new styling — as long as it preserves the <PII_*>…</PII_*>
+// tags verbatim (they are demasked after the response is parsed) and
+// follows the print-safe CSS guide so the output prints well in the
+// browser's "Save as PDF" dialog.
+
+export interface EditContext {
+  maskedCurrentHTML: string;
+  maskedMasterResume: string;
+  jdContext: { company: string; job_title: string; requirements: string[] };
+  profile: PIIProfile;
+}
 
 async function editDocumentFullHTML(
-  currentHTML: string,
+  context: EditContext,
   docType: 'resume' | 'cover_letter',
   userMessage: string
 ): Promise<string> {
   const system = docType === 'resume'
-    ? 'You are an expert resume writer. You are editing an existing resume. Apply the requested change to the document. Return the complete edited resume HTML document including all original content (summary, skills, work experience, education, certifications — unchanged unless the user explicitly asked to modify them). Preserve all existing CSS classes, structure, and formatting.'
-    : 'You are an expert cover letter writer. You are editing an existing cover letter. Apply the requested change to the document. Return the complete edited cover letter HTML document including all original content (all paragraphs, sender info, signature — unchanged unless the user explicitly asked to modify them). Preserve all existing CSS classes, structure, and formatting.';
+    ? `You are an expert resume designer and writer. You are editing an existing resume that the user wants to change. The user's PII (name, phone, email, socials, portfolio) is wrapped in XML-style tags like <PII_NAME>…</PII_NAME> — you MUST preserve these tags exactly as they appear. Treat <PII_NAME>John Smith</PII_NAME> as if it were literally the candidate's name; do not invent different values. Return the complete edited resume as a valid <!DOCTYPE html>…</html> document.
 
-  const prompt = `Edit the following ${docType === 'resume' ? 'resume' : 'cover letter'} HTML document according to the user's request.
+${PRINT_SAFE_CSS_GUIDE}`
+    : `You are an expert cover letter designer and writer. You are editing an existing cover letter. The user's PII (name, phone, email) is wrapped in XML-style tags like <PII_NAME>…</PII_NAME> — preserve these tags exactly. Return the complete edited cover letter as a valid <!DOCTYPE html>…</html> document.
 
-CURRENT DOCUMENT:
-${currentHTML}
+${PRINT_SAFE_CSS_GUIDE}`;
+
+  const { maskedCurrentHTML, maskedMasterResume, jdContext } = context;
+
+  const prompt = `Edit the following ${docType === 'resume' ? 'resume' : 'cover letter'} according to the user's request.
+
+You have full creative freedom:
+- You may make small text edits (rewording, fixing typos, shortening).
+- You may restructure sections, reorder content, or add new sections.
+- You may completely REDESIGN the document with new layouts, colors, fonts,
+  sidebars, two-column layouts, dividers, icon accents, or any other visual
+  change — as long as you follow the print-safe CSS guide.
+- You may NOT remove or change any <PII_NAME>, <PII_PHONE>, <PII_EMAIL>,
+  <PII_LINKEDIN>, <PII_GITHUB>, <PII_PORTFOLIO> tag content. Treat each tag
+  as opaque and pass it through unchanged.
+- The MASTER RESUME (below) is the source of truth for the candidate's
+  background. You may draw new phrasing or reorder content from it, but
+  do not invent facts (no fake employers, degrees, or metrics).
 
 USER'S REQUEST:
 "${userMessage}"
 
-INSTRUCTIONS:
-- Apply the requested change to the document
-- Keep ALL other content exactly as it is — do not remove, reorder, or rewrite anything unless the user explicitly asked
-- Return the COMPLETE edited HTML document including the full <!DOCTYPE html>... structure
-- Do not add any commentary, explanation, or text outside the HTML
-- Preserve all existing CSS classes, HTML structure, and inline styles
-- For resumes: keep Professional Summary, Skills, Work Experience, Education, and Certifications sections intact unless specifically asked to change them
-- For cover letters: keep all paragraphs and all structural elements (sender block, date, recipient, subject, signature) intact unless specifically asked to change them`;
+CURRENT DOCUMENT (PII is masked):
+${maskedCurrentHTML}
+
+MASTER RESUME (PII is masked — for context on the candidate's background):
+${maskedMasterResume}
+
+TARGET JOB (for tailoring context):
+Company: ${jdContext.job_title}
+Title: ${jdContext.job_title}
+Key requirements: ${jdContext.requirements.join(', ') || '(not extracted)'}
+
+OUTPUT:
+- Return ONLY the complete edited <!DOCTYPE html>…</html> document.
+- Do not add commentary, explanation, or text outside the HTML.
+- Apply the print-safe CSS guide from the system prompt.
+- Preserve every <PII_*>…</PII_*> tag exactly as it appears in the current document.`;
 
   const raw = await zenChat(prompt, system);
   if (!raw || raw.length < 50) {
@@ -630,7 +676,8 @@ INSTRUCTIONS:
     throw new Error('AI did not return a valid HTML document. Please try again.');
   }
 
-  return cleaned;
+  // Demask the PII tags → real values restored.
+  return demaskPII(cleaned, context.profile);
 }
 
 function extractJDFromHTML(jdHtml: string): { company: string; job_title: string; requirements: string[] } {
@@ -655,12 +702,32 @@ function extractJDFromHTML(jdHtml: string): { company: string; job_title: string
   return { company, job_title, requirements: reqs };
 }
 
+// Public entry point used by the API route. The caller (the route) does
+// the master-resume + JD fetch, profile extraction, and HTML masking, then
+// passes everything here. The result is a complete HTML document with the
+// real PII values restored.
 export async function editDocumentHTML(
-  fullHTML: string,
+  args: {
+    fullHTML: string;
+    maskedMasterResume: string;
+    profile: PIIProfile;
+    jdHtml: string | null;
+  },
   docType: 'resume' | 'cover_letter',
   userMessage: string
 ): Promise<string> {
-  return editDocumentFullHTML(fullHTML, docType, userMessage);
+  const jdContext = extractJDFromHTML(args.jdHtml || '');
+  const maskedCurrentHTML = maskPIIInHTML(args.fullHTML, args.profile);
+  return editDocumentFullHTML(
+    {
+      maskedCurrentHTML,
+      maskedMasterResume: args.maskedMasterResume,
+      jdContext,
+      profile: args.profile,
+    },
+    docType,
+    userMessage
+  );
 }
 
 // ---------------------------------------------------------------------------
