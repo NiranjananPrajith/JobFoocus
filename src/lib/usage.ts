@@ -35,12 +35,20 @@ export async function getOrCreateTodayUsage(userId: string): Promise<UsageRow> {
   const supabase = createServiceClient();
   const today = utcDateString();
 
+  // Try to read the existing row first.
+  const { data: existing } = await supabase
+    .from('usage_counters')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('usage_date', today)
+    .maybeSingle();
+
+  if (existing) return existing as UsageRow;
+
+  // Row doesn't exist — create it with zeros.
   const { data, error } = await supabase
     .from('usage_counters')
-    .upsert(
-      { user_id: userId, usage_date: today, jobs_added: 0, edits_made: 0 },
-      { onConflict: 'user_id,usage_date', ignoreDuplicates: true }
-    )
+    .insert({ user_id: userId, usage_date: today, jobs_added: 0, edits_made: 0 })
     .select('*')
     .single();
 
