@@ -6,6 +6,7 @@ import { parseResumeFile, getAcceptedFileTypes, getAcceptedMimeTypes, type Parse
 import Card from '@/components/design/Card';
 import Button from '@/components/design/Button';
 import SuccessPopup from '@/components/design/SuccessPopup';
+import LoadingScreen from '@/components/LoadingScreen';
 
 // ---------------------------------------------------------------------------
 // Data Structures
@@ -328,9 +329,7 @@ function MasterResumeContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-xl text-steel">Loading...</div>
-      </div>
+      <LoadingScreen messages={['Loading your master resume...', 'Preparing the editor...', 'Almost there...']} />
     );
   }
 
@@ -737,9 +736,7 @@ function MasterResumeContent() {
 
 function LoadingFallback() {
   return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="text-xl text-steel">Loading...</div>
-    </div>
+    <LoadingScreen messages={['Loading your master resume...', 'Preparing the editor...', 'Almost there...']} />
   );
 }
 

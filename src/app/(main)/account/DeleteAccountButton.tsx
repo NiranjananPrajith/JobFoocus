@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Spinner from '@/components/Spinner'
 import { createClient } from '@/lib/supabase/client'
 
 export default function DeleteAccountButton() {
@@ -90,7 +91,7 @@ export default function DeleteAccountButton() {
                 disabled={!canDelete || loading}
                 className="px-4 py-2 text-[14px] font-medium text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Deleting…' : 'Delete Account'}
+                {loading ? <><Spinner size={14} className="mr-2" /> Deleting…</> : 'Delete Account'}
               </button>
             </div>
           </div>

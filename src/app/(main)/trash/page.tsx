@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import LoadingScreen from '@/components/LoadingScreen';
 import { getTrashedApplications, permanentlyDeleteApplication, restoreApplication, type EnrichedApplication } from '@/lib/storage-adapter';
 
 function formatDeletedDate(dateStr: string) {
@@ -80,19 +81,7 @@ export default function TrashPage() {
 
       <div className="max-w-screen-xl mx-auto px-6 py-8">
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fa520f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
-              <line x1="12" y1="2" x2="12" y2="6"/>
-              <line x1="12" y1="18" x2="12" y2="22"/>
-              <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/>
-              <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/>
-              <line x1="2" y1="12" x2="6" y2="12"/>
-              <line x1="18" y1="12" x2="22" y2="12"/>
-              <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/>
-              <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/>
-            </svg>
-            <span className="ml-3 text-steel">Loading...</span>
-          </div>
+          <LoadingScreen messages={['Fetching archived applications...', 'Almost there...']} />
         ) : trashed.length === 0 ? (
           <div className="text-center py-20">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-4">

@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { getUserCategories, type UserCategory } from '@/lib/storage-adapter';
 import CategoryPopup from './CategoryPopup';
+import LoadingScreen from './LoadingScreen';
 
 interface CategorySelectorProps {
   value: string;
@@ -106,8 +107,8 @@ export default function CategorySelector({
 
   if (!mounted) {
     return (
-      <div className="w-full px-4 py-3 rounded-md border border-hairline-strong bg-canvas text-ink text-[14px] h-11">
-        Loading...
+      <div className="w-full px-4 py-3 rounded-md border border-hairline-strong bg-canvas text-ink text-[14px] h-11 flex items-center">
+        <LoadingScreen messages={['Loading categories...']} compact size="sm" className="min-h-0 gap-2" />
       </div>
     );
   }

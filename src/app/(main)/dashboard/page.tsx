@@ -6,6 +6,7 @@ import ManageCategoriesModal from '@/components/ManageCategoriesModal';
 import DashboardHeader from './components/DashboardHeader';
 import KanbanBoard from './components/KanbanBoard';
 import OnboardingCard from './components/OnboardingCard';
+import LoadingScreen from '@/components/LoadingScreen';
 import {
   getAllApplications,
   deleteApplication,
@@ -93,9 +94,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-[16px] text-steel">Loading your pipeline...</div>
-      </div>
+      <LoadingScreen messages={['Fetching your saved jobs...', 'Arranging your kanban board...', 'Sorting follow-ups...', 'Almost there...']} />
     );
   }
 

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import ApplicationCard from '@/components/ApplicationCard';
 import ManageCategoriesModal from '@/components/ManageCategoriesModal';
 import Card from '@/components/design/Card';
+import LoadingScreen from '@/components/LoadingScreen';
 import { deleteApplication, getAllApplications, saveApplication, getUserCategories, type EnrichedApplication, type UserCategory } from '@/lib/storage-adapter';
 import { StatusType } from '@/lib/design-system';
 
@@ -89,9 +90,7 @@ export default function FollowupsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-xl text-steel">Loading...</div>
-      </div>
+      <LoadingScreen messages={['Finding jobs that need attention...', 'Checking follow-up dates...', 'Almost there...']} />
     );
   }
 

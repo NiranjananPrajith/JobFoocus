@@ -6,6 +6,7 @@
 // payment update page in a new tab.
 
 import { useState } from 'react';
+import Spinner from '@/components/Spinner';
 
 interface AccountRazorpayManageModalProps {
   open: boolean;
@@ -93,7 +94,7 @@ export default function AccountRazorpayManageModal({
             disabled={loading}
             className="w-full px-4 py-2.5 rounded-lg border border-hairline-soft text-[14px] font-medium text-ink hover:bg-cream transition-colors disabled:opacity-60"
           >
-            {loading ? 'Loading…' : 'Update payment method'}
+            {loading ? <><Spinner size={14} className="mr-2" /> Loading…</> : 'Update payment method'}
           </button>
         </div>
 

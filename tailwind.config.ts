@@ -110,6 +110,30 @@ const config: Config = {
         "2xl": "24px",
         "3xl": "32px",
       },
+      keyframes: {
+        "jf-breathe": {
+          "0%, 100%": { transform: "scale(1)", opacity: "1" },
+          "50%": { transform: "scale(1.08)", opacity: "0.88" },
+        },
+        "jf-orbit": {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
+        "jf-ring": {
+          "0%": { transform: "scale(0.8)", opacity: "0.45" },
+          "100%": { transform: "scale(2.2)", opacity: "0" },
+        },
+        "jf-fade-up": {
+          "0%": { opacity: "0", transform: "translateY(6px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+      },
+      animation: {
+        "jf-breathe": "jf-breathe 2.4s ease-in-out infinite",
+        "jf-orbit": "jf-orbit 9s linear infinite",
+        "jf-ring": "jf-ring 2.4s ease-out infinite",
+        "jf-fade-up": "jf-fade-up 0.5s ease-out",
+      },
     },
   },
   plugins: [],

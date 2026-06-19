@@ -7,6 +7,7 @@ import Button from '@/components/design/Button';
 import Badge from '@/components/design/Badge';
 import CategorySelector from '@/components/CategorySelector';
 import ManageCategoriesModal from '@/components/ManageCategoriesModal';
+import LoadingScreen from '@/components/LoadingScreen';
 import {
   getDocumentHTML,
   getAllApplications,
@@ -1350,9 +1351,7 @@ function ApplicationContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-xl text-steel">Loading...</div>
-      </div>
+      <LoadingScreen messages={['Fetching your application...', 'Loading documents...', 'Preparing the timeline...', 'Almost there...']} />
     );
   }
 
@@ -1987,9 +1986,7 @@ function ApplicationContent() {
 
 function LoadingFallback() {
   return (
-    <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="text-xl text-steel">Loading...</div>
-    </div>
+    <LoadingScreen messages={['Fetching your application...', 'Loading documents...', 'Preparing the timeline...', 'Almost there...']} />
   );
 }
 

@@ -22,6 +22,7 @@ function getCurrencyFromCookie(): Currency {
 }
 import { timeUntilReset } from '@/lib/usage-utils'
 import type { User } from '@supabase/supabase-js'
+import LoadingScreen from './LoadingScreen'
 
 export default function NavBar() {
   const pathname = usePathname()
@@ -503,7 +504,7 @@ function BillingPopdown({
           {/* Header — current plan */}
           <div className="px-4 py-3 border-b border-hairline-soft">
             {loading && (
-              <p className="text-[12px] text-steel">Loading…</p>
+              <LoadingScreen messages={['Loading your plan...']} compact size="sm" className="min-h-0 gap-2 py-1" />
             )}
             {error && !loading && !state && (
               <div>

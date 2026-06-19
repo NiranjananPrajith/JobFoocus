@@ -15,6 +15,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Button from '@/components/design/Button';
+import Spinner from '@/components/Spinner';
 import type { Currency } from '@/lib/region';
 
 interface PricingCTAButtonsProps {
@@ -91,7 +92,7 @@ export default function PricingCTAButtons({
         onClick={handleClick}
         disabled={loading}
       >
-        {loading ? 'Loading…' : cta}
+        {loading ? <><Spinner size={14} className="mr-2" /> Loading…</> : cta}
       </Button>
       {error && (
         <p className="mt-2 text-[12px] text-red-600 text-center">{error}</p>

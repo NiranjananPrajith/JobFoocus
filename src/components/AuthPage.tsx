@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/client'
 import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Button from '@/components/design/Button'
+import LoadingScreen from '@/components/LoadingScreen'
+import Spinner from '@/components/Spinner'
 
 type Tab = 'login' | 'signup'
 
@@ -18,7 +20,7 @@ export default function AuthPage({ defaultTab }: { defaultTab: Tab }) {
 function AuthFallback() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-surface">
-      <div className="text-[14px] text-steel">Loading…</div>
+      <LoadingScreen messages={['Preparing your workspace...', 'Almost there...']} />
     </div>
   )
 }
@@ -166,7 +168,7 @@ function AuthContent({ defaultTab }: { defaultTab: Tab }) {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
             </svg>
-            {googleLoading ? 'Redirecting...' : 'Continue with Google'}
+            {googleLoading ? <><Spinner size={14} className="mr-2" /> Redirecting...</> : 'Continue with Google'}
           </button>
 
           <div className="flex items-center gap-3">
@@ -200,7 +202,7 @@ function AuthContent({ defaultTab }: { defaultTab: Tab }) {
                 </div>
 
                 <Button variant="primary" type="submit" className="w-full justify-center py-2.5" disabled={loading}>
-                  {loading ? 'Sending link...' : isLogin ? 'Send magic link' : 'Create account'}
+                  {loading ? <><Spinner size={14} className="mr-2" /> Sending link...</> : isLogin ? 'Send magic link' : 'Create account'}
                 </Button>
               </>
             )}

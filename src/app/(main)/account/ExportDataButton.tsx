@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Spinner from '@/components/Spinner'
 
 export default function ExportDataButton() {
   const [loading, setLoading] = useState(false)
@@ -37,7 +38,7 @@ export default function ExportDataButton() {
         <polyline points="7 10 12 15 17 10" />
         <line x1="12" y1="15" x2="12" y2="3" />
       </svg>
-      {loading ? 'Exporting…' : 'Export Data'}
+      {loading ? <><Spinner size={14} className="mr-2" /> Exporting…</> : 'Export Data'}
     </button>
   )
 }

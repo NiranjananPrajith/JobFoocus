@@ -6,6 +6,7 @@
 
 import { useState } from 'react';
 import Button from '@/components/design/Button';
+import Spinner from '@/components/Spinner';
 import AccountRazorpayManageModal from './AccountRazorpayManageModal';
 
 interface AccountManageButtonProps {
@@ -73,7 +74,7 @@ export default function AccountManageButton({
         onClick={onClick}
         disabled={loading}
       >
-        {loading ? 'Opening…' : 'Manage Subscription'}
+        {loading ? <><Spinner size={14} className="mr-2" /> Opening…</> : 'Manage Subscription'}
       </Button>
       {error && (
         <p className="mt-2 text-[12px] text-red-600 text-right max-w-[180px]">

@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { getDocumentHTML, saveDocumentHTML, getMasterResume } from '@/lib/storage-adapter';
 import UpgradePromptModal from '@/components/UpgradePromptModal';
+import LoadingScreen from '@/components/LoadingScreen';
 
 function DocumentContent() {
   const searchParams = useSearchParams();
@@ -215,7 +216,7 @@ function DocumentContent() {
           </div>
         </div>
         <div className="document-page">
-          <p style={{ color: 'var(--steel)' }}>Loading...</p>
+          <LoadingScreen messages={['Loading your document...', 'Polishing the page...', 'Almost there...']} />
         </div>
       </div>
     );
@@ -428,12 +429,12 @@ function LoadingFallback() {
       <div className="document-header no-print bg-surface border-b border-hairline px-6 py-5">
         <div className="document-header-inner flex items-center justify-between max-w-screen-xl mx-auto">
           <div className="document-header-left flex items-center gap-3">
-            <span className="text-steel uppercase tracking-wider text-xs font-semibold">Loading...</span>
+            <span className="text-steel uppercase tracking-wider text-xs font-semibold">Document</span>
           </div>
         </div>
       </div>
       <div className="document-page">
-        <p style={{ color: 'var(--steel)' }}>Loading...</p>
+        <LoadingScreen messages={['Loading your document...', 'Polishing the page...', 'Almost there...']} />
       </div>
     </div>
   );
