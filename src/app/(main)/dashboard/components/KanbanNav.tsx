@@ -20,7 +20,7 @@ export default function KanbanNav({ items, activeKey, onSelect }: KanbanNavProps
   return (
     <nav
       aria-label="Pipeline sections"
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1 p-1
+      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex items-center gap-0.5 sm:gap-1 p-1
                  rounded-full bg-card-glass backdrop-blur-md border border-hairline shadow-lg"
     >
       {items.map((item) => {
@@ -30,19 +30,35 @@ export default function KanbanNav({ items, activeKey, onSelect }: KanbanNavProps
             key={item.key}
             onClick={() => onSelect(item.key)}
             aria-current={isActive ? 'true' : undefined}
-            className={`px-3 py-1.5 rounded-full text-[12px] font-medium flex items-center gap-1.5
+            className={`px-2.5 py-1.5 sm:px-3 rounded-full text-[12px] font-medium
+              flex-col sm:flex-row flex items-center gap-0.5 sm:gap-1.5
               transition-colors duration-150 ${
                 isActive
                   ? 'bg-surface text-ink'
                   : 'text-steel hover:text-ink'
               }`}
           >
+            {/* Mobile: filled colored count badge */}
             <span
-              className="w-2 h-2 rounded-full shrink-0"
+              className="sm:hidden text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white leading-none"
+              style={{ backgroundColor: item.color }}
+            >
+              {item.count}
+            </span>
+
+            {/* Desktop: colored dot */}
+            <span
+              className="hidden sm:block w-2 h-2 rounded-full shrink-0"
               style={{ backgroundColor: item.color }}
             />
-            {item.label}
-            <span className="text-[11px] text-muted tabular-nums ml-0.5">
+
+            {/* Label — smaller on mobile */}
+            <span className="text-[10px] sm:text-[12px] leading-tight">
+              {item.label}
+            </span>
+
+            {/* Desktop: count text inline */}
+            <span className="hidden sm:inline text-[11px] text-muted tabular-nums ml-0.5">
               {item.count}
             </span>
           </button>
