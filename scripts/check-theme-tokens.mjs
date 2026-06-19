@@ -37,6 +37,7 @@ const INLINE_ALLOWLIST = [
   { file: null, pattern: /statusColors/, reason: "status color palette — intentionally stable" },
   // Pulsing dot animation on card — stays white
   { file: "ApplicationCard.tsx", pattern: /bg-white animate-pulse/, reason: "loading pulse dot — stays white" },
+  { file: "KanbanCard.tsx", pattern: /bg-white animate-pulse/, reason: "loading pulse dot — stays white" },
 ];
 
 // ============================================
