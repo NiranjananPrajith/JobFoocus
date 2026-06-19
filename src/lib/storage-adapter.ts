@@ -526,6 +526,50 @@ export async function saveApplication(
   }
 }
 
+/**
+ * Update only the status of an application without touching other fields.
+ * Unlike saveApplication, this does NOT reset response_date or any other data.
+ */
+export async function updateApplicationStatus(
+  category: CategoryKey,
+  folderName: string,
+  status: StatusKey
+): Promise<void> {
+  const userId = await getUserId();
+  const key = `${category}/${folderName}`;
+
+  if (!userId) {
+    const data = (await getLocalData('applications')) || {};
+    const existing = data[key] as EnrichedApplication | undefined;
+    if (!existing) return;
+    const now = new Date();
+    const appliedDate = new Date(existing.date_applied);
+    const daysSinceApplied = Math.floor((now.getTime() - appliedDate.getTime()) / (1000 * 60 * 60 * 24));
+    data[key] = {
+      ...existing,
+      status,
+      days_since_applied: daysSinceApplied,
+      needs_followup: ['prospect', 'applied'].includes(status) && daysSinceApplied > 7,
+    };
+    await setLocalData('applications', data);
+    return;
+  }
+
+  try {
+    await apiFetch('/api/db/applications', {
+      method: 'POST',
+      body: JSON.stringify({ category, folder: folderName, updates: { status } }),
+    });
+  } catch (err) {
+    console.error('[storage-adapter] updateApplicationStatus failed:', err);
+    // Fallback: do a full save but preserve response_date
+    const existing = await getApplicationById(category, folderName);
+    if (existing) {
+      await saveApplication(category, folderName, { ...existing, status } as Application);
+    }
+  }
+}
+
 export async function updateApplicationDocFlags(
   category: CategoryKey,
   folderName: string,
