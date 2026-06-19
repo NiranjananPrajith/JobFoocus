@@ -39,7 +39,7 @@ export async function getOrCreateTodayUsage(userId: string): Promise<UsageRow> {
     .from('usage_counters')
     .upsert(
       { user_id: userId, usage_date: today, jobs_added: 0, edits_made: 0 },
-      { onConflict: 'user_id,usage_date', ignoreDuplicates: false }
+      { onConflict: 'user_id,usage_date', ignoreDuplicates: true }
     )
     .select('*')
     .single();
