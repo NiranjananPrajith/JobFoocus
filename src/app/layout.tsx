@@ -2,6 +2,7 @@ import { Inter } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { ThemeProvider } from '@/lib/theme-context';
+import MetaPixel from '@/components/MetaPixel';
 import '../styles/globals.css';
 
 const inter = Inter({
@@ -28,11 +29,21 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: FOUC_SCRIPT }} />
+        <noscript>
+          <img
+            height="1"
+            width="1"
+            style={{ display: 'none' }}
+            src="https://www.facebook.com/tr?id=2172124703579742&ev=PageView&noscript=1"
+            alt=""
+          />
+        </noscript>
       </head>
       <body className="min-h-screen bg-canvas text-ink">
         <ThemeProvider>
           {children}
         </ThemeProvider>
+        <MetaPixel />
         <Analytics />
         <SpeedInsights />
       </body>
