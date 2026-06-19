@@ -41,7 +41,10 @@ export default function DashboardHeader({
 
         <button
           onClick={onAddJob}
-          className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 text-[14px] font-medium rounded-lg bg-surface-code text-ink hover:brightness-125 transition-all"
+          className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 text-[14px] font-medium rounded-md text-white transition-colors duration-150"
+          style={{ backgroundColor: 'var(--primary)' }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary-deep)')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary)')}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19" />

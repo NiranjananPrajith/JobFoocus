@@ -62,7 +62,7 @@ export default function OnboardingCard({ hasMasterResume, onAddJob }: Onboarding
             <div
               className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-semibold mt-0.5 ${
                 step.done
-                  ? 'bg-surface-code text-ink'
+                  ? 'bg-primary text-on-primary'
                   : 'bg-surface text-steel'
               }`}
             >
@@ -88,14 +88,20 @@ export default function OnboardingCard({ hasMasterResume, onAddJob }: Onboarding
                   step.action.type === 'link' ? (
                     <Link
                       href={step.action.href}
-                      className="shrink-0 px-3 py-1.5 text-[12px] font-medium rounded-md bg-surface-code text-ink hover:brightness-125 transition-all"
+                      className="shrink-0 px-3 py-1.5 text-[12px] font-medium rounded-md text-white transition-colors duration-150"
+                      style={{ backgroundColor: 'var(--primary)' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary-deep)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary)')}
                     >
                       {step.action.label}
                     </Link>
                   ) : (
                     <button
                       onClick={step.action.onClick}
-                      className="shrink-0 px-3 py-1.5 text-[12px] font-medium rounded-md bg-surface-code text-ink hover:brightness-125 transition-all"
+                      className="shrink-0 px-3 py-1.5 text-[12px] font-medium rounded-md text-white transition-colors duration-150"
+                      style={{ backgroundColor: 'var(--primary)' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary-deep)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary)')}
                     >
                       {step.action.label}
                     </button>
