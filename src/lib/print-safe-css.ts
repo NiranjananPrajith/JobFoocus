@@ -65,6 +65,9 @@ FORBIDDEN (will break ATS parsing or browser print)
 - Tables for layout (only for actual tabular data).
 - CSS animations, transitions (print is a static snapshot).
 - Background images.
+- page-break-inside: avoid on entry containers (.job-entry, .edu-entry,
+  .cert-entry). Entries must allow natural page breaks between
+  paragraphs and bullet points.
 
 SIZING
 - Body text: 10-11pt. Name (h1): 16-18pt. Section headers (h2): 12-13pt.

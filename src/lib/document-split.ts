@@ -66,5 +66,10 @@ export function normalizePageSizeToA4(fullHTML: string): string {
   result = result.replace(/(@page\s*\{[^}]*margin\s*:\s*)0(\s*;?)/i, '$115mm$2');
   // 3. Strip body padding — let @page handle the margins per page
   result = result.replace(/(body\s*\{[^}]*padding\s*:\s*)\d+(mm|pt|px)([^}]*\})/i, '$10$3');
+  // 4. Strip page-break-inside: avoid — the export-pdf.ts print override
+  //    handles this globally (auto on all elements, avoid only on
+  //    .signature-space). Cleaning it from stored HTML prevents the
+  //    browser from keeping whole entries together and creating gaps.
+  result = result.replace(/page-break-inside\s*:\s*avoid\s*;?/gi, '');
   return result;
 }

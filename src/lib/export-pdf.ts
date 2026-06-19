@@ -39,7 +39,19 @@ export async function exportDocumentPdf({ html, filename }: ExportPdfArgs): Prom
   // for the browser to render them in).
   const fixStyle = printWindow.document.createElement('style');
   fixStyle.textContent =
-    '@page { size: A4; margin: 15mm; } html, body { margin: 0 !important; padding: 0 !important; }';
+    '@page { size: A4; margin: 15mm; }' +
+    'html, body { margin: 0 !important; padding: 0 !important; }' +
+    /* Override any page-break-inside: avoid in the document's own
+       <style> — old documents, AI-generated, or manual edits. This
+       forces the browser to allow natural breaks between paragraphs
+       and bullet points within entries. */
+    '* { page-break-inside: auto !important; }' +
+    /* Re-add page-break-inside: avoid for the cover letter signature
+       block so "Sincerely" + name stay together. */
+    '.signature-space { page-break-inside: avoid !important; }' +
+    /* Keep headers with their content — prevents an h2 or company
+       line from being orphaned at the bottom of a page. */
+    'h1, h2, h3, h4, h5, h6, .job-company, .edu-course { page-break-after: avoid !important; }';
   printWindow.document.head?.appendChild(fixStyle);
 
   // Set the document title so the browser pre-fills the "Save as PDF"
