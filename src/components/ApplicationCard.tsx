@@ -6,7 +6,7 @@ import CategorySelector from './CategorySelector';
 import { StatusType } from '@/lib/design-system';
 import type { UserCategory } from '@/lib/storage-adapter';
 
-const STATUS_OPTIONS: StatusType[] = ['prospect', 'applied', 'phone_screen', 'interview', 'offer', 'rejected'];
+const STATUS_OPTIONS: StatusType[] = ['prospect', 'applied', 'interview', 'offer', 'rejected'];
 
 interface ApplicationCardProps {
   id: string;

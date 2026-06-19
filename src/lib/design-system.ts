@@ -12,7 +12,6 @@
 export const statusColors: Record<string, string> = {
   prospect: "#888888",
   applied: "#4a90e2",
-  phone_screen: "#5ac8fa",
   interview: "#f5a623",
   offer: "#4caf50",
   rejected: "#e74c3c",
@@ -21,7 +20,6 @@ export const statusColors: Record<string, string> = {
 export const statusLabels: Record<string, string> = {
   prospect: "Prospect",
   applied: "Applied",
-  phone_screen: "Phone Screen",
   interview: "Interview",
   offer: "Offer",
   rejected: "Rejected",

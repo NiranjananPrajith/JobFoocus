@@ -253,7 +253,6 @@ export async function assignJobToCategory(category: string, folder: string, newC
 export const STATUS_CONFIG = {
   prospect: { label: 'Prospect', color: '#888888' },
   applied: { label: 'Applied', color: '#4a90e2' },
-  phone_screen: { label: 'Phone Screen', color: '#5ac8fa' },
   interview: { label: 'Interview', color: '#f5a623' },
   offer: { label: 'Offer', color: '#4caf50' },
   rejected: { label: 'Rejected', color: '#e74c3c' },
@@ -798,10 +797,13 @@ async function cleanupExpiredTrash(): Promise<void> {
 
 export async function getApplicationsByStatus(applications: EnrichedApplication[]): Promise<Record<StatusKey, EnrichedApplication[]>> {
   const byStatus: Record<StatusKey, EnrichedApplication[]> = {
-    prospect: [], applied: [], phone_screen: [],
+    prospect: [], applied: [],
     interview: [], offer: [], rejected: [],
   };
-  for (const app of applications) { byStatus[app.status].push(app); }
+  for (const app of applications) {
+    // Guard: unmigrated rows (e.g. phone_screen) are silently dropped
+    if (byStatus[app.status]) byStatus[app.status].push(app);
+  }
   return byStatus;
 }
 
@@ -839,7 +841,7 @@ export async function getCategoryStats(applications: EnrichedApplication[]): Pro
 
   for (const [categoryKey, categoryInfo] of Array.from(categoryMap.entries())) {
     const categoryApps = applications.filter(a => a.category_key === categoryKey || a.category_name === categoryKey || a.category_name?.toLowerCase() === categoryKey.toLowerCase());
-    const byStatus: Record<StatusKey, number> = { prospect: 0, applied: 0, phone_screen: 0, interview: 0, offer: 0, rejected: 0 };
+    const byStatus: Record<StatusKey, number> = { prospect: 0, applied: 0, interview: 0, offer: 0, rejected: 0 };
     for (const app of categoryApps) { byStatus[app.status]++; }
     stats.push({ category: categoryKey, category_key: categoryKey as CategoryKey, category_name: categoryInfo.name, category_color: categoryInfo.color, count: categoryApps.length, by_status: byStatus });
   }

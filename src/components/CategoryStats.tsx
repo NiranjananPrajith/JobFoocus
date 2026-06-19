@@ -32,7 +32,7 @@ const CategoryStats = ({ stats }: CategoryStatsProps) => {
         const total = catStats?.count || 0;
         const applied = byStatus.applied || 0;
         const prospects = byStatus.prospect || 0;
-        const responses = byStatus.phone_screen ? byStatus.phone_screen + (byStatus.interview || 0) : 0;
+        const responses = byStatus.interview || 0;
         const interviews = byStatus.interview || 0;
         const offers = byStatus.offer || 0;
 

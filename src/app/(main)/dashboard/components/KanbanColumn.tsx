@@ -12,6 +12,8 @@ interface KanbanColumnProps {
   applications: EnrichedApplication[];
   search: string;
   onDelete: (id: string) => void;
+  columnRef?: (el: HTMLDivElement | null) => void;
+  isHighlighted?: boolean;
 }
 
 export default function KanbanColumn({
@@ -21,6 +23,8 @@ export default function KanbanColumn({
   applications,
   search,
   onDelete,
+  columnRef,
+  isHighlighted,
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
@@ -43,7 +47,14 @@ export default function KanbanColumn({
   });
 
   return (
-    <div className="flex flex-col min-w-[260px] flex-1">
+    <div
+      ref={columnRef}
+      className="flex flex-col min-w-[260px] flex-1"
+      style={isHighlighted ? {
+        boxShadow: `inset 0 0 0 9999px ${color}14`,
+        transition: 'box-shadow 0.3s ease',
+      } : undefined}
+    >
       {/* Column header */}
       <div className="flex items-center gap-2 px-2 pb-3 mb-0">
         <div

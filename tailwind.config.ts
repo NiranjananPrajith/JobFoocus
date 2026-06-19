@@ -33,6 +33,7 @@ const config: Config = {
         "surface-cream-soft": "var(--surface-cream-soft)",
         "surface-code": "var(--surface-code)",
         card: "var(--card)",
+        "card-glass": "var(--card-glass)",
         // Text
         ink: "var(--ink)",
         "ink-tint": "var(--ink-tint)",

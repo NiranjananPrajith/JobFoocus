@@ -96,7 +96,7 @@ interface Application {
   files: { name: string; size: number; type: string }[];
 }
 
-const STATUS_OPTIONS: StatusType[] = ['prospect', 'applied', 'phone_screen', 'interview', 'offer', 'rejected'];
+const STATUS_OPTIONS: StatusType[] = ['prospect', 'applied', 'interview', 'offer', 'rejected'];
 
 function ApplicationContent() {
   const router = useRouter();

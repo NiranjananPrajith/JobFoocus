@@ -152,7 +152,7 @@ Buttons are **never** pills. The geometry is sober and editorial.
 |---|---|---|
 | **Button** | `Button.tsx` | `primary`, `cream`, `dark`, `secondary`, `on-cream`, `link`, `ghost`, `outline`, `destructive`, `subtle` |
 | **Card** | `Card.tsx` | `default`, `elevated`, `cream`, `cream-soft`, `feature-product`, `glass`, `outlined`, `filled` |
-| **Badge** | `Badge.tsx` | `prospect`, `applied`, `phone_screen`, `interview`, `offer`, `rejected` |
+| **Badge** | `Badge.tsx` | `prospect`, `applied`, `interview`, `offer`, `rejected` |
 | **SuccessPopup** | `SuccessPopup.tsx` | Single variant |
 | **SunsetStripeBand** | `sunset-stripe-band.tsx` | Single variant (uses `var(--sunset-stripe)`) |
 

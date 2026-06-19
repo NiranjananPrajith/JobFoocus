@@ -115,6 +115,7 @@ html *::after {
   --hover-bg: rgba(0, 0, 0, 0.05);
   /* Card surface (default/elevated card body) */
   --card: #ffffff;
+  --card-glass: color-mix(in srgb, #ffffff 82%, transparent);
   /* Info / Blue (PII indicators, info panels) */
   --info-bg: #eff6ff;
   --info-bg-strong: #dbeafe;
@@ -149,6 +150,7 @@ html *::after {
   --surface-code: #252118;
   /* Card surface — warm variant, gives default/elevated cards definition on canvas */
   --card: #1a1410;
+  --card-glass: color-mix(in srgb, #1a1410 82%, transparent);
   /* Text — UNCHANGED (cool/neutral for legibility) */
   --ink: #f5f5f4;
   --ink-tint: #e7e5e4;
