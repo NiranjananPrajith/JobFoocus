@@ -168,6 +168,128 @@ Buttons are **never** pills. The geometry is sober and editorial.
 | **FeatureBentoGrid** | All `var(--*)` style attributes |
 | **TrustRibbon** | `var(--cream)`, `var(--steel)` |
 | **HeroSection** | `var(--sunshine-700)`, `var(--primary)` |
+| **LoadingScreen** | Breathing icon + orbiting status dots + pulse rings + rotating messages. `border-primary` for rings, `statusColors` for dots, `text-steel` for messages |
+| **Spinner** | Inline SVG spinner, `stroke="currentColor"` — inherits button text color |
+
+---
+
+## Loading System
+
+Every full-screen, section-level, and inline loading state uses a shared animated loader (`LoadingScreen.tsx`) that replaces the old static "Loading..." text. Button loading states use a lightweight `Spinner.tsx` component.
+
+### Visual Anatomy
+
+```
+        ╭─ pulse ring (expanding, fading) ─╮
+        │                                  │
+        │    ● ····· ○ ····· ○             │  ← 5 status-colored dots
+        │   ·  ╭─────────╮  ·              │     orbiting the icon
+        │  ○   │  icon   │   ○             │
+        │   ·  ╰─────────╯  ·              │
+        │    ○ ····· ● ····· ○             │
+        │          ╭─ pulse ring ─╮        │
+        ╰──────────╰─────────────╯────────╯
+                  "Fetching your saved jobs..."
+```
+
+The centerpiece is the **JobFoocus icon** (`public/icon.webp`) that gently breathes (scale 1 → 1.08, opacity 1 → 0.88, 2.4 s ease-in-out loop). Around it, **5 pipeline-colored dots** orbit in a circle (9 s linear loop). Behind the icon, **two sonar pulse rings** expand outward and fade (2.4 s ease-out loop, staggered by 1.2 s). Below, a **rotating context message** crossfades every 2.2 s with a fade-in-up motion.
+
+### Pipeline Dots (Orbiting)
+
+The 5 dots use the kanban status colors, matching the pipeline column order:
+
+| Dot | Status | Color |
+|---|---|---|
+| 1 | Prospect | `#888888` (gray) |
+| 2 | Applied | `#4a90e2` (blue) |
+| 3 | Interview | `#f5a623` (amber) |
+| 4 | Offer | `#4caf50` (green) |
+| 5 | Rejected | `#e74c3c` (red) |
+
+Colors are sourced from `statusColors` in `src/lib/design-system.ts` — not hardcoded. Lint-safe.
+
+### Custom Keyframes (`tailwind.config.ts`)
+
+| Keyframe | Utility Class | Duration | Easing | Loop |
+|---|---|---|---|---|
+| `jf-breathe` | `animate-jf-breathe` | 2.4 s | `ease-in-out` | infinite |
+| `jf-orbit` | `animate-jf-orbit` | 9 s | `linear` | infinite |
+| `jf-ring` | `animate-jf-ring` | 2.4 s | `ease-out` | infinite |
+| `jf-fade-up` | `animate-jf-fade-up` | 0.5 s | `ease-out` | once (retriggered per message) |
+
+All keyframes are brand-prefixed (`jf-`) to avoid collisions. Defined in `tailwind.config.ts` `theme.extend` — outside `src/`, so the theme lint never inspects them.
+
+### Component API
+
+#### `LoadingScreen` (`src/components/LoadingScreen.tsx`)
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `messages` | `string[]` | (required) | Rotating context messages. Cycles every 2.2 s. |
+| `fullScreen` | `boolean` | `false` | `min-h-screen` (true) vs `min-h-[60vh]` (false). |
+| `compact` | `boolean` | `false` | Breathing icon + message only (no orbit dots or pulse rings). For tight inline spots. |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Icon size and orbit radius scale. |
+| `className` | `string` | `''` | Additional classes merged onto the outer container. |
+
+**Size presets:**
+
+| Size | Icon | Orbit Radius | Dot | Ring |
+|---|---|---|---|---|
+| `sm` | 32 px | 28 px | 6 px | 44 px |
+| `md` | 48 px | 44 px | 8 px | 68 px |
+| `lg` | 64 px | 60 px | 10 px | 92 px |
+
+**Message rotation mechanism:** `setInterval` every 2200 ms cycles an index through the `messages` array. The `<p>` element uses `key={idx}` to force a React remount, which retriggers the `jf-fade-up` CSS animation on each cycle. No external animation library needed.
+
+#### `Spinner` (`src/components/Spinner.tsx`)
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `size` | `number` | `16` | Width and height in pixels. |
+| `className` | `string` | `''` | Additional classes (e.g. `mr-2` for button spacing). |
+
+Uses `stroke="currentColor"` so it inherits the parent button's text color automatically. Lint-safe (no hex, no inline style).
+
+### Usage Map
+
+**Full-screen / full-section loaders** (9 page-level spots):
+
+| Page | Messages |
+|---|---|
+| Dashboard | "Fetching your saved jobs..." → "Arranging your kanban board..." → "Sorting follow-ups..." → "Almost there..." |
+| Application detail | "Fetching your application..." → "Loading documents..." → "Preparing the timeline..." → "Almost there..." |
+| Follow-ups | "Finding jobs that need attention..." → "Checking follow-up dates..." → "Almost there..." |
+| Master resume | "Loading your master resume..." → "Preparing the editor..." → "Almost there..." |
+| Document editor | "Loading your document..." → "Polishing the page..." → "Almost there..." |
+| Auth (Suspense fallback) | "Preparing your workspace..." → "Almost there..." |
+| Trash | "Fetching archived applications..." → "Almost there..." |
+| Categories | "Loading your categories..." → "Almost there..." |
+| Manage Categories modal | "Loading categories..." → "Almost there..." (size `sm`) |
+
+**Compact inline loaders** (2 spots):
+
+| Location | Messages |
+|---|---|
+| CategorySelector (form field placeholder) | "Loading categories..." |
+| NavBar profile dropdown | "Loading your plan..." |
+
+**Button loading states** (7 spots, using `Spinner`):
+
+| Button | Loading Text |
+|---|---|
+| Auth — Google sign-in | "Redirecting..." |
+| Auth — Magic link | "Sending link..." |
+| Pricing CTA | "Loading…" |
+| Razorpay — Update card | "Loading…" |
+| Account — Delete | "Deleting…" |
+| Account — Export | "Exporting…" |
+| Account — Manage | "Opening…" |
+
+### Design Notes
+
+- **No external dependencies.** All animation is pure CSS keyframes + React state. No framer-motion, GSAP, or Lottie.
+- **Lint-safe throughout.** Dot colors use the `statusColors` variable (allowlisted). Ring borders use `border-primary` token. Pulse-ring opacity is driven by the keyframe, not a Tailwind `/opacity` modifier on a hex CSS var. `transform` and `animationDelay` inline styles are not inspected by the theme lint.
+- **Theme-aware.** The breathing icon, pulse rings, and message text all respond to the active light/dark theme automatically (icon stays the same; rings use `border-primary`; message text uses `text-steel`).
 
 ---
 
