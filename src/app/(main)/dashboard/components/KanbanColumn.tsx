@@ -49,11 +49,10 @@ export default function KanbanColumn({
   return (
     <div
       ref={columnRef}
-      className="flex flex-col min-w-[260px] flex-1"
-      style={isHighlighted ? {
-        boxShadow: `inset 0 0 0 9999px ${color}14`,
-        transition: 'box-shadow 0.3s ease',
-      } : undefined}
+      className={`flex flex-col min-w-[260px] flex-1 transition-all duration-300 ${
+        isHighlighted ? 'p-2 rounded-xl bg-[color:var(--col-tint)]' : ''
+      }`}
+      style={isHighlighted ? { '--col-tint': `${color}14` } as React.CSSProperties : undefined}
     >
       {/* Column header */}
       <div className="flex items-center gap-2 px-2 pb-3 mb-0">
