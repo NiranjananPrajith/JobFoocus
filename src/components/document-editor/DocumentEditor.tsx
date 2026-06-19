@@ -2,13 +2,12 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Editor } from '@tiptap/core';
 import {
   getDocumentHTML,
   saveDocumentHTML,
   getMasterResume,
 } from '@/lib/storage-adapter';
-import DocumentIframe, { DocumentIframeHandle } from './DocumentIframe';
+import DocumentIframe, { DocumentIframeHandle, EditorHandle } from './DocumentIframe';
 import EditorToolbar from './EditorToolbar';
 import SmartEditPanel from './SmartEditPanel';
 import PrintGuide from './PrintGuide';
@@ -36,7 +35,7 @@ export default function DocumentEditor() {
   const [initialHTML, setInitialHTML] = useState<string | null>(null);
   const [currentHTML, setCurrentHTML] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [editor, setEditor] = useState<Editor | null>(null);
+  const [handle, setHandle] = useState<EditorHandle | null>(null);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
 
@@ -116,32 +115,41 @@ export default function DocumentEditor() {
     };
   }, [appId, category, folder, docType]);
 
-  // The iframe fires onEditorReady once TipTap is mounted on its body.
-  const handleEditorReady = useCallback((ed: Editor) => {
-    setEditor(ed);
+  // The iframe fires onEditorReady once the contentEditable body is set up.
+  const handleEditorReady = useCallback((h: EditorHandle) => {
+    setHandle(h);
   }, []);
 
   // ---- Save logic (debounced auto-save + manual save) ----
+  //
+  // We read the LIVE HTML from the iframe handle instead of the
+  // currentHTML state. By the time a debounced save fires, the state
+  // closure in performSave may be stale (more edits could have landed
+  // after the callback was scheduled). The handle reads the iframe's
+  // body.innerHTML directly, which is always current.
   const performSave = useCallback(async () => {
-    if (!currentHTML || !appId || !docType) return;
-    if (currentHTML === lastSavedHTMLRef.current) return;
+    if (!appId || !docType) return;
+    const liveHTML = iframeRef.current?.getHTML() ?? currentHTML;
+    if (!liveHTML) return;
+    if (liveHTML === lastSavedHTMLRef.current) return;
     setSaveStatus('saving');
+    setCurrentHTML(liveHTML);
     try {
-      await saveDocumentHTML(category, folder, docType, currentHTML);
-      lastSavedHTMLRef.current = currentHTML;
+      await saveDocumentHTML(category, folder, docType, liveHTML);
+      lastSavedHTMLRef.current = liveHTML;
       setSaveStatus('saved');
       setLastSavedAt(Date.now());
     } catch (err) {
       console.error('[document-editor] save failed:', err);
       setSaveStatus('error');
     }
-  }, [currentHTML, category, folder, docType, appId]);
+  }, [appId, docType, category, folder, currentHTML]);
 
   const handleIframeChange = useCallback(
     (newFullHTML: string) => {
       // If the editor reports the same content we already have on disk
-      // (e.g. the initial setContent round-trip), treat it as a no-op
-      // so we don't show a misleading "Unsaved changes" status.
+      // (e.g. a programmatic innerHTML set), treat it as a no-op so we
+      // don't show a misleading "Unsaved changes" status.
       if (newFullHTML === lastSavedHTMLRef.current) {
         setSaveStatus('saved');
         return;
@@ -205,8 +213,16 @@ export default function DocumentEditor() {
         console.warn('[document-editor] usage pre-check failed, continuing:', err);
       }
 
-      // Get the latest HTML from the editor (not the state, which may be stale).
-      const liveHTML = currentHTML || lastSavedHTMLRef.current;
+      // Flush any pending debounced save so the AI edits the latest
+      // on-disk version, not a stale snapshot.
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        await performSave();
+      }
+
+      // Get the latest HTML from the iframe handle (always current,
+      // unlike the React state closure which may be stale).
+      const liveHTML = iframeRef.current?.getHTML() ?? currentHTML ?? lastSavedHTMLRef.current;
 
       setIsAiEditing(true);
       try {
@@ -241,19 +257,24 @@ export default function DocumentEditor() {
 
         const { newFullHTML } = await res.json();
 
-        // Update the iframe (this also persists our splitRef/head).
+        // Update the iframe with the AI's new document (this replaces
+        // the head <style> AND re-injects the page-sheet styles, then
+        // sets the body content).
         iframeRef.current?.applyExternalHTML(newFullHTML);
 
-        // Update local state and mark as saved (AI route already saved via storage? No —
-        // the AI route doesn't save; the client saves. So we save now.)
+        // Persist the AI result. Set 'saving' first, then 'saved'/'error'
+        // after — so the chip reflects reality even if the write fails
+        // (previously it said "Saved" before the await resolved).
         setCurrentHTML(newFullHTML);
-        lastSavedHTMLRef.current = newFullHTML;
-        setSaveStatus('saved');
-        setLastSavedAt(Date.now());
+        setSaveStatus('saving');
         try {
           await saveDocumentHTML(category, folder, docType, newFullHTML);
+          lastSavedHTMLRef.current = newFullHTML;
+          setSaveStatus('saved');
+          setLastSavedAt(Date.now());
         } catch (err) {
           console.error('[document-editor] save after AI edit failed:', err);
+          setSaveStatus('error');
         }
 
         // Bump counter (fire-and-forget).
@@ -269,21 +290,23 @@ export default function DocumentEditor() {
         setIsAiEditing(false);
       }
     },
-    [appId, docType, category, folder, currentHTML]
+    [appId, docType, category, folder, currentHTML, performSave]
   );
 
   // ---- Export ----
   const handleExportConfirm = useCallback(async () => {
-    if (!currentHTML) return;
     setExporting(true);
     try {
-      // Flush any pending save first.
+      // Flush any pending save first so the PDF matches the latest content.
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
         await performSave();
       }
+      // Read live HTML from the iframe (always current).
+      const liveHTML = iframeRef.current?.getHTML() ?? currentHTML;
+      if (!liveHTML) return;
       await exportDocumentPdf({
-        html: currentHTML,
+        html: liveHTML,
         filename: document.title || 'document',
       });
       setPrintGuideOpen(false);
@@ -294,6 +317,28 @@ export default function DocumentEditor() {
       setExporting(false);
     }
   }, [currentHTML, performSave]);
+
+  // ---- Ctrl/Cmd+P → open the export guide instead of printing the
+  // app chrome (which would just print a gray box since the iframe
+  // content doesn't print from the parent window). ----
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        setPrintGuideOpen(true);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  // ---- Re-render the "Saved Xs ago" chip periodically while idle so
+  // the relative time stays fresh. ----
+  const [, setNowTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setNowTick((t) => t + 1), 15000);
+    return () => clearInterval(id);
+  }, []);
 
   // ---- Render ----
   if (loadError) {
@@ -330,7 +375,9 @@ export default function DocumentEditor() {
         canExport
       />
 
-      <EditorToolbar editor={editor} />
+      <div className="document-toolbar sticky top-[49px] z-10 no-print">
+        <EditorToolbar handle={handle} />
+      </div>
 
       {isAiEditing && (
         <div
@@ -380,19 +427,18 @@ export default function DocumentEditor() {
         otherLabel="Jobs today"
       />
 
-      {/* The print-specific styles for the iframe are injected on load.
-          We also hide the chrome (header, toolbar, smart-edit panel) when
-          printing the parent window. The dedicated export window is clean. */}
+      {/* Print/screen styles. The iframe auto-resizes to its content (set
+          via the handle's autoResize), so we don't force a min-height
+          here — that would create a gray gap below short documents and a
+          double-scrollbar on long ones. The whole page scrolls as one. */}
       <style>{`
         @page { size: A4; margin: 0; }
         .document-canvas {
           background: #525659;
-          min-height: calc(100vh - 120px);
         }
         .document-canvas iframe {
           display: block;
           width: 100%;
-          min-height: calc(100vh - 120px);
           border: 0;
           background: #525659;
         }
@@ -402,7 +448,6 @@ export default function DocumentEditor() {
           }
           .document-canvas {
             background: #ffffff !important;
-            min-height: 0 !important;
           }
         }
       `}</style>

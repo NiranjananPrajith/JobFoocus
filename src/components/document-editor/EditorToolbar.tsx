@@ -1,10 +1,10 @@
 'use client';
 
-import { Editor } from '@tiptap/core';
-import { useState, useCallback, useEffect } from 'react';
+import { EditorHandle } from './DocumentIframe';
+import { useState, useEffect, useCallback } from 'react';
 
 interface EditorToolbarProps {
-  editor: Editor | null;
+  handle: EditorHandle | null;
 }
 
 const FONT_FAMILIES = [
@@ -74,32 +74,25 @@ function Divider() {
   return <div className="w-px h-5 bg-hairline mx-1" />;
 }
 
-export default function EditorToolbar({ editor }: EditorToolbarProps) {
+export default function EditorToolbar({ handle }: EditorToolbarProps) {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
-  const [activeFontFamily, setActiveFontFamily] = useState('');
-  const [activeFontSize, setActiveFontSize] = useState('');
+  const [tick, setTick] = useState(0);
 
-  const updateActiveStates = useCallback(() => {
-    if (!editor) return;
-    // Read current marks at selection.
-    const fontFamily = (editor.getAttributes('fontFamily') as any).fontFamily || '';
-    setActiveFontFamily(fontFamily);
-    const fontSize = (editor.getAttributes('fontSize') as any).fontSize || '';
-    setActiveFontSize(fontSize);
-  }, [editor]);
-
-  // Wire selection/transaction updates to refresh dropdowns (once per editor).
+  // Re-render on selection changes so active states update. execCommand
+  // has no event hooks, so we poll the selection on a short interval while
+  // the toolbar is mounted. (Lightweight — queryCommandState is cheap.)
   useEffect(() => {
-    if (!editor) return;
-    editor.on('selectionUpdate', updateActiveStates);
-    editor.on('transaction', updateActiveStates);
-    return () => {
-      editor.off('selectionUpdate', updateActiveStates);
-      editor.off('transaction', updateActiveStates);
-    };
-  }, [editor, updateActiveStates]);
+    if (!handle) return;
+    const interval = setInterval(() => setTick((t) => t + 1), 250);
+    return () => clearInterval(interval);
+  }, [handle]);
 
-  if (!editor) {
+  const isActive = useCallback(
+    (command: string): boolean => (handle ? handle.queryState(command) : false),
+    [handle, tick] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  if (!handle) {
     return (
       <div className="flex items-center gap-2 px-4 py-2 border-b border-hairline bg-surface text-steel text-sm">
         Loading editor…
@@ -107,20 +100,25 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
     );
   }
 
-  const isActive = (name: string, attrs?: Record<string, unknown>) =>
-    editor.isActive(name, attrs as any);
+  const activeFontName = (() => {
+    // queryCommandValue('fontName') may return quoted/legacy forms; we
+    // match loosely against our preset values.
+    const v = handle.queryValue('fontName') || '';
+    const match = FONT_FAMILIES.find((f) => f.value && v.replace(/['"]/g, '').toLowerCase().includes(f.value.replace(/['"]/g, '').split(',')[0].toLowerCase()));
+    return match ? match.value : '';
+  })();
 
   return (
     <div className="flex flex-wrap items-center gap-0.5 px-3 py-2 border-b border-hairline bg-surface">
       {/* Font family */}
       <select
-        value={activeFontFamily}
+        value={activeFontName}
         onChange={(e) => {
           const v = e.target.value;
           if (v) {
-            editor.chain().focus().setFontFamily(v).run();
+            handle.exec('fontName', v);
           } else {
-            editor.chain().focus().unsetFontFamily().run();
+            handle.exec('removeFormat');
           }
         }}
         className="h-8 text-[13px] rounded-md border border-hairline bg-canvas px-2 text-ink mr-1"
@@ -135,14 +133,13 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
 
       {/* Font size */}
       <select
-        value={activeFontSize}
+        value=""
         onChange={(e) => {
           const v = e.target.value;
-          if (v) {
-            editor.chain().focus().setFontSize(v).run();
-          } else {
-            editor.chain().focus().unsetFontSize().run();
-          }
+          if (v) handle.wrapFontSize(v);
+          // Reset to the placeholder immediately so the dropdown doesn't
+          // "stick" on a size after applying.
+          e.target.value = '';
         }}
         className="h-8 text-[13px] rounded-md border border-hairline bg-canvas px-2 text-ink mr-1 w-[72px]"
         title="Font size"
@@ -160,21 +157,21 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
       {/* Bold / Italic / Underline */}
       <ToolbarButton
         active={isActive('bold')}
-        onClick={() => editor.chain().focus().toggleBold().run()}
+        onClick={() => handle.exec('bold')}
         title="Bold (Ctrl+B)"
       >
         <span className="font-bold">B</span>
       </ToolbarButton>
       <ToolbarButton
         active={isActive('italic')}
-        onClick={() => editor.chain().focus().toggleItalic().run()}
+        onClick={() => handle.exec('italic')}
         title="Italic (Ctrl+I)"
       >
         <span className="italic font-serif">I</span>
       </ToolbarButton>
       <ToolbarButton
         active={isActive('underline')}
-        onClick={() => editor.chain().focus().toggleUnderline().run()}
+        onClick={() => handle.exec('underline')}
         title="Underline (Ctrl+U)"
       >
         <span className="underline">U</span>
@@ -191,7 +188,7 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
           <span
             className="inline-block w-4 h-4 rounded-sm border border-hairline"
             style={{
-              backgroundColor: (editor.getAttributes('color') as any).color || '#000000',
+              backgroundColor: handle.queryValue('foreColor') || '#000000',
             }}
           />
           <span className="text-[10px]">▾</span>
@@ -208,7 +205,7 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
-                    editor.chain().focus().setColor(c).run();
+                    handle.exec('foreColor', c);
                     setColorPickerOpen(false);
                   }}
                   className="w-5 h-5 rounded-sm border border-hairline cursor-pointer hover:scale-110 transition-transform"
@@ -221,13 +218,16 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
               Custom
               <input
                 type="color"
-                onChange={(e) => editor.chain().focus().setColor(e.target.value).run()}
+                onChange={(e) => handle.exec('foreColor', e.target.value)}
                 className="w-6 h-6 cursor-pointer"
               />
               <button
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
-                onClick={() => editor.chain().focus().unsetColor().run()}
+                onClick={() => {
+                  // Reset to black via a fresh foreColor call.
+                  handle.exec('foreColor', '#000000');
+                }}
                 className="ml-auto text-[11px] text-steel hover:text-ink underline"
               >
                 Reset
@@ -241,29 +241,29 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
 
       {/* Alignment */}
       <ToolbarButton
-        active={isActive('textAlign', { textAlign: 'left' })}
-        onClick={() => editor.chain().focus().setTextAlign('left').run()}
+        active={isActive('justifyLeft')}
+        onClick={() => handle.exec('justifyLeft')}
         title="Align left"
       >
         <AlignIcon type="left" />
       </ToolbarButton>
       <ToolbarButton
-        active={isActive('textAlign', { textAlign: 'center' })}
-        onClick={() => editor.chain().focus().setTextAlign('center').run()}
+        active={isActive('justifyCenter')}
+        onClick={() => handle.exec('justifyCenter')}
         title="Align center"
       >
         <AlignIcon type="center" />
       </ToolbarButton>
       <ToolbarButton
-        active={isActive('textAlign', { textAlign: 'right' })}
-        onClick={() => editor.chain().focus().setTextAlign('right').run()}
+        active={isActive('justifyRight')}
+        onClick={() => handle.exec('justifyRight')}
         title="Align right"
       >
         <AlignIcon type="right" />
       </ToolbarButton>
       <ToolbarButton
-        active={isActive('textAlign', { textAlign: 'justify' })}
-        onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+        active={isActive('justifyFull')}
+        onClick={() => handle.exec('justifyFull')}
         title="Justify"
       >
         <AlignIcon type="justify" />
@@ -273,16 +273,16 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
 
       {/* Lists */}
       <ToolbarButton
-        active={isActive('bulletList')}
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        active={isActive('insertUnorderedList')}
+        onClick={() => handle.exec('insertUnorderedList')}
         title="Bullet list"
       >
         <span className="text-[14px]">•</span>
         <span className="text-[12px]">≡</span>
       </ToolbarButton>
       <ToolbarButton
-        active={isActive('orderedList')}
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        active={isActive('insertOrderedList')}
+        onClick={() => handle.exec('insertOrderedList')}
         title="Numbered list"
       >
         <span className="text-[12px]">1.</span>
@@ -292,20 +292,20 @@ export default function EditorToolbar({ editor }: EditorToolbarProps) {
       <Divider />
 
       <ToolbarButton
-        onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
+        onClick={() => handle.exec('removeFormat')}
         title="Clear formatting"
       >
         <span className="text-[12px]">Tx</span>
       </ToolbarButton>
 
       <ToolbarButton
-        onClick={() => editor.chain().focus().undo().run()}
+        onClick={() => handle.exec('undo')}
         title="Undo (Ctrl+Z)"
       >
         <UndoIcon />
       </ToolbarButton>
       <ToolbarButton
-        onClick={() => editor.chain().focus().redo().run()}
+        onClick={() => handle.exec('redo')}
         title="Redo (Ctrl+Shift+Z)"
       >
         <RedoIcon />

@@ -28,7 +28,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-utils/server';
-import { editDocumentHTML } from '@/lib/ai-generation';
+import { editDocumentHTML } from '@/lib/ai-edit';
 import { extractPIIProfile, maskPII, type PIIProfile } from '@/lib/pii-utils';
 import { getEffectiveTier } from '@/lib/subscription';
 import { getOrCreateTodayUsage } from '@/lib/usage';
