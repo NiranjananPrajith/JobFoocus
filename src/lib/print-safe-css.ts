@@ -42,13 +42,16 @@ SEMANTIC HTML (critical for ATS parsing)
 PAGE SETUP
 - @page { size: A4; margin: 15mm; } — margin on @page, NOT body padding.
 - body { margin: 0; padding: 0; } — let @page handle per-page margins.
-- page-break-inside: avoid on job entries and education entries.
+- Allow natural page breaks within entries (between bullet points,
+  between paragraphs). Use page-break-after: avoid on company lines
+  (.job-company) and course lines (.edu-course) only, to keep headers
+  with their titles.
 
 ALLOWED CSS
 - Single <style> block in <head>. No <link rel="stylesheet">.
 - Standard typography: font-family, font-size (in pt or px), font-weight,
   font-style, color, text-align, line-height, margin, padding.
-- page-break-inside: avoid on blocks that must not split.
+- page-break-after: avoid on elements that must stay with the next sibling.
 
 FORBIDDEN (will break ATS parsing or browser print)
 - <script> tags. No JavaScript.
