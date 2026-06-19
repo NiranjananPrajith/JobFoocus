@@ -31,6 +31,15 @@ export async function exportDocumentPdf({ html, filename }: ExportPdfArgs): Prom
   printWindow.document.write(normalized);
   printWindow.document.close();
 
+  // Inject a belt-and-braces zero-margin style so Chrome and Firefox
+  // disable "Headers and footers" automatically (they have no @page
+  // margin area to render them in). The document's own <style> already
+  // has @page { margin: 0 }, but the explicit override here prevents
+  // any UA default body margin from sneaking in.
+  const fixStyle = printWindow.document.createElement('style');
+  fixStyle.textContent = '@page { size: A4; margin: 0; } html, body { margin: 0 !important; }';
+  printWindow.document.head?.appendChild(fixStyle);
+
   // Set the document title so the browser pre-fills the "Save as PDF"
   // filename. Some browsers honor it; some don't — but it's the best we
   // can do without a custom filename prompt.

@@ -42,6 +42,10 @@ export default function PrintGuide({ isOpen, onClose, onConfirm, filename, busy 
             <span className="shrink-0 w-5 h-5 rounded-full bg-primary text-on-primary text-[11px] font-semibold flex items-center justify-center">4</span>
             <span><strong>Background graphics:</strong> ON (so colors and colored bars render)</span>
           </li>
+          <li className="flex gap-2">
+            <span className="shrink-0 w-5 h-5 rounded-full bg-primary text-on-primary text-[11px] font-semibold flex items-center justify-center">5</span>
+            <span><strong>Headers and footers:</strong> OFF (uncheck if your browser shows this option)</span>
+          </li>
         </ol>
 
         <p className="text-[12px] text-steel mb-5">

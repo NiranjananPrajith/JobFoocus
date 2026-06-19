@@ -427,20 +427,18 @@ export default function DocumentEditor() {
         otherLabel="Jobs today"
       />
 
-      {/* Print/screen styles. The iframe auto-resizes to its content (set
-          via the handle's autoResize), so we don't force a min-height
-          here — that would create a gray gap below short documents and a
-          double-scrollbar on long ones. The whole page scrolls as one. */}
+      {/* Print/screen styles. The iframe auto-resizes to its content so
+          no fixed height is needed. The whole page scrolls as one. */}
       <style>{`
         @page { size: A4; margin: 0; }
         .document-canvas {
-          background: #525659;
+          background: #ffffff;
         }
         .document-canvas iframe {
           display: block;
           width: 100%;
           border: 0;
-          background: #525659;
+          background: #ffffff;
         }
         @media print {
           .no-print, .document-header, .document-toolbar, [class*="no-print"] {

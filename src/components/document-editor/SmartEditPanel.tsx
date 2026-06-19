@@ -44,8 +44,8 @@ export default function SmartEditPanel({ onSubmit, busy }: SmartEditPanelProps) 
             disabled={busy}
             className="flex-1 resize-none rounded-xl px-4 py-3 text-[13px] text-ink placeholder-steel border focus:outline-none transition-all duration-200 disabled:cursor-not-allowed"
             style={{
-              backgroundColor: busy ? '#f5f0e0' : '#fffaeb',
-              borderColor: '#e6d5a8',
+              backgroundColor: busy ? 'var(--cream-deeper)' : 'var(--cream-light)',
+              borderColor: 'var(--beige-deep)',
             }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && message.trim()) {
@@ -59,8 +59,8 @@ export default function SmartEditPanel({ onSubmit, busy }: SmartEditPanelProps) 
             disabled={!message.trim() || busy}
             className="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200 disabled:cursor-not-allowed"
             style={{
-              backgroundColor: message.trim() && !busy ? '#fa520f' : '#e6d5a8',
-              color: message.trim() && !busy ? '#ffffff' : '#999999',
+              backgroundColor: message.trim() && !busy ? 'var(--primary)' : 'var(--beige-deep)',
+              color: message.trim() && !busy ? 'var(--on-primary)' : 'var(--stone)',
             }}
             title="Send"
             type="button"

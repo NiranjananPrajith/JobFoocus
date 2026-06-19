@@ -14,54 +14,52 @@ import {
   normalizePageSizeToA4,
 } from '@/lib/document-split';
 
-// On-screen A4 page-sheet visualization. We turn the document body into a
-// Word-like white A4 column on a gray canvas, with visible gray "gaps"
-// every 297mm so the user sees multiple distinct pages. The gaps are
-// painted by the body's own background — a repeating gradient — so the
-// contentEditable stays a single, continuous element (cursor flows across
-// pages). Text lines that happen to fall on a gray gap band render on
-// gray; that's the accepted visual quirk of this approach. Scoped to
-// @media screen so the printed output is unaffected.
+// On-screen editor styles.
 //
-// GAP_PX is the gray band width at each A4 page boundary. Dial it to
-// taste during QA (0 = thin rule, ~10 = visible Word-like gap).
-const GAP_PX = 10;
-const PAGE_HEIGHT_MM = 297;
+// The editor is a clean white writing surface with no page separation —
+// page breaks and A4 margins appear only in the final PDF (the
+// document's own @media print + @page rules handle that).
+//
+// On desktop the content is a comfortable, centered column (max-width
+// 210mm ≈ A4). On mobile it fills the screen with smaller padding.
+// Wide AI-generated content (e.g. two-column flex layouts) scrolls
+// horizontally inside the iframe rather than breaking the outer page.
 
-const PAGE_SHEET_CSS = `
+const EDITOR_SURFACE_CSS = `
 @media screen {
   html {
-    background: #525659;
+    background: #ffffff;
     min-height: 100%;
   }
   body {
-    width: 210mm;
-    min-height: ${PAGE_HEIGHT_MM}mm;
-    margin: ${GAP_PX}px auto !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-    /* White page blocks of PAGE_HEIGHT_MM, separated by GAP_PX gray bands,
-       repeating vertically across the whole body height. */
-    background: repeating-linear-gradient(
-      to bottom,
-      #ffffff 0,
-      #ffffff ${PAGE_HEIGHT_MM}mm,
-      #d0d0d0 ${PAGE_HEIGHT_MM}mm,
-      #d0d0d0 calc(${PAGE_HEIGHT_MM}mm + ${GAP_PX}px)
-    ) !important;
-    background-attachment: local !important;
-    /* Make the body a proper A4 page box. */
+    width: 100% !important;
+    max-width: 210mm;
+    margin: 0 auto !important;
+    min-height: auto !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    /* Responsive padding: comfortable on desktop, tighter on mobile. */
+    padding: 24px 32px !important;
     box-sizing: border-box;
+    /* Let wide two-column AI designs scroll inside the iframe
+       instead of breaking the outer page layout on mobile. */
+    overflow-x: auto;
+  }
+}
+@media screen and (max-width: 768px) {
+  body {
+    max-width: 100% !important;
+    padding: 16px !important;
   }
 }
 `;
 
-function injectPageSheetStyles(doc: Document) {
+function injectEditorStyles(doc: Document) {
   if (!doc.head) return;
-  // Avoid double-injection on reloads.
-  if (doc.getElementById('jf-page-sheets')) return;
+  if (doc.getElementById('jf-editor-surface')) return;
   const style = doc.createElement('style');
-  style.id = 'jf-page-sheets';
-  style.textContent = PAGE_SHEET_CSS;
+  style.id = 'jf-editor-surface';
+  style.textContent = EDITOR_SURFACE_CSS;
   doc.head.appendChild(style);
 }
 
@@ -237,7 +235,7 @@ const DocumentIframe = forwardRef<DocumentIframeHandle, DocumentIframeProps>(
           doc.head.innerHTML = split.headHTML;
           // Re-inject the page-sheet styles — head.innerHTML replaced
           // them above (issue: AI edit used to wipe the page sheets).
-          injectPageSheetStyles(doc);
+          injectEditorStyles(doc);
         }
         // Update our split cache so future onChange can recombine.
         splitRef.current = split;
@@ -287,7 +285,7 @@ const DocumentIframe = forwardRef<DocumentIframeHandle, DocumentIframeProps>(
       if (!split) return;
 
       // Inject the page-sheet visualization (screen-only).
-      injectPageSheetStyles(doc);
+      injectEditorStyles(doc);
 
       // Populate the body with the original content — raw, preserving all
       // divs/classes/spans (the whole point of switching off TipTap).
@@ -357,7 +355,7 @@ const DocumentIframe = forwardRef<DocumentIframeHandle, DocumentIframeProps>(
           // scrollHeight so the whole page scrolls as one.
           height: '600px',
           border: 'none',
-          background: '#525659',
+          background: '#ffffff',
         }}
       />
     );

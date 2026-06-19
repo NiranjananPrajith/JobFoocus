@@ -76,6 +76,7 @@ function Divider() {
 
 export default function EditorToolbar({ handle }: EditorToolbarProps) {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const [hexInput, setHexInput] = useState('');
   const [tick, setTick] = useState(0);
 
   // Re-render on selection changes so active states update. execCommand
@@ -214,25 +215,42 @@ export default function EditorToolbar({ handle }: EditorToolbarProps) {
                 />
               ))}
             </div>
-            <label className="flex items-center gap-2 text-[11px] text-steel">
-              Custom
+            <div className="flex items-center gap-2 mt-1 text-[11px] text-steel">
+              <span>Hex</span>
               <input
-                type="color"
-                onChange={(e) => handle.exec('foreColor', e.target.value)}
-                className="w-6 h-6 cursor-pointer"
+                type="text"
+                value={hexInput}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setHexInput(v);
+                  // Apply the color immediately if it's a valid 6-digit hex.
+                  if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+                    handle.exec('foreColor', v);
+                  }
+                }}
+                placeholder="#000000"
+                maxLength={7}
+                className="w-20 h-7 rounded-md border border-hairline bg-canvas text-ink text-[12px] px-2 font-mono focus:outline-none focus:border-hairline-strong"
               />
+              {/* Live preview chip */}
+              {/^#[0-9a-fA-F]{6}$/.test(hexInput) && (
+                <span
+                  className="inline-block w-4 h-4 rounded-sm border border-hairline"
+                  style={{ backgroundColor: hexInput }}
+                />
+              )}
               <button
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => {
-                  // Reset to black via a fresh foreColor call.
                   handle.exec('foreColor', '#000000');
+                  setHexInput('');
                 }}
                 className="ml-auto text-[11px] text-steel hover:text-ink underline"
               >
                 Reset
               </button>
-            </label>
+            </div>
           </div>
         )}
       </div>

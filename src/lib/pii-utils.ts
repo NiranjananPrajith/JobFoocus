@@ -41,12 +41,27 @@ export function extractPIIProfile(data: {
   phone?: string;
   email?: string;
   socials?: Array<{ name: string; url: string }>;
-  portfolio?: string;
+  // portfolio can be a string (legacy), an array of link objects, or absent.
+  portfolio?: string | Array<{ name?: string; url: string }>;
 }): PIIProfile {
   const socials = data.socials || [];
   const linkedIn = socials.find(s => /linkedin/i.test(s.name))?.url || '';
   const github = socials.find(s => /github/i.test(s.name))?.url || '';
   const emailUser = data.email ? data.email.split('@')[0] : '';
+
+  // Normalize portfolio to a string. The master resume stores it as an
+  // array of {name, url} objects; legacy data may have it as a plain
+  // string. Either way we extract the URL(s) so PII masking can
+  // search for them in the HTML.
+  let portfolioStr = '';
+  if (Array.isArray(data.portfolio)) {
+    portfolioStr = data.portfolio
+      .map((p) => (typeof p === 'object' && p?.url ? p.url : ''))
+      .filter(Boolean)
+      .join(' ');
+  } else if (typeof data.portfolio === 'string') {
+    portfolioStr = data.portfolio;
+  }
 
   return {
     name: data.name || '',
@@ -55,7 +70,7 @@ export function extractPIIProfile(data: {
     emailUser,
     linkedIn,
     github,
-    portfolio: data.portfolio || '',
+    portfolio: portfolioStr,
     otherLinks: [],
   };
 }
@@ -154,7 +169,7 @@ export function demaskPII(text: string, profile: PIIProfile): string {
 const HEAD_SPLIT_RE = /(<head[^>]*>[\s\S]*?<\/head>)/i;
 
 function maskString(html: string, value: string, tag: string): string {
-  if (!value) return html;
+  if (!value || typeof value !== 'string') return html;
   // Escape regex special chars in the value (e.g. + in phone numbers, . in email)
   const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   // Match the value as a whole word/identifier, case-sensitive.
