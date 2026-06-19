@@ -24,6 +24,7 @@ export interface SubscriptionRow {
   current_period_end: string | null;
   cancel_at_period_end: boolean;
   currency: Currency | null;
+  insider: boolean | null;
   updated_at: string;
 }
 

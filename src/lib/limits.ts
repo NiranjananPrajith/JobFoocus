@@ -12,7 +12,7 @@
 
 import type { Currency } from '@/lib/region';
 
-export type Tier = 'free' | 'pro' | 'max';
+export type Tier = 'free' | 'pro' | 'max' | 'insider';
 
 export interface TierLimits {
   /** Max jobs the user can add per UTC day. */
@@ -22,9 +22,10 @@ export interface TierLimits {
 }
 
 export const TIER_LIMITS: Record<Tier, TierLimits> = {
-  free: { jobs: 5,   edits: 25 },
-  pro:  { jobs: 25,  edits: 150 },
-  max:  { jobs: 250, edits: 500 },
+  free:   { jobs: 5,   edits: 25 },
+  pro:    { jobs: 25,  edits: 100 },
+  max:    { jobs: 250, edits: 1000 },
+  insider:{ jobs: 25,  edits: 100 },
 };
 
 /** Display label for the tier in UI. "Max" is the marketing name. */
@@ -32,6 +33,7 @@ export const TIER_LABEL: Record<Tier, string> = {
   free: 'Free',
   pro:  'Pro',
   max:  'Max',
+  insider: 'Insider',
 };
 
 /** Monthly price in whole US dollars, for UI badges. */
@@ -39,6 +41,7 @@ export const TIER_PRICE_USD: Record<Tier, number> = {
   free: 0,
   pro:  5,
   max:  12,
+  insider: 0,
 };
 
 /** Monthly price in Euro, for UI badges. */
@@ -46,6 +49,7 @@ export const TIER_PRICE_EUR: Record<Tier, number> = {
   free: 0,
   pro:  4.5,
   max:  11,
+  insider: 0,
 };
 
 /** Monthly price in Indian Rupees, for UI badges. */
@@ -53,6 +57,7 @@ export const TIER_PRICE_INR: Record<Tier, number> = {
   free: 0,
   pro:  500,
   max:  1250,
+  insider: 0,
 };
 
 /**
@@ -138,9 +143,12 @@ export function tierFromSubscription(sub: {
   status: string | null;
   stripe_price_id: string | null;
   razorpay_plan_id: string | null;
+  insider?: boolean | null;
 } | null | undefined): Tier {
   if (!sub) return 'free';
   if (sub.status !== 'active' && sub.status !== 'trialing') return 'free';
+  // Insider tier is granted manually (no Stripe/Razorpay price ID).
+  if (sub.insider) return 'insider';
   // Try Razorpay first (newer provider), fall back to Stripe.
   if (sub.razorpay_plan_id) return tierFromRazorpayPlanId(sub.razorpay_plan_id);
   return tierFromPriceId(sub.stripe_price_id);

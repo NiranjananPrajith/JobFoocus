@@ -18,8 +18,8 @@ import type { Currency } from '@/lib/region';
 // server-only module.
 const PLAN_LIMITS = {
   free: { jobs: 5,   edits: 25 },
-  pro:  { jobs: 25,  edits: 150 },
-  max:  { jobs: 250, edits: 500 },
+  pro:  { jobs: 25,  edits: 100 },
+  max:  { jobs: 250, edits: 1000 },
 };
 
 interface PlanDef {
