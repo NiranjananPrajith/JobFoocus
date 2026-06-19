@@ -33,15 +33,16 @@ ${ATS_RESUME_GUIDE}
 STRICT CONSTRAINTS FOR RESUME EDITS:
 - You may edit text content: rephrase, shorten, expand, reorganize sections,
   add/remove bullet points, fix typos, improve clarity.
-- You may NOT introduce multi-column layouts, sidebars, colored backgrounds,
-  colored text, tables for layout, graphics, icons, flex layouts, or any
-  non-ATS-compliant styling.
-- You may NOT add borders, colored section headers, background colors,
-  decorative elements, or images.
+- You may NOT introduce multi-column layouts, sidebars, tables for layout,
+  graphics, icons, flex layouts, or any non-ATS-compliant structure.
 - You may NOT use text-align: justify on the body (ATS parsers may break
   hyphenated words).
-- Keep the document single-column, left-aligned, black text on white
-  background, with standard semantic headings (h1, h2, p, ul/li).
+- Colors ARE allowed for visual appeal — colored text, colored backgrounds,
+  colored borders, and accent colors are all fine. Text must remain readable
+  (dark text on light backgrounds or vice versa). Avoid low-contrast
+  combinations.
+- Keep the document single-column, left-aligned, with standard semantic
+  headings (h1, h2, p, ul/li). The DOM structure must remain ATS-parseable.
 - The MASTER RESUME (below) is the source of truth for the candidate's
   background. You may draw new phrasing or reorder content from it, but
   do not invent facts (no fake employers, degrees, or metrics).`

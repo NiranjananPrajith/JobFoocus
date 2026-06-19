@@ -77,17 +77,17 @@
     ],
     "ats_notes": [
       "Single-column ONLY — NO sidebars, NO two-column layouts, NO flexbox for layout",
-      "Black text (#000 or #222) on white background — NO colored text, NO colored backgrounds",
+      "Colors ARE allowed for visual appeal — colored text, colored backgrounds, colored borders, accent colors",
+      "Text must remain readable: dark text on light backgrounds or vice versa, avoid low-contrast combinations",
       "Left-aligned text — NO text-align: justify on any resume elements",
       "Use standard semantic HTML: h1 for name, h2 for sections, p for text, ul/li for bullets",
       "Content flows top-to-bottom in reading order — NO flex reorder, NO tables for layout",
       "NO position: fixed/sticky/absolute, NO CSS multi-columns, NO vh/vw units, NO JavaScript",
-      "NO graphics, icons, images, or decorative elements",
       "@page { size: A4; margin: 15mm } — let @page handle per-page margins, NOT body padding",
       "Include SafeCheck Advanced Food Safety Certification ONLY when category includes food-handling duties",
       "Tailor skills to match keywords from the job description"
     ],
-    "ai_instructions": "Using the MASTER DATA and TARGET JOB provided, generate the resume HTML body (no <html>, <head>, or <body> tags). Fill in the Professional Summary with 3-4 sentences tailored to the job. Extract 3-4 Skills categories with relevant skills. For Professional Experience, select the 1-3 most relevant past jobs and tailor their achievement bullets to match the job requirements — use concrete metrics where available. For Education, list 1-2 most relevant entries. Do NOT invent content not in the master data. Follow the ATS_RESUME_GUIDE in src/lib/print-safe-css.ts — the output must be ATS-compliant (single-column, black text, left-aligned, standard semantic HTML, no colors, no sidebars, no flex layouts)."
+    "ai_instructions": "Using the MASTER DATA and TARGET JOB provided, generate the resume HTML body (no <html>, <head>, or <body> tags). Fill in the Professional Summary with 3-4 sentences tailored to the job. Extract 3-4 Skills categories with relevant skills. For Professional Experience, select the 1-3 most relevant past jobs and tailor their achievement bullets to match the job requirements — use concrete metrics where available. For Education, list 1-2 most relevant entries. Do NOT invent content not in the master data. Follow the ATS_RESUME_GUIDE in src/lib/print-safe-css.ts — the output must have ATS-compliant structure (single-column, left-aligned, standard semantic HTML, no sidebars, no flex layouts). Colors and visual styling are allowed for appeal — colored text, backgrounds, borders, accent colors — as long as text remains readable and the DOM structure stays ATS-parseable."
   },
   "cover_letter": {
     "description": "Generate a print-ready cover letter tailored to the target job and company.",

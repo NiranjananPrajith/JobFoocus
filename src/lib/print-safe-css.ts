@@ -1,12 +1,13 @@
 // ATS-compliant resume guide and print-safe cover letter guide for the AI.
 //
-// Resumes MUST be ATS-compliant: single-column, black text, no colors,
-// no sidebars, no flex layout, standard semantic HTML. Applicant Tracking
-// Systems parse resumes top-to-bottom; non-standard layouts scramble the
-// text order and lose content.
+// Resumes MUST be ATS-compliant: single-column, standard semantic HTML,
+// no sidebars, no flex layout. Applicant Tracking Systems parse resumes
+// top-to-bottom; non-standard layouts scramble the text order and lose
+// content. Colors and decorative styling are fine — ATS parsers read
+// the DOM structure, not CSS.
 //
 // Cover letters are read by humans, not ATS, but must still print cleanly:
-// single-column, no colors, no sidebars.
+// single-column, no sidebars.
 
 export const ATS_RESUME_GUIDE = `
 ATS-COMPLIANT RESUME RULES (REQUIRED — your output is parsed by Applicant
@@ -19,9 +20,12 @@ LAYOUT
 - Use normal document flow (block elements stacking vertically).
 
 STYLING
-- Black text (#000 or #222) on white background ONLY.
-- NO colored text, NO colored backgrounds, NO colored borders.
-- NO graphics, icons, images, or decorative elements.
+- Colors are allowed for visual appeal — colored text, colored backgrounds,
+  colored borders, and accent colors are all fine.
+- Text must remain readable: use dark text on light backgrounds (or vice
+  versa). Avoid low-contrast combinations (e.g., light gray on white).
+- Accent colors work well on: section headers (h2), the candidate name (h1),
+  horizontal rules, or subtle background highlights on job entries.
 - Standard web-safe fonts only: Helvetica, Arial, Georgia, or Times New Roman.
 - Bold/italic for emphasis on job titles and company names only.
 - Left-aligned text. NO text-align: justify. NO center alignment (except
@@ -55,7 +59,6 @@ FORBIDDEN (will break ATS parsing or browser print)
 - @font-face, external resources, @import.
 - CSS transforms for layout.
 - display: none, visibility: hidden (hides content from ATS).
-- Colored backgrounds, colored text, colored borders.
 - Tables for layout (only for actual tabular data).
 - CSS animations, transitions (print is a static snapshot).
 - Background images.
@@ -79,8 +82,10 @@ LAYOUT
 - Content flows top-to-bottom.
 
 STYLING
-- Black text (#000 or #222) on white background.
-- NO colored backgrounds, NO colored borders.
+- Colors are allowed for visual appeal — colored text, colored backgrounds,
+  and colored borders are all fine.
+- Text must remain readable: use dark text on light backgrounds (or vice
+  versa). Avoid low-contrast combinations.
 - Standard web-safe fonts: Helvetica, Arial, Georgia, or Times New Roman.
 - Bold for emphasis on sender name and subject line only.
 
@@ -101,7 +106,6 @@ FORBIDDEN
 - flexbox or CSS multi-column for layout.
 - Viewport units (vh, vw).
 - @font-face, external resources.
-- Colored backgrounds, colored text.
 - Tables for layout.
 
 OUTPUT
