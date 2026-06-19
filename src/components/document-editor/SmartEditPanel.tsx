@@ -7,13 +7,6 @@ interface SmartEditPanelProps {
   busy: boolean;
 }
 
-const SUGGESTIONS = [
-  'Add a two-column sidebar design with a colored header',
-  'Make the summary section more concise',
-  'Change the section header style to use an accent color',
-  'Convert the experience list to use stronger action verbs',
-];
-
 export default function SmartEditPanel({ onSubmit, busy }: SmartEditPanelProps) {
   const [message, setMessage] = useState('');
 
@@ -39,7 +32,7 @@ export default function SmartEditPanel({ onSubmit, busy }: SmartEditPanelProps) 
           <textarea
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Describe a change — or pick a suggestion below…"
+            placeholder="Describe a change…"
             rows={2}
             disabled={busy}
             className="flex-1 resize-none rounded-xl px-4 py-3 text-[13px] text-ink placeholder-steel border focus:outline-none transition-all duration-200 disabled:cursor-not-allowed"
@@ -74,22 +67,6 @@ export default function SmartEditPanel({ onSubmit, busy }: SmartEditPanelProps) 
               </svg>
             )}
           </button>
-        </div>
-
-        {/* Suggestion chips */}
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {SUGGESTIONS.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setMessage(s)}
-              disabled={busy}
-              className="text-[11px] px-2.5 py-1 rounded-full border transition-colors disabled:opacity-50 hover:bg-canvas"
-              style={{ borderColor: 'var(--beige-deep)', color: 'var(--ink-tint)' }}
-            >
-              {s}
-            </button>
-          ))}
         </div>
       </div>
     </div>
