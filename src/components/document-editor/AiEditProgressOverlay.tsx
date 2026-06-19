@@ -1,28 +1,29 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface AiEditProgressOverlayProps {
   active: boolean;
 }
 
-// Total target duration in seconds (3 minutes).
-const DURATION_SEC = 180;
+// Reach 95% in 60 seconds, then hold there until the AI finishes.
+const DURATION_SEC = 60;
+// The slow-animation ceiling — the bar holds here when active is still true.
+const CEILING = 95;
 // Update interval in ms.
 const TICK_MS = 100;
-// Progress per tick (percentage per TICK_MS).
-const STEP = 100 / ((DURATION_SEC * 1000) / TICK_MS);
+// Progress per tick toward the ceiling.
+const STEP = CEILING / ((DURATION_SEC * 1000) / TICK_MS);
 
 // Messages rotate based on progress thresholds.
 const MESSAGES: { at: number; text: string }[] = [
   { at: 0, text: 'Understanding your request…' },
   { at: 25, text: 'Editing your document…' },
   { at: 55, text: 'Applying the changes…' },
-  { at: 80, text: 'Almost there…' },
+  { at: 85, text: 'Processing…' },
 ];
 
 function getMessage(progress: number): string {
-  // Walk backwards through the thresholds to find the current message.
   for (let i = MESSAGES.length - 1; i >= 0; i--) {
     if (progress >= MESSAGES[i].at) return MESSAGES[i].text;
   }
@@ -40,7 +41,6 @@ export default function AiEditProgressOverlay({ active }: AiEditProgressOverlayP
   useEffect(() => {
     if (!active) return;
 
-    // Show the overlay and reset progress.
     setProgress(0);
     setFlyToFinish(false);
     setVisible(true);
@@ -49,10 +49,10 @@ export default function AiEditProgressOverlay({ active }: AiEditProgressOverlayP
     intervalRef.current = setInterval(() => {
       setProgress((prev) => {
         const next = prev + STEP;
-        if (next >= 100) {
-          // Reached 100% while still active — stay at 100.
+        if (next >= CEILING) {
+          // Reached the ceiling — stop ticking, hold at CEILING.
           if (intervalRef.current) clearInterval(intervalRef.current);
-          return 100;
+          return CEILING;
         }
         return next;
       });
@@ -66,9 +66,8 @@ export default function AiEditProgressOverlay({ active }: AiEditProgressOverlayP
   // When active transitions from true → false (AI finished), fly to 100%
   // then hide after a short delay.
   useEffect(() => {
-    if (active) return; // only react when active is false
+    if (active) return;
 
-    // If we were visible (AI was running), fly to 100% and then hide.
     if (visible) {
       if (intervalRef.current) clearInterval(intervalRef.current);
       setFlyToFinish(true);
@@ -87,9 +86,7 @@ export default function AiEditProgressOverlay({ active }: AiEditProgressOverlayP
 
   if (!visible) return null;
 
-  const message = progress >= 100
-    ? (flyToFinish ? '' : 'Still working… this is taking longer than expected.')
-    : getMessage(progress);
+  const message = flyToFinish ? '' : getMessage(progress);
 
   return (
     <div
