@@ -11,15 +11,16 @@ declare global {
   }
 }
 
-function waitForFbq(cb: () => void) {
-  if (typeof window.fbq === 'function') { cb(); return; }
-  let tries = 0;
-  const id = setInterval(() => {
-    tries++;
-    if (typeof window.fbq === 'function') { clearInterval(id); cb(); }
-    if (tries > 50) clearInterval(id); // 5s max
-  }, 100);
-}
+const FBQ_STUB = `
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+`;
 
 export default function MetaPixel() {
   const pathname = usePathname();
@@ -33,15 +34,17 @@ export default function MetaPixel() {
   return (
     <>
       <Script
-        id="meta-pixel"
-        src="https://connect.facebook.net/en_US/fbevents.js"
+        id="meta-pixel-init"
+        strategy="beforeInteractive"
+        dangerouslySetInnerHTML={{ __html: FBQ_STUB }}
+      />
+      <Script
+        id="meta-pixel-pageview"
         strategy="afterInteractive"
         onReady={() => {
-          waitForFbq(() => {
-            window.fbq('init', '2172124703579742');
-            window.fbq('track', 'PageView');
-            initialized.current = true;
-          });
+          window.fbq('init', '2172124703579742');
+          window.fbq('track', 'PageView');
+          initialized.current = true;
         }}
       />
     </>
