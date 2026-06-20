@@ -17,6 +17,7 @@ import { useRouter } from 'next/navigation';
 import Button from '@/components/design/Button';
 import Spinner from '@/components/Spinner';
 import type { Currency } from '@/lib/region';
+import { fbqTrack } from '@/lib/meta-capi-client';
 
 interface PricingCTAButtonsProps {
   cta: string;
@@ -77,6 +78,10 @@ export default function PricingCTAButtons({
         throw new Error(data?.error || 'Failed to start checkout');
       }
       // Full page navigation so the PSP-hosted page can take over.
+      // Meta CAPI: Lead event on paid CTA click (client-only)
+      fbqTrack(crypto.randomUUID(), 'Lead', {
+        content_name: tier,
+      });
       window.location.href = data.url;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');

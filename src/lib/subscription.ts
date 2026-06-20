@@ -25,6 +25,7 @@ export interface SubscriptionRow {
   cancel_at_period_end: boolean;
   currency: Currency | null;
   insider: boolean | null;
+  meta_purchase_event_id: string | null;
   updated_at: string;
 }
 

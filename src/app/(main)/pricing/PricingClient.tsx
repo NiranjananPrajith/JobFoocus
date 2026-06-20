@@ -5,13 +5,14 @@
 // (resolved from the cookie or the user's geo region), and this
 // component manages the interactive state.
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Card from '@/components/design/Card';
 import CurrencyToggle, { setCurrencyCookie } from './CurrencyToggle';
 import PricingCTAButtons from './PricingCTAButtons';
 import { formatTierPriceCurrency, type Tier } from '@/lib/limits';
 import type { Currency } from '@/lib/region';
+import { fbqTrack } from '@/lib/meta-capi-client';
 
 // Plan limits (mirrors src/lib/limits.ts). Declared here so the
 // client component can render feature lists without importing a
@@ -94,6 +95,14 @@ interface PricingClientProps {
 export default function PricingClient({ defaultCurrency }: PricingClientProps) {
   const [currency, setCurrency] = useState<Currency>(defaultCurrency);
   const router = useRouter();
+
+  // Meta CAPI: ViewContent event on pricing page mount
+  useEffect(() => {
+    fbqTrack(crypto.randomUUID(), 'ViewContent', {
+      content_name: 'Pricing Page',
+      content_category: 'pricing',
+    });
+  }, []);
 
   const handleChange = (c: Currency) => {
     setCurrency(c);

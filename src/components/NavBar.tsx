@@ -8,6 +8,7 @@ import { useTheme } from '@/lib/theme-context'
 import { createClient } from '@/lib/supabase/client'
 import { TIER_LABEL, TIER_PRICE_USD, TIER_PRICE_INR, TIER_PRICE_EUR, type Tier } from '@/lib/limits'
 import type { Currency } from '@/lib/region'
+import { fbqTrack } from '@/lib/meta-capi-client'
 
 /** Read the currency cookie set by the pricing page toggle. */
 function getCurrencyFromCookie(): Currency {
@@ -39,8 +40,18 @@ export default function NavBar() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user))
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
+
+      // Meta CAPI: CompleteRegistration client dedup
+      if (event === 'SIGNED_IN') {
+        const match = document.cookie.match(/(?:^|;\s*)jf_reg_event_id=([^;]*)/)
+        if (match?.[1]) {
+          fbqTrack(match[1], 'CompleteRegistration')
+          // Delete the cookie
+          document.cookie = 'jf_reg_event_id=; max-age=0; path=/; SameSite=Lax'
+        }
+      }
     })
     return () => subscription.unsubscribe()
   }, [])

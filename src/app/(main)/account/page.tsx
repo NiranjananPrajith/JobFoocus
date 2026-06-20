@@ -29,6 +29,7 @@ import AccountUpgradeButton from './AccountUpgradeButton';
 import AccountAutoRenewToggle from './AccountAutoRenewToggle';
 import ExportDataButton from './ExportDataButton';
 import DeleteAccountButton from './DeleteAccountButton';
+import PurchaseEventTracker from './PurchaseEventTracker';
 
 export const dynamic = 'force-dynamic'; // always show fresh data
 
@@ -115,6 +116,13 @@ export default async function AccountPage() {
 
   return (
     <div className="max-w-[680px] mx-auto">
+      {/* Meta CAPI: Purchase client dedup — fires pixel event if server stored an event_id */}
+      <PurchaseEventTracker
+        metaPurchaseEventId={subscription?.meta_purchase_event_id ?? null}
+        tier={tier}
+        currency={subCurrency}
+      />
+
       <div className="mb-10">
         <p className="text-[13px] font-semibold uppercase tracking-[0.08em] text-primary mb-3">
           Account

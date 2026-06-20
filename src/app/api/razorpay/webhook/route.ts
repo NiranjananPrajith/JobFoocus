@@ -24,6 +24,7 @@ import crypto from 'crypto';
 import { getRazorpay } from '@/lib/razorpay';
 import { createServiceClient } from '@/lib/supabase-utils/service';
 import { tierFromRazorpayPlanId } from '@/lib/limits';
+import { sendMetaCAPIEvent, getEventSourceUrl } from '@/lib/meta-capi';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,7 +68,7 @@ export async function POST(request: Request) {
       case 'subscription.activated':
       case 'subscription.charged': {
         const sub = event.payload?.subscription?.entity;
-        if (sub) await handleSubscriptionUpsert(service, sub);
+        if (sub) await handleSubscriptionUpsert(service, sub, request, event.event);
         break;
       }
       case 'subscription.cancelled': {
@@ -107,7 +108,9 @@ export async function POST(request: Request) {
 
 async function handleSubscriptionUpsert(
   service: ReturnType<typeof createServiceClient>,
-  sub: any
+  sub: any,
+  request?: Request,
+  eventType?: string
 ) {
   const userId = sub.notes?.user_id;
   if (!userId) {
@@ -156,6 +159,35 @@ async function handleSubscriptionUpsert(
   console.log(
     `[razorpay-webhook] subscription upsert: user=${userId} status=${sub.status} tier=${tierFromRazorpayPlanId(sub.plan_id)}`
   );
+
+  // Meta CAPI: Purchase event (fire-and-forget, only on activated/charged)
+  if (request && (eventType === 'subscription.activated' || eventType === 'subscription.charged')) {
+    const eventId = `purchase_${sub.id}`;
+    const tier = tierFromRazorpayPlanId(sub.plan_id);
+
+    // Store event_id for client-side dedup
+    await service
+      .from('subscriptions')
+      .update({ meta_purchase_event_id: eventId })
+      .eq('user_id', userId);
+
+    // Get user email from Razorpay notes or try to fetch from DB
+    const email = sub.notes?.email ?? null;
+
+    const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '';
+    const clientUa = request.headers.get('user-agent') ?? '';
+
+    sendMetaCAPIEvent({
+      eventName: 'Purchase',
+      eventId,
+      eventTime: Math.floor(Date.now() / 1000),
+      eventSourceUrl: getEventSourceUrl(request),
+      clientIpAddress: clientIp,
+      clientUserAgent: clientUa,
+      userData: email ? { email, externalId: userId } : { externalId: userId },
+      customData: { currency: 'INR', value: 0, content_name: tier },
+    });
+  }
 }
 
 async function handleSubscriptionCancelled(

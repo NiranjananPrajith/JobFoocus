@@ -18,6 +18,7 @@ import type Stripe from 'stripe';
 import { getStripe } from '@/lib/stripe';
 import { createServiceClient } from '@/lib/supabase-utils/service';
 import { tierFromPriceId } from '@/lib/limits';
+import { sendMetaCAPIEvent, getEventSourceUrl } from '@/lib/meta-capi';
 
 // Stripe needs the raw body for signature verification. We disable
 // Next.js's automatic body parsing for this route.
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
-        await handleCheckoutCompleted(service, session);
+        await handleCheckoutCompleted(service, session, request);
         break;
       }
       case 'customer.subscription.created':
@@ -106,7 +107,8 @@ interface ServiceClient {
 
 async function handleCheckoutCompleted(
   service: ReturnType<typeof createServiceClient>,
-  session: Stripe.Checkout.Session
+  session: Stripe.Checkout.Session,
+  request: Request
 ) {
   // Two ways to find the user:
   //   1. session.metadata.user_id (we set this when creating the session)
@@ -130,6 +132,48 @@ async function handleCheckoutCompleted(
     typeof session.subscription === 'string' ? session.subscription : session.subscription.id
   );
   await handleSubscriptionUpsert(service, sub, userId);
+
+  // Meta CAPI: Purchase event (fire-and-forget)
+  const sessionId = session.id;
+  const eventId = `purchase_${sessionId}`;
+  const tier = tierFromPriceId(sub.items.data[0]?.price.id ?? null);
+  const item = sub.items.data[0];
+  const rawCurrency = (item?.price as any)?.currency as string | undefined;
+  const currency = rawCurrency?.toUpperCase() ?? 'USD';
+  const unitAmount = (item?.price as any)?.unit_amount as number | null;
+  const value = unitAmount != null ? unitAmount / 100 : 0;
+
+  // Store event_id on subscription row for client-side dedup
+  await service
+    .from('subscriptions')
+    .update({ meta_purchase_event_id: eventId })
+    .eq('user_id', userId);
+
+  // Get user email for CAPI
+  const { data: userData } = await service
+    .from('subscriptions')
+    .select('user_id')
+    .eq('user_id', userId)
+    .single();
+
+  // Fetch email from auth (service client)
+  const stripeClient = getStripe();
+  const customer = await stripe.customers.retrieve(session.customer as string);
+  const email = !customer.deleted ? (customer as Stripe.Customer).email : null;
+
+  const clientIp = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? '';
+  const clientUa = request.headers.get('user-agent') ?? '';
+
+  sendMetaCAPIEvent({
+    eventName: 'Purchase',
+    eventId,
+    eventTime: Math.floor(Date.now() / 1000),
+    eventSourceUrl: getEventSourceUrl(request),
+    clientIpAddress: clientIp,
+    clientUserAgent: clientUa,
+    userData: email ? { email, externalId: userId } : { externalId: userId },
+    customData: { currency, value, content_name: tier },
+  });
 }
 
 async function handleSubscriptionUpsert(
