@@ -11,6 +11,16 @@ declare global {
   }
 }
 
+function waitForFbq(cb: () => void) {
+  if (typeof window.fbq === 'function') { cb(); return; }
+  let tries = 0;
+  const id = setInterval(() => {
+    tries++;
+    if (typeof window.fbq === 'function') { clearInterval(id); cb(); }
+    if (tries > 50) clearInterval(id); // 5s max
+  }, 100);
+}
+
 export default function MetaPixel() {
   const pathname = usePathname();
   const initialized = useRef(false);
@@ -27,9 +37,11 @@ export default function MetaPixel() {
         src="https://connect.facebook.net/en_US/fbevents.js"
         strategy="afterInteractive"
         onReady={() => {
-          window.fbq('init', '2172124703579742');
-          window.fbq('track', 'PageView');
-          initialized.current = true;
+          waitForFbq(() => {
+            window.fbq('init', '2172124703579742');
+            window.fbq('track', 'PageView');
+            initialized.current = true;
+          });
         }}
       />
     </>
