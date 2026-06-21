@@ -528,7 +528,7 @@ function BillingPopdown({
                 </button>
               </div>
             )}
-            {state && (
+            {!loading && state && (
               <div>
                 <p className="text-[12px] font-semibold uppercase tracking-[0.06em] text-steel mb-1">
                   Current plan
@@ -554,7 +554,7 @@ function BillingPopdown({
           </div>
 
           {/* Body — usage bars + reset hint */}
-          {state && (
+          {!loading && state && (
             <div className="px-4 py-3">
               <CompactUsageBar
                 label="Jobs added"
@@ -574,7 +574,7 @@ function BillingPopdown({
           )}
 
           {/* Footer — single link to Account page */}
-          {state && (
+          {!loading && state && (
             <div className="px-4 py-3 border-t border-hairline-soft">
               <a
                 href="/account"
