@@ -53,7 +53,7 @@ export default function LoadingScreen({
   }, [messages.length]);
 
   const d = DIMS[size];
-  const minH = fullScreen ? 'min-h-screen' : 'min-h-[60vh]';
+  const minH = fullScreen ? 'min-h-screen' : compact ? 'min-h-0' : 'min-h-[60vh]';
 
   return (
     <div
