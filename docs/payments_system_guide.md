@@ -83,7 +83,6 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   current_period_end        timestamptz,
   cancel_at_period_end      boolean DEFAULT false,
   currency                  text,       -- 'USD' | 'EUR' | 'INR' | null
-  insider                   boolean DEFAULT false,
   meta_purchase_event_id    text,       -- Meta CAPI Purchase dedup event_id
   updated_at                timestamptz DEFAULT now()
 );
@@ -102,7 +101,6 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 | `status` | `active`/`trialing` → paid tier. `past_due` → still paid (dunning). `canceled`/`null`/anything else → free. |
 | `cancel_at_period_end` | True if the subscription is scheduled to cancel at period end. User retains access until then. |
 | `currency` | From the price object's currency field. Normalized to uppercase ('USD', 'EUR', 'INR'). |
-| `insider` | Manually granted — overrides price/plan ID tier resolution. |
 
 **Provider inference (no stored column):**
 ```ts
@@ -151,17 +149,17 @@ SUPABASE_SERVICE_ROLE_KEY=
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
-STRIPE_PRICE_ID_PRO=price_...            # USD Pro
-STRIPE_PRICE_ID_MAX=price_...            # USD Max
-STRIPE_PRICE_ID_PRO_EUR=price_...        # EUR Pro
-STRIPE_PRICE_ID_MAX_EUR=price_...        # EUR Max
+STRIPE_PRICE_ID_TIER_2=price_...            # USD Tier 2
+STRIPE_PRICE_ID_TIER_3=price_...            # USD Tier 3
+STRIPE_PRICE_ID_TIER_2_EUR=price_...        # EUR Tier 2
+STRIPE_PRICE_ID_TIER_3_EUR=price_...        # EUR Tier 3
 
 # Razorpay
 RAZORPAY_KEY_ID=rzp_live_...
 RAZORPAY_KEY_SECRET=...
 RAZORPAY_WEBHOOK_SECRET=...
-RAZORPAY_PLAN_ID_PRO=plan_...
-RAZORPAY_PLAN_ID_MAX=plan_...
+RAZORPAY_PLAN_ID_TIER_2=plan_...
+RAZORPAY_PLAN_ID_TIER_3=plan_...
 
 # Region (dev fallback)
 NEXT_PUBLIC_DEV_REGION=IN          # optional, for local dev without Vercel geo
@@ -228,7 +226,7 @@ function getCurrencyFromCookie(): Currency {
 ### 5.1 Tier definition
 
 ```ts
-export type Tier = 'free' | 'pro' | 'max' | 'insider';
+export type Tier = 'free' | 'tier_2' | 'tier_3';
 ```
 
 ### 5.2 Limits
@@ -236,18 +234,17 @@ export type Tier = 'free' | 'pro' | 'max' | 'insider';
 ```ts
 export const TIER_LIMITS: Record<Tier, TierLimits> = {
   free:    { jobs: 5,   edits: 25 },
-  pro:     { jobs: 25,  edits: 100 },
-  max:     { jobs: 250, edits: 1000 },
-  insider: { jobs: 25,  edits: 100 },
+  tier_2:  { jobs: 25,  edits: 100 },
+  tier_3:  { jobs: 250, edits: 1000 },
 };
 ```
 
 ### 5.3 Tier → Price (all three currencies)
 
 ```ts
-TIER_PRICE_USD = { free: 0, pro: 5,  max: 12,  insider: 0 }
-TIER_PRICE_EUR = { free: 0, pro: 4.5, max: 11, insider: 0 }
-TIER_PRICE_INR = { free: 0, pro: 500, max: 1250, insider: 0 }
+TIER_PRICE_USD = { free: 0, tier_2: 5,  tier_3: 12 }
+TIER_PRICE_EUR = { free: 0, tier_2: 4.5, tier_3: 11 }
+TIER_PRICE_INR = { free: 0, tier_2: 500, tier_3: 1250 }
 ```
 
 ### 5.4 Resolving tier from subscription
@@ -270,7 +267,7 @@ export function tierFromSubscription(sub: {
 **Key behaviors:**
 - `status` must be `'active'` or `'trialing'` — anything else (`'past_due'`, `'canceled'`, `null`, etc.) resolves to `'free'`
 - `cancel_at_period_end` does **not** demote to free — user keeps paid access until `current_period_end`
-- `insider` overrides price/plan ID resolution
+- `insider` (optional boolean column) can override price/plan ID resolution for internal tiers
 - Razorpay plan ID is checked first, then Stripe price ID
 - If no row exists (new user, no subscription history), returns `'free'`
 
@@ -303,7 +300,7 @@ export function getStripe(): Stripe {
 Full flow:
 
 1. **Auth:** `supabase.auth.getUser()` → 401 if missing
-2. **Parse body:** `{ tier: 'pro' | 'max', currency: 'USD' | 'EUR' }` or `{ priceId: string }`
+2. **Parse body:** `{ tier: 'tier_2' | 'tier_3', currency: 'USD' | 'EUR' }` or `{ priceId: string }`
 3. **Resolve price ID:** `stripePriceIdForTier(tier, currency)` reads the correct env var
 4. **Find or create customer:**
    - Check `subscriptions` table for existing `stripe_customer_id`
@@ -467,7 +464,7 @@ export function getRazorpay(): Razorpay {
 ### 7.2 Create Subscription (`POST /api/razorpay/create-subscription`)
 
 1. **Auth:** `supabase.auth.getUser()` → 401 if missing
-2. **Parse body:** `{ tier: 'pro' | 'max' }`
+2. **Parse body:** `{ tier: 'tier_2' | 'tier_3' }`
 3. **Resolve plan ID:** `razorpayPlanIdForTier(tier)`
 4. **Create subscription:**
    ```ts
@@ -660,7 +657,7 @@ const handleClick = async () => {
 | Mode | Behavior |
 |---|---|
 | `'signup'` (Free card) | `router.push('/signup')` — no PSP call |
-| `'checkout'` (Pro/Max cards) | POST to checkout API → PSP redirect |
+| `'checkout'` (Tier 2 / Tier 3 cards) | POST to checkout API → PSP redirect |
 | `'manage'` (Account page) | POST to portal API → Portal redirect |
 
 ---
@@ -671,7 +668,7 @@ const handleClick = async () => {
 
 ```ts
 const subscription = await getSubscription(user.id);              // DB row
-const tier = tierFromSubscription(subscription);                  // Free/Pro/Max
+const tier = tierFromSubscription(subscription);                  // Free / Tier 2 / Tier 3
 const limits = TIER_LIMITS[tier];                                 // { jobs, edits }
 const usage = await getTodayUsageReadOnly(user.id);               // Today's counters
 const provider = subscriptionProvider(subscription);              // stripe | razorpay | null
@@ -792,7 +789,7 @@ export async function getEffectiveTier(userId: string): Promise<EffectiveTier> {
 }
 ```
 
-If `getSubscription` throws or the DB is unreachable, the caller handles the error and defaults to `tier: 'free'`. Never default to `tier: 'max'`.
+If `getSubscription` throws or the DB is unreachable, the caller handles the error and defaults to `tier: 'free'`. Never default to the highest tier.
 
 ---
 
@@ -802,8 +799,8 @@ If `getSubscription` throws or the DB is unreachable, the caller handles the err
 
 1. Create a **Stripe account** (live + test mode)
 2. Create **products** for each tier × currency:
-   - Pro (USD), Pro (EUR)
-   - Max (USD), Max (EUR)
+   - Tier 2 (USD), Tier 2 (EUR)
+   - Tier 3 (USD), Tier 3 (EUR)
 3. Create **recurring prices** for each product (monthly, USD/EUR amounts)
 4. Copy each **price ID** (starts with `price_`)
 5. Configure **Customer Portal** in Stripe Dashboard settings
@@ -817,17 +814,17 @@ If `getSubscription` throws or the DB is unreachable, the caller handles the err
 STRIPE_SECRET_KEY=sk_live_...    # or sk_test_... for test mode
 STRIPE_WEBHOOK_SECRET=whsec_...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...  # or pk_test_...
-STRIPE_PRICE_ID_PRO=price_...
-STRIPE_PRICE_ID_MAX=price_...
-STRIPE_PRICE_ID_PRO_EUR=price_...
-STRIPE_PRICE_ID_MAX_EUR=price_...
+STRIPE_PRICE_ID_TIER_2=price_...
+STRIPE_PRICE_ID_TIER_3=price_...
+STRIPE_PRICE_ID_TIER_2_EUR=price_...
+STRIPE_PRICE_ID_TIER_3_EUR=price_...
 ```
 
 ### 13.3 Test checks
 
-- [ ] Click "Upgrade to Pro" → redirected to Stripe-hosted checkout
+- [ ] Click "Upgrade to Tier 2" → redirected to Stripe-hosted checkout
 - [ ] Complete payment → redirected to `/account?session_id=cs_xxx`
-- [ ] `/account` page shows "Pro" tier, correct price, correct period end
+- [ ] `/account` page shows "Tier 2" tier, correct price, correct period end
 - [ ] `subscriptions` table has row with correct status + price ID
 - [ ] Stripe CLI forwarding: `stripe listen --forward-to localhost:3000/api/stripe/webhook`
 - [ ] Cancel in Customer Portal → `/account` shows "Expires on" after page refresh
@@ -841,7 +838,7 @@ STRIPE_PRICE_ID_MAX_EUR=price_...
 ### 14.1 Dashboard setup
 
 1. Create a **Razorpay account** (live + test mode)
-2. Create **plans** for each tier (Pro, Max) — monthly, INR amounts
+2. Create **plans** for each tier (Tier 2, Tier 3) — monthly, INR amounts
 3. Copy each **plan ID** (starts with `plan_`)
 4. Create a **webhook endpoint** pointing to `https://yourdomain.com/api/razorpay/webhook`
    - Events: `subscription.authenticated`, `subscription.activated`, `subscription.charged`, `subscription.cancelled`, `subscription.completed`, `subscription.halted`, `subscription.resumed`
@@ -853,17 +850,17 @@ STRIPE_PRICE_ID_MAX_EUR=price_...
 RAZORPAY_KEY_ID=rzp_live_...    # or rzp_test_... for test mode
 RAZORPAY_KEY_SECRET=...
 RAZORPAY_WEBHOOK_SECRET=...
-RAZORPAY_PLAN_ID_PRO=plan_...
-RAZORPAY_PLAN_ID_MAX=plan_...
+RAZORPAY_PLAN_ID_TIER_2=plan_...
+RAZORPAY_PLAN_ID_TIER_3=plan_...
 ```
 
 ### 14.3 Test checks
 
 - [ ] Set `NEXT_PUBLIC_DEV_REGION=IN` in `.env` for local testing
 - [ ] Pricing page shows ₹500 / ₹1250 in INR
-- [ ] Click "Upgrade to Pro" → redirected to Razorpay-hosted checkout
+- [ ] Click "Upgrade to Tier 2" → redirected to Razorpay-hosted checkout
 - [ ] Complete payment → redirected back to site
-- [ ] `/account` page shows "Pro" tier, INR price
+- [ ] `/account` page shows "Tier 2" tier, INR price
 - [ ] `subscriptions` table has row with `razorpay_subscription_id` + `currency: 'INR'`
 - [ ] Cancel → DB shows `cancel_at_period_end: true`
 - [ ] Reactivate → DB shows `cancel_at_period_end: false`
@@ -945,7 +942,7 @@ The `CurrencyToggle` sets a `jf-currency` cookie. The NavBar's BillingPopdown an
 | `src/lib/stripe.ts` | Stripe SDK singleton, `stripePriceIdForTier()` |
 | `src/lib/razorpay.ts` | Razorpay SDK singleton, `razorpayPlanIdForTier()` |
 | `src/lib/subscription.ts` | `getSubscription()`, `getEffectiveTier()`, `subscriptionProvider()`, reconciliation functions |
-| `src/lib/limits.ts` | `Tier`, `TIER_LIMITS`, `tierFromPriceId()`, `tierFromRazorpayPlanId()`, `tierFromSubscription()`, price maps |
+| `src/lib/limits.ts` | `Tier`, `TIER_LIMITS`, `tierFromPriceId()`, `tierFromRazorpayPlanId()`, `tierFromSubscription()`, price maps per currency |
 | `src/lib/region.ts` | `getRegion()`, `Region`, `Currency` types |
 | `src/lib/usage.ts` | `tryIncrement()`, `getOrCreateTodayUsage()`, `getTodayUsageReadOnly()` |
 | `src/middleware.ts` | Region detection via Vercel geo headers |
