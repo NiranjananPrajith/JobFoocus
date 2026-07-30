@@ -129,37 +129,218 @@ Stripe and Supabase keys are sensitive.
 
 ## Database (Supabase)
 
-The schema lives in `supabase/migrations/`, applied in numeric order.
+JobFoocus uses Supabase PostgreSQL with Row Level Security (RLS). To initialize a fresh database instance, open the **Supabase Dashboard → SQL Editor**, paste the consolidated schema below, and run it:
 
-| File                                      | Purpose                                       |
-| ----------------------------------------- | --------------------------------------------- |
-| `001_initial_schema.sql`                  | Base tables: `applications`, `documents`, `master_resumes`, `settings` |
-| `002_soft_delete.sql`                     | Adds `trashed_at` + `trashed_from_category` for trash flow |
-| `003_user_categories.sql`                 | User-defined categories table                 |
-| `004_category_uuid_storage_key.sql`       | `applications.category_id` FK to categories  |
-| `005_subscriptions_and_usage.sql`         | Stripe subscription mirror + atomic daily usage counters |
-| `006_auto_create_uncategorized.sql`       | Auto-create `Uncategorized` category for new users |
-| `007_razorpay_columns.sql`               | Razorpay subscription columns on `subscriptions` table |
+```sql
+-- JobFoocus Complete Consolidated Database Schema
 
-To apply a fresh migration:
+-- 1. Applications table
+create table if not exists applications (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  category text not null,
+  category_id uuid,
+  folder text not null,
+  data jsonb not null default '{}',
+  deleted_at timestamptz,
+  created_at timestamptz default now() not null,
+  updated_at timestamptz default now() not null,
+  unique (user_id, category, folder)
+);
 
-1. Open Supabase dashboard → SQL Editor.
-2. Paste the file content.
-3. Run. The file is idempotent (`create table if not exists`, `drop
-   policy if exists` + `create policy`).
+create index if not exists applications_user_id_idx on applications(user_id);
+create index if not exists applications_deleted_at_idx on applications(user_id, deleted_at);
 
-The 005 migration creates:
+alter table applications enable row level security;
+drop policy if exists "Users manage own applications" on applications;
+create policy "Users manage own applications"
+  on applications for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
-- **`subscriptions`** — one row per user, mirrors Stripe state. RLS
-  allows the user to read their own row; writes are service-role only
-  (the webhook uses the service-role key).
-- **`usage_counters`** — one row per user per UTC day. RLS read-only for
-  the user. Writes happen through the `try_increment_usage` RPC.
-- **`try_increment_usage(p_user_id uuid, p_action text, p_cap int)`** —
-  SECURITY DEFINER function. Performs the upsert + atomic
-  `UPDATE ... SET x = x + 1 WHERE x < cap` in a single statement and
-  returns `{ ok, value }`. Called by `/api/usage/increment` so two
-  parallel saves can never both squeak past the cap.
+-- 2. Documents table
+create table if not exists documents (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  category text not null,
+  category_id uuid,
+  folder text not null,
+  doc_type text not null,
+  html text not null default '',
+  created_at timestamptz default now() not null,
+  updated_at timestamptz default now() not null,
+  unique (user_id, category, folder, doc_type)
+);
+
+create index if not exists documents_user_id_idx on documents(user_id);
+
+alter table documents enable row level security;
+drop policy if exists "Users manage own documents" on documents;
+create policy "Users manage own documents"
+  on documents for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- 3. Master Resumes table
+create table if not exists master_resumes (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid not null references auth.users(id) on delete cascade unique,
+  data jsonb not null default '{"name":"","phone":"","email":"","workExperience":[],"education":[],"skills":[],"socials":[],"portfolio":[]}',
+  created_at timestamptz default now() not null,
+  updated_at timestamptz default now() not null
+);
+
+alter table master_resumes enable row level security;
+drop policy if exists "Users manage own master resume" on master_resumes;
+create policy "Users manage own master resume"
+  on master_resumes for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- 4. Settings table
+create table if not exists settings (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid not null references auth.users(id) on delete cascade unique,
+  cloud_provider text not null default 'none',
+  sync_enabled boolean not null default false,
+  openai_key text not null default '',
+  created_at timestamptz default now() not null,
+  updated_at timestamptz default now() not null
+);
+
+alter table settings enable row level security;
+drop policy if exists "Users manage own settings" on settings;
+create policy "Users manage own settings"
+  on settings for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- 5. User Categories table
+create table if not exists user_categories (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  description text default '',
+  color text default '#888888',
+  created_at timestamptz default now() not null,
+  updated_at timestamptz default now() not null,
+  unique(user_id, name)
+);
+
+create index if not exists user_categories_user_id_idx on user_categories(user_id);
+
+alter table user_categories enable row level security;
+drop policy if exists "Users manage own categories" on user_categories;
+create policy "Users manage own categories"
+  on user_categories for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- 6. Subscriptions table (Stripe + Razorpay)
+create table if not exists subscriptions (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  stripe_customer_id text,
+  stripe_subscription_id text,
+  stripe_price_id text,
+  razorpay_customer_id text,
+  razorpay_subscription_id text,
+  razorpay_plan_id text,
+  status text,
+  current_period_end timestamptz,
+  cancel_at_period_end boolean default false,
+  currency text,
+  meta_purchase_event_id text,
+  updated_at timestamptz default now() not null
+);
+
+create index if not exists subscriptions_stripe_customer_id_idx on subscriptions(stripe_customer_id);
+create index if not exists subscriptions_stripe_subscription_id_idx on subscriptions(stripe_subscription_id);
+create index if not exists subscriptions_razorpay_subscription_id_idx on subscriptions(razorpay_subscription_id);
+
+alter table subscriptions enable row level security;
+drop policy if exists "users read own subscription" on subscriptions;
+create policy "users read own subscription"
+  on subscriptions for select
+  using (auth.uid() = user_id);
+
+-- 7. Usage Counters table
+create table if not exists usage_counters (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  usage_date date not null,
+  jobs_added int not null default 0 check (jobs_added >= 0),
+  edits_made int not null default 0 check (edits_made >= 0),
+  primary key (user_id, usage_date)
+);
+
+create index if not exists usage_counters_user_date_idx on usage_counters(user_id, usage_date desc);
+
+alter table usage_counters enable row level security;
+drop policy if exists "users read own counters" on usage_counters;
+create policy "users read own counters"
+  on usage_counters for select
+  using (auth.uid() = user_id);
+
+-- 8. Insider Requests table
+create table if not exists insider_requests (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null,
+  email text not null,
+  referrer_name text not null,
+  referral_code text not null,
+  created_at timestamptz default now() not null
+);
+
+alter table insider_requests enable row level security;
+drop policy if exists "users insert own insider request" on insider_requests;
+create policy "users insert own insider request"
+  on insider_requests for insert
+  with check (auth.uid() = user_id);
+
+-- 9. Function: Atomic usage increment RPC
+create or replace function public.try_increment_usage(
+  p_user_id uuid,
+  p_action text,
+  p_cap int
+) returns json
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_today date := (now() at time zone 'utc')::date;
+  v_col text;
+  v_value int;
+begin
+  if p_action not in ('add_job', 'edit_doc') then
+    raise exception 'invalid action: %', p_action;
+  end if;
+
+  v_col := case when p_action = 'add_job' then 'jobs_added' else 'edits_made' end;
+
+  insert into usage_counters (user_id, usage_date, jobs_added, edits_made)
+    values (p_user_id, v_today, 0, 0)
+    on conflict (user_id, usage_date) do nothing;
+
+  update usage_counters
+    set jobs_added = case when v_col = 'jobs_added' then jobs_added + 1 else jobs_added end,
+        edits_made = case when v_col = 'edits_made' then edits_made + 1 else edits_made end
+    where user_id = p_user_id
+      and usage_date = v_today
+      and case when v_col = 'jobs_added' then jobs_added else edits_made end < p_cap
+    returning case when v_col = 'jobs_added' then jobs_added else edits_made end into v_value;
+
+  if v_value is null then
+    return json_build_object('ok', false, 'value', p_cap);
+  end if;
+
+  return json_build_object('ok', true, 'value', v_value);
+end;
+$$;
+
+revoke all on function public.try_increment_usage(uuid, text, int) from public;
+grant execute on function public.try_increment_usage(uuid, text, int) to service_role;
+```
 
 ---
 

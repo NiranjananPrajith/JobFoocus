@@ -1,17 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase-utils/server';
 
 const API_KEY = process.env.OPENCODE_ZEN_API_KEY || '';
 const MODEL = 'deepseek-v4-flash-free';
 const BASE_URL = 'https://opencode.ai/zen/v1/chat/completions';
 
 export async function POST(req: NextRequest) {
-  const { prompt, system } = await req.json();
+  // Auth gate — must be logged in to send AI prompts.
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  let body: { prompt?: string; system?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  const { prompt, system } = body;
 
   if (!API_KEY) {
     return NextResponse.json({ error: 'AI service not configured' }, { status: 500 });
   }
 
-  if (!prompt) {
+  if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
     return NextResponse.json({ error: 'prompt is required' }, { status: 400 });
   }
 

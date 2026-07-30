@@ -22,14 +22,18 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
 `;
 
+const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
+
 export default function MetaPixel() {
   const pathname = usePathname();
   const initialized = useRef(false);
 
   useEffect(() => {
-    if (!initialized.current || typeof window.fbq !== 'function') return;
+    if (!PIXEL_ID || !initialized.current || typeof window.fbq !== 'function') return;
     window.fbq('track', 'PageView');
   }, [pathname]);
+
+  if (!PIXEL_ID) return null;
 
   return (
     <>
@@ -42,7 +46,7 @@ export default function MetaPixel() {
         id="meta-pixel-pageview"
         strategy="afterInteractive"
         onReady={() => {
-          window.fbq('init', '2172124703579742');
+          window.fbq('init', PIXEL_ID);
           window.fbq('track', 'PageView');
           initialized.current = true;
         }}
@@ -50,3 +54,4 @@ export default function MetaPixel() {
     </>
   );
 }
+

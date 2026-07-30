@@ -41,3 +41,9 @@ tsconfig.tsbuildinfo
 
 # Claude
 .claude
+
+# Ignored directories (reference docs, dev scripts, and Supabase migrations)
+/ref/
+/scripts/
+/supabase/
+

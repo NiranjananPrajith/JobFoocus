@@ -46,9 +46,10 @@ export async function POST(request: Request) {
   const expectedSig = crypto
     .createHmac('sha256', webhookSecret)
     .update(rawBody)
-    .digest('hex');
+  const sigBuf = Buffer.from(sig);
+  const expectedBuf = Buffer.from(expectedSig);
 
-  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) {
+  if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) {
     console.error('[razorpay-webhook] signature verification failed');
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }

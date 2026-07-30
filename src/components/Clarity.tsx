@@ -3,10 +3,15 @@
 import { useEffect } from 'react';
 import Clarity from '@microsoft/clarity';
 
+const CLARITY_ID = process.env.NEXT_PUBLIC_MICROSOFT_CLARITY_ID;
+
 export default function ClarityTracker() {
   useEffect(() => {
-    Clarity.init('x9q83k55lt');
+    if (CLARITY_ID) {
+      Clarity.init(CLARITY_ID);
+    }
   }, []);
 
   return null;
 }
+

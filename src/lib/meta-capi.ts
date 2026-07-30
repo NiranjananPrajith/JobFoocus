@@ -5,8 +5,9 @@
 //
 // Requires META_ACCESS_TOKEN env var (from Meta Events Manager).
 
-const PIXEL_ID = '2172124703579742';
-const GRAPH_URL = `https://graph.facebook.com/v21.0/${PIXEL_ID}/events`;
+const PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || '';
+const GRAPH_URL = PIXEL_ID ? `https://graph.facebook.com/v21.0/${PIXEL_ID}/events` : '';
+
 
 /** Lowercase + SHA-256 hash for Meta user_data fields (email). */
 export async function hashData(value: string): Promise<string> {
@@ -51,8 +52,8 @@ interface CAPIEventParams {
  */
 export async function sendMetaCAPIEvent(params: CAPIEventParams): Promise<void> {
   const accessToken = process.env.META_ACCESS_TOKEN;
-  if (!accessToken) {
-    console.warn('[meta-capi] META_ACCESS_TOKEN not set, skipping event');
+  if (!PIXEL_ID || !accessToken) {
+    console.warn('[meta-capi] META_ACCESS_TOKEN or NEXT_PUBLIC_META_PIXEL_ID not set, skipping event');
     return;
   }
 

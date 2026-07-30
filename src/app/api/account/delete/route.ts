@@ -42,7 +42,8 @@ export async function POST() {
   //    ON DELETE CASCADE on user_id, so this wipes applications,
   //    documents, master_resumes, settings, categories,
   //    subscriptions, and usage_counters in one shot.
-  const { error } = await supabase.auth.admin.deleteUser(user.id)
+  const adminClient = createServiceClient()
+  const { error } = await adminClient.auth.admin.deleteUser(user.id)
   if (error) {
     console.error('[account-delete] deleteUser failed:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -50,3 +51,4 @@ export async function POST() {
 
   return NextResponse.json({ ok: true })
 }
+
