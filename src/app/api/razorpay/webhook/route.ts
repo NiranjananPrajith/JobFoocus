@@ -46,6 +46,8 @@ export async function POST(request: Request) {
   const expectedSig = crypto
     .createHmac('sha256', webhookSecret)
     .update(rawBody)
+    .digest('hex');
+
   const sigBuf = Buffer.from(sig);
   const expectedBuf = Buffer.from(expectedSig);
 
