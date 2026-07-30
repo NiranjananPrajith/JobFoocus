@@ -1,12 +1,13 @@
 # JobFoocus — Enterprise SaaS Platform
 
-> **A full-stack, production-grade SaaS platform built with Next.js 14 App Router, Supabase Postgres (RLS), multi-currency Stripe + Razorpay subscriptions, zero-PII AI pipeline, Manifest V3 extension, and Meta Conversions API (CAPI).**
+> **A full-stack, production-grade SaaS platform built with Next.js 14 App Router, Supabase Postgres (RLS), multi-currency Stripe + Razorpay subscriptions, zero-PII AI pipeline, published Manifest V3 extensions (Chrome & Firefox), and Meta Conversions API (CAPI).**
 
 [![Next.js](https://img.shields.io/badge/Next.js-14.2-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-Postgres_RLS-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-Published-4285F4?style=for-the-badge&logo=googlechrome)](https://chromewebstore.google.com/detail/dddmilicbgjmfidicpahglaflfjfcnjl)
+[![Firefox Add-ons](https://img.shields.io/badge/Firefox_Add--ons-Published-FF7139?style=for-the-badge&logo=firefoxbrowser)](https://addons.mozilla.org/en-CA/firefox/addon/jobfoocus/)
 [![Stripe](https://img.shields.io/badge/Stripe-USD%20%2F%20EUR-635BFF?style=for-the-badge&logo=stripe)](https://stripe.com/)
 [![Razorpay](https://img.shields.io/badge/Razorpay-INR-0C2340?style=for-the-badge&logo=razorpay)](https://razorpay.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
@@ -19,12 +20,12 @@ JobFoocus turns a master resume and job posting into tailored, ATS-friendly resu
 
 This repository serves as a **portfolio implementation** showcasing key production SaaS architectural patterns:
 
+- 🧩 **Published Cross-Browser Extensions**: Production Manifest V3 browser extension published on both the **[Chrome Web Store](https://chromewebstore.google.com/detail/dddmilicbgjmfidicpahglaflfjfcnjl)** and **[Firefox Add-ons Store](https://addons.mozilla.org/en-CA/firefox/addon/jobfoocus/)**, supporting 8 major browsers.
 - 🎨 **Design System & UI/UX Excellence**: Custom warm sunset & mineral dark themes, magazine-style Kanban pipeline, custom interactive document editor, floating AI prompt controls, and print-optimized PDF outputs.
 - 🔐 **Privacy-First Zero-PII AI Architecture**: Client-side tag-wrapping mask/demask pipeline ensuring candidate names, phones, emails, and portfolios are never transmitted to third-party LLMs.
 - ⚡ **Atomic Database Concurrency**: Race-condition-free usage counters using custom PostgreSQL `SECURITY DEFINER` RPC functions and strict Row-Level Security (RLS).
 - 🌍 **Geo-Optimized Multi-Provider Payments**: Automatic geo-routing serving **Stripe** (USD/EUR) to international visitors and **Razorpay Subscriptions** (INR) to Indian visitors, backed by self-healing state reconciliation.
 - 📊 **Dual-Layer Analytics & CAPI**: Full-funnel Meta Conversions API (CAPI) deduplicated against browser Meta Pixel via unique `event_id`, paired with Microsoft Clarity heatmaps and session recordings.
-- 🧩 **Manifest V3 Browser Extension**: Deep-linked Chrome/Firefox extension with auto-extraction heuristics and single-click job capture.
 
 ---
 
@@ -34,8 +35,8 @@ This repository serves as a **portfolio implementation** showcasing key producti
    ┌─────────────────────────────────────────────────────────────────────────┐
    │                          CLIENT LAYER                                   │
    │  ┌──────────────────────┐  ┌──────────────────┐  ┌───────────────────┐  │
-   │  │ Next.js App Router   │  │ Browser Extension│  │ Meta Pixel /      │  │
-   │  │ (Kanban & Editor)    │  │ (Manifest V3)    │  │ Microsoft Clarity │  │
+   │  │ Next.js App Router   │  │ Published Ext.   │  │ Meta Pixel /      │  │
+   │  │ (Kanban & Editor)    │  │ (Chrome & Firefox)│ │ Microsoft Clarity │  │
    │  └──────────┬───────────┘  └────────┬─────────┘  └───────────────────┘  │
    └─────────────┼───────────────────────┼───────────────────────────────────┘
                  │                       │ Deep-link Pre-fill
@@ -54,6 +55,22 @@ This repository serves as a **portfolio implementation** showcasing key producti
    │ • Atomic RPC Counter     │ │ (DeepSeek LLM)   │ │ Webhooks & Portals   │
    └──────────────────────────┘ └──────────────────┘ └──────────────────────┘
 ```
+
+---
+
+## 🛍️ Published Browser Extensions (Chrome & Firefox)
+
+JobFoocus includes a production-grade browser extension engineered from a single Manifest V3 codebase (`extension/`) to target both Chromium and Gecko engines.
+
+### Published Store Listings
+- 🛒 **[Chrome Web Store Listing](https://chromewebstore.google.com/detail/dddmilicbgjmfidicpahglaflfjfcnjl)** — Official extension listing for Chrome, Edge, Brave, Opera, Arc, and Vivaldi.
+- 🦊 **[Firefox Add-ons Store Listing](https://addons.mozilla.org/en-CA/firefox/addon/jobfoocus/)** — Official Mozilla add-on listing.
+
+### Extension Engineering Highlights
+- **Dual Manifest V3 Compatibility**: Configured with `background.service_worker` for Chromium service workers alongside `background.scripts` and `browser_specific_settings.gecko` for Firefox MV3 background page standards.
+- **Smart DOM Scraping Heuristics**: Advanced field extraction algorithms (`extension/content.js`) that extract job title, company name, location, and description across major ATS platforms (Workday, Greenhouse, Lever, Indeed, LinkedIn, ZipRecruiter, Glassdoor).
+- **Popdown UI & Context Menu**: Built-in keyboard shortcuts (`Ctrl+Shift+J` / `Cmd+Shift+J`), custom right-click context menu ("Send to JobFoocus"), and interactive popdown interface (`popup.html`).
+- **Automated Packaging Pipeline**: Integrated Node.js packaging script (`scripts/build-extension.mjs`) using JSZip to compile versioned releases (`public/extensions/build/jobfoocus-extension-v1.2.0.zip`) and static distribution bundles.
 
 ---
 
@@ -102,7 +119,7 @@ JobFoocus implements a zero-trust PII masking pipeline (`src/lib/pii-utils.ts`):
 | **Payment Gateways** | Stripe SDK (USD/EUR Checkout & Customer Portal), Razorpay SDK (INR Subscriptions) |
 | **AI Integration** | OpenCode ZEN API (DeepSeek V4 Flash Free), Custom PII Masking Pipeline |
 | **Analytics & Telemetry** | Meta Pixel + Server Conversions API (CAPI), Microsoft Clarity, Vercel Speed Insights |
-| **Browser Extension** | Manifest V3 (Chrome, Firefox, Edge, Brave), Background Service Worker |
+| **Browser Extension** | Published Manifest V3 Extensions (Chrome Web Store, Firefox Add-ons), Service Worker |
 | **PDF Processing** | `pdfjs-dist` static worker setup for resume parsing |
 
 ---
@@ -371,18 +388,6 @@ $$;
 
 revoke all on function public.try_increment_usage(uuid, text, int) from public;
 grant execute on function public.try_increment_usage(uuid, text, int) to service_role;
-```
-
----
-
-## 🧩 Browser Extension Packaging
-
-The Manifest V3 extension (`extension/`) scrapes job board postings and deep-links into the dashboard:
-
-```bash
-# Build the distributable zip package:
-npm run build:extension
-# → public/extensions/build/jobfoocus-extension.zip
 ```
 
 ---
