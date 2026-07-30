@@ -1,135 +1,166 @@
-# JobFoocus
+# JobFoocus — Enterprise SaaS Platform
 
-A Next.js job-application workspace. You drop in a master resume, paste a
-job description (or send one from the browser extension), and the app
-generates a tailored resume + cover letter, files them under
-`YYYY-MM-DD_Company_Title`, and tracks status through your pipeline.
+> **A full-stack, production-grade SaaS platform built with Next.js 14 App Router, Supabase Postgres (RLS), multi-currency Stripe + Razorpay subscriptions, zero-PII AI pipeline, Manifest V3 extension, and Meta Conversions API (CAPI).**
 
-Three paid tiers (Stripe), daily usage limits, a print-optimized document
-viewer, and a Manifest V3 browser extension for one-click capture from
-any job board.
-
----
-
-## Table of contents
-
-- [Features](#features)
-- [Stack](#stack)
-- [Quick start (local)](#quick-start-local)
-- [Environment variables](#environment-variables)
-- [Database (Supabase)](#database-supabase)
-- [Stripe setup](#stripe-setup)
-- [Browser extension](#browser-extension)
-- [Deployment (Vercel)](#deployment-vercel)
-- [Security notes](#security-notes)
-- [Project layout](#project-layout)
-- [Useful npm scripts](#useful-npm-scripts)
+[![Next.js](https://img.shields.io/badge/Next.js-14.2-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-Postgres_RLS-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+[![Stripe](https://img.shields.io/badge/Stripe-USD%20%2F%20EUR-635BFF?style=for-the-badge&logo=stripe)](https://stripe.com/)
+[![Razorpay](https://img.shields.io/badge/Razorpay-INR-0C2340?style=for-the-badge&logo=razorpay)](https://razorpay.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
 ---
 
-## Features
+## 🌟 SaaS Platform Highlights
 
-- **AI document generation** — server-side calls to the DeepSeek V4 Flash Free model
-  draft a tailored `resume.html` and `cover_letter.html`. PII is masked
-  before the prompt and demasked on the way back so the model never sees
-  your real phone/email.
-- **Smart categorization** — user-defined categories with AI
-  auto-classification based on job title, company, and description. A
-  reserved `Uncategorized` bucket is the fallback.
-- **Document editor** — in-browser AI edits via a floating yellow panel.
-  Server-side cap enforcement (402 → upgrade modal) on the AI endpoint.
-- **Subscription tiers** — Free / Pro / Max via Stripe Checkout + Customer
-  Portal + webhook. Daily usage caps are enforced at the database layer
-  with an atomic SQL function.
-- **Browser extension** — Manifest V3, works in Chrome / Edge / Brave /
-  Firefox. One-click scrape, context-menu shortcut, popdown UI, deep-link
-  pre-fill to the dashboard.
-- **Print to PDF** — `@page` CSS hooks + `print-color-adjust: exact`,
-  no floats, no multi-column layouts (ATS-safe).
-- **Account dashboard** — current plan, today's usage bars, reset
-  countdown, and "Manage in Stripe" portal link.
+JobFoocus turns a master resume and job posting into tailored, ATS-friendly resume and cover letter packages, automatically categorizing and tracking applications across a Kanban pipeline.
+
+This repository serves as a **portfolio implementation** showcasing key production SaaS architectural patterns:
+
+- 🎨 **Design System & UI/UX Excellence**: Custom warm sunset & mineral dark themes, magazine-style Kanban pipeline, custom interactive document editor, floating AI prompt controls, and print-optimized PDF outputs.
+- 🔐 **Privacy-First Zero-PII AI Architecture**: Client-side tag-wrapping mask/demask pipeline ensuring candidate names, phones, emails, and portfolios are never transmitted to third-party LLMs.
+- ⚡ **Atomic Database Concurrency**: Race-condition-free usage counters using custom PostgreSQL `SECURITY DEFINER` RPC functions and strict Row-Level Security (RLS).
+- 🌍 **Geo-Optimized Multi-Provider Payments**: Automatic geo-routing serving **Stripe** (USD/EUR) to international visitors and **Razorpay Subscriptions** (INR) to Indian visitors, backed by self-healing state reconciliation.
+- 📊 **Dual-Layer Analytics & CAPI**: Full-funnel Meta Conversions API (CAPI) deduplicated against browser Meta Pixel via unique `event_id`, paired with Microsoft Clarity heatmaps and session recordings.
+- 🧩 **Manifest V3 Browser Extension**: Deep-linked Chrome/Firefox extension with auto-extraction heuristics and single-click job capture.
 
 ---
 
-## Stack
+## 🏗 System Architecture
 
-| Layer            | Tech                                                |
-| ---------------- | --------------------------------------------------- |
-| Framework        | Next.js 14.2.29 (App Router) + React 18 + TypeScript |
-| Database         | Supabase Postgres with RLS                          |
-| Auth             | Supabase Auth (email + Google OAuth)                |
-| Payments         | Stripe (USD/EUR) + Razorpay Subscriptions (INR) + webhooks |
-| AI               | DeepSeek V4 Flash Free via OpenCode ZEN (OpenAI-compatible) |
-| PDF rendering    | `pdfjs-dist` (worker copied to `public/pdf-worker/`) |
-| Styling          | Tailwind CSS                                        |
-| Hosting          | Vercel                                              |
-| Browser ext.     | Manifest V3 (Chrome / Firefox)                      |
-| Package manager  | npm                                                 |
+```
+   ┌─────────────────────────────────────────────────────────────────────────┐
+   │                          CLIENT LAYER                                   │
+   │  ┌──────────────────────┐  ┌──────────────────┐  ┌───────────────────┐  │
+   │  │ Next.js App Router   │  │ Browser Extension│  │ Meta Pixel /      │  │
+   │  │ (Kanban & Editor)    │  │ (Manifest V3)    │  │ Microsoft Clarity │  │
+   │  └──────────┬───────────┘  └────────┬─────────┘  └───────────────────┘  │
+   └─────────────┼───────────────────────┼───────────────────────────────────┘
+                 │                       │ Deep-link Pre-fill
+                 ▼                       │
+   ┌─────────────────────────────────────▼───────────────────────────────────┐
+   │                    NEXT.JS SERVER / API ROUTES                          │
+   │  ┌────────────────────────┐ ┌──────────────────┐ ┌───────────────────┐  │
+   │  │ Server Storage Adapter │ │ AI Proxy & Gate  │ │ Geo Payment Router│  │
+   │  │ (Auth-Checked Queries) │ │ (PII Mask/Demask)│ │ (Vercel Edge Geo) │  │
+   │  └───────────┬────────────┘ └────────┬─────────┘ └─────────┬─────────┘  │
+   └──────────────┼───────────────────────┼─────────────────────┼────────────┘
+                  │                       │                     │
+                  ▼                       ▼                     ▼
+   ┌──────────────────────────┐ ┌──────────────────┐ ┌──────────────────────┐
+   │ Supabase Postgres (RLS)  │ │ OpenCode ZEN API │ │ Stripe & Razorpay    │
+   │ • Atomic RPC Counter     │ │ (DeepSeek LLM)   │ │ Webhooks & Portals   │
+   └──────────────────────────┘ └──────────────────┘ └──────────────────────┘
+```
 
 ---
 
-## Quick start (local)
+## 💎 Core SaaS Modules & Technical Implementation
 
+### 1. 🎨 UI/UX System & Editorial Design Architecture
+- **Warm Sunset & Mineral Dark Tokens**: Single-source-of-truth CSS custom properties (`--canvas`, `--surface`, `--ink`, `--steel`) eliminating theme bleed across light/dark modes.
+- **Interactive Kanban Pipeline**: Drag-and-drop job application workflow with custom floating segmented navigation, status color indicators, and response date trackers.
+- **AI Document Editor**: Full-HTML pass-through content-editable editor with natural language AI formatting, custom progress overlays, and real-time color customizers.
+- **ATS-Optimized PDF Export**: Engineered `@page` print stylesheets (`print-color-adjust: exact`) guaranteeing zero multi-column breaks or ATS parsing issues.
+
+### 2. 🔐 Privacy & Zero-PII AI Pipeline
+JobFoocus implements a zero-trust PII masking pipeline (`src/lib/pii-utils.ts`):
+1. **Extraction**: Client extracts PII fields (name, phone, email, socials, portfolio) into a secure profile.
+2. **Masking**: Replaces PII in prompts with XML-style tags (`<PII_NAME>`, `<PII_EMAIL>`).
+3. **LLM Execution**: The OpenCode ZEN API (DeepSeek V4 Flash Free model) processes only masked text.
+4. **Demasking**: Returned document HTML is restored with the user's PII locally before saving to Postgres.
+
+### 3. 🛡️ Database & Race-Condition-Free Usage Limits
+- **Supabase Postgres + RLS**: All user-facing tables (`applications`, `documents`, `master_resumes`, `settings`, `user_categories`) enforce `auth.uid() = user_id`.
+- **Atomic Usage RPC (`try_increment_usage`)**: Prevents parallel API race conditions by executing `UPDATE ... SET count = count + 1 WHERE count < cap` atomically in a single PostgreSQL statement.
+
+### 4. 💳 Multi-Currency Payment System (Stripe + Razorpay)
+- **Geo-Detection Middleware**: Inspects Vercel edge headers (`x-jf-region`) to automatically route users:
+  - **India (`IN`)**: Serves INR prices via **Razorpay Subscriptions**.
+  - **Europe (`EEA`)**: Serves EUR prices via **Stripe Checkout**.
+  - **Rest of World (`OTHER`)**: Serves USD prices via **Stripe Checkout**.
+- **Self-Healing Reconciliation**: The `/account` page reconciles subscription state with PSP servers on load, ensuring immediate entitlement access even if webhooks are delayed.
+- **HMAC Signature Verification**: All webhook endpoints verify raw signatures (`stripe-signature` and `x-razorpay-signature`) with constant-time buffer comparisons.
+
+### 5. 📊 Dual Analytics & Meta Conversions API (CAPI)
+- **Client Pixel**: `beforeInteractive` script stub for browser-side event tracking.
+- **Server CAPI Integration**: Server-side purchase event dispatching (`sendMetaCAPIEvent` in `src/lib/meta-capi.ts`) hashed via SHA-256 (`userData.em`).
+- **Deduplication**: Shares matching `event_id` strings (`purchase_${sessionId}`) between browser and server events to ensure 100% accurate ad attribution.
+- **Microsoft Clarity**: Integrated session tracking (`NEXT_PUBLIC_MICROSOFT_CLARITY_ID`) for UX heatmap analysis.
+
+---
+
+## 🛠️ Stack & Technologies
+
+| Layer | Technologies Used |
+|---|---|
+| **Frontend Framework** | Next.js 14.2 (App Router), React 18, TypeScript (Strict Mode) |
+| **Styling & Icons** | Tailwind CSS, Custom Theme Design System, SVG Brand Icons |
+| **Database & Auth** | Supabase Postgres, Row-Level Security (RLS), Supabase Auth (Email + Google OAuth) |
+| **Payment Gateways** | Stripe SDK (USD/EUR Checkout & Customer Portal), Razorpay SDK (INR Subscriptions) |
+| **AI Integration** | OpenCode ZEN API (DeepSeek V4 Flash Free), Custom PII Masking Pipeline |
+| **Analytics & Telemetry** | Meta Pixel + Server Conversions API (CAPI), Microsoft Clarity, Vercel Speed Insights |
+| **Browser Extension** | Manifest V3 (Chrome, Firefox, Edge, Brave), Background Service Worker |
+| **PDF Processing** | `pdfjs-dist` static worker setup for resume parsing |
+
+---
+
+## ⚡ Quick Start (Local Setup)
+
+### 1. Clone & Install
 ```bash
+git clone https://github.com/NiranjananPrajith/JobFoocus.git
+cd JobFoocus
 npm install
-cp .env .env.local          # then fill in real values (see below)
+```
+
+### 2. Environment Configuration
+Copy `.env.example` to `.env` and fill in your keys:
+```bash
+cp .env.example .env
+```
+
+```env
+# Core Database & Auth
+NEXT_PUBLIC_SUPABASE_URL=https://your-supabase-project.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+
+# AI Gateway
+OPENCODE_ZEN_API_KEY=your-opencode-zen-api-key
+
+# Payments (Stripe & Razorpay)
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_PRICE_ID_PRO=price_...
+STRIPE_PRICE_ID_MAX=price_...
+
+RAZORPAY_KEY_ID=rzp_test_...
+RAZORPAY_KEY_SECRET=your-razorpay-secret
+RAZORPAY_WEBHOOK_SECRET=your-razorpay-webhook-secret
+RAZORPAY_PLAN_ID_PRO=plan_...
+RAZORPAY_PLAN_ID_MAX=plan_...
+
+# Analytics
+NEXT_PUBLIC_META_PIXEL_ID=your-meta-pixel-id
+META_ACCESS_TOKEN=your-meta-capi-token
+NEXT_PUBLIC_MICROSOFT_CLARITY_ID=your-clarity-id
+```
+
+### 3. Run Development Server
+```bash
 npm run dev
 # → http://localhost:3000
 ```
 
-The first dev run copies `pdfjs-dist`'s worker into `public/pdf-worker/`
-via the `copy-pdf-worker` predev hook. The packaged extension zip is
-**not** built automatically — see [Browser extension](#browser-extension).
-
-> **Local data is local.** The dev server reads from Supabase, not from
-> `localStorage`. There is no localStorage fallback in this codebase —
-> data created in dev is real data on the same Postgres instance the
-> production app uses. Be careful with seed accounts.
-
 ---
 
-## Environment variables
+## 🗄️ Database Setup (Supabase)
 
-All values live in `.env` (local) and in the Vercel project settings
-(production). **Never commit `.env`** — `.gitignore` covers it, and the
-Stripe and Supabase keys are sensitive.
-
-| Variable                                | Required | Where it comes from                            |
-| --------------------------------------- | -------- | ---------------------------------------------- |
-| `OPENCODE_ZEN_API_KEY`                 | yes      | OpenCode ZEN dashboard                              |
-| `NEXT_PUBLIC_SUPABASE_URL`              | yes      | Supabase project settings                      |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`  | yes      | Supabase project settings (anon / publishable) |
-| `SUPABASE_SERVICE_ROLE_KEY`             | yes      | Supabase project settings (service role, secret) |
-| `STRIPE_SECRET_KEY`                     | yes      | Stripe dashboard → Developers → API keys       |
-| `STRIPE_WEBHOOK_SECRET`                 | yes      | Stripe dashboard → Webhooks → endpoint signing secret |
-| `STRIPE_PRICE_ID_PRO`                   | yes      | Stripe dashboard → Products → Pro price ID (USD) |
-| `STRIPE_PRICE_ID_MAX`                   | yes      | Stripe dashboard → Products → Max price ID (USD) |
-| `STRIPE_PRICE_ID_PRO_EUR`              | yes      | Stripe dashboard → Products → Pro price ID (EUR) |
-| `STRIPE_PRICE_ID_MAX_EUR`              | yes      | Stripe dashboard → Products → Max price ID (EUR) |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`    | yes      | Stripe dashboard → Developers → API keys       |
-| `RAZORPAY_KEY_ID`                      | yes      | Razorpay dashboard → Settings → API Keys       |
-| `RAZORPAY_KEY_SECRET`                  | yes      | Razorpay dashboard → Settings → API Keys       |
-| `RAZORPAY_WEBHOOK_SECRET`              | yes      | Razorpay dashboard → Webhooks → signing secret  |
-| `RAZORPAY_PLAN_ID_PRO`                 | yes      | Razorpay dashboard → Subscriptions → Plans → Pro plan ID |
-| `RAZORPAY_PLAN_ID_MAX`                 | yes      | Razorpay dashboard → Subscriptions → Plans → Max plan ID |
-| `NEXT_PUBLIC_SITE_URL`                  | optional | Canonical site URL, used for Stripe `success_url` / `cancel_url` fallbacks |
-| `NEXT_PUBLIC_GOOGLE_CLIENT_ID`          | yes      | Google Cloud Console → OAuth client ID         |
-| `ONEDRIVE_CLIENT_ID`                    | yes      | Azure App Registrations                        |
-| `DROPBOX_CLIENT_ID`                     | yes      | Dropbox App Console                            |
-
-> **Mode consistency.** When you flip Stripe from test to live (or vice
-> versa), you must swap **all four** Stripe env vars in lockstep:
-> `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID_PRO`, `STRIPE_PRICE_ID_MAX`,
-> `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`. A test-mode secret key with a
-> live-mode price ID returns 500 from `create-checkout-session` with
-> `No such price`. Live and test products are in separate dashboards
-> (toggle "Test mode" in the top-right of the Stripe dashboard).
-
----
-
-## Database (Supabase)
-
-JobFoocus uses Supabase PostgreSQL with Row Level Security (RLS). To initialize a fresh database instance, open the **Supabase Dashboard → SQL Editor**, paste the consolidated schema below, and run it:
+To set up a fresh database instance, open **Supabase Dashboard → SQL Editor**, paste the consolidated schema below, and click **Run**:
 
 ```sql
 -- JobFoocus Complete Consolidated Database Schema
@@ -344,271 +375,18 @@ grant execute on function public.try_increment_usage(uuid, text, int) to service
 
 ---
 
-## Stripe setup
+## 🧩 Browser Extension Packaging
 
-You need two products in the Stripe dashboard:
-
-| Product            | Monthly price | What it's for                   |
-| ------------------ | ------------- | ------------------------------- |
-| Pro (`prod_…`)     | $5            | 25 jobs/day, 150 edits/day      |
-| Max (`prod_…`)     | $12           | 250 jobs/day, 500 edits/day (UI: "unlimited") |
-
-For each product, copy the recurring price's `price_…` ID and put it
-into the matching `STRIPE_PRICE_ID_PRO` / `STRIPE_PRICE_ID_MAX` env var.
-
-### Webhook
-
-1. Stripe dashboard → Developers → Webhooks → **Add endpoint**.
-2. Endpoint URL: `https://<your-domain>/api/stripe/webhook`.
-3. Listen for: `checkout.session.completed`,
-   `customer.subscription.created`, `customer.subscription.updated`,
-   `customer.subscription.deleted`, `invoice.payment_failed`.
-4. Copy the signing secret into `STRIPE_WEBHOOK_SECRET`.
-
-For local development, use the Stripe CLI:
+The Manifest V3 extension (`extension/`) scrapes job board postings and deep-links into the dashboard:
 
 ```bash
-stripe listen --forward-to localhost:3000/api/stripe/webhook
-# copy the whsec_… it prints into STRIPE_WEBHOOK_SECRET
-```
-
-### Customer Portal
-
-Stripe dashboard → Settings → Customer Portal → enable the portal and
-configure which actions (cancel, update payment method, switch plan)
-are allowed. The app just opens a session via
-`stripe.billingPortal.sessions.create({ customer, return_url })`.
-
-### Restricted API keys (recommended)
-
-If you create a restricted key (`rk_…`) for the app, the required
-permissions are:
-
-- **Customers**: write (create + retrieve)
-- **Checkout Sessions**: write
-- **Billing Portal Sessions**: write
-- **Subscriptions**: read
-- **All other resources**: none
-
----
-
-## Razorpay setup (India / INR)
-
-Indian visitors (detected via Vercel's geo headers) see prices in INR and
-are routed to Razorpay instead of Stripe. Everyone else uses Stripe as
-before.
-
-You need two subscription plans in the Razorpay dashboard:
-
-| Plan              | Monthly price | What it's for                   |
-| ----------------- | ------------- | ------------------------------- |
-| Pro (`plan_…`)    | ₹500          | 25 jobs/day, 150 edits/day      |
-| Max (`plan_…`)    | ₹1,250        | 250 jobs/day, 500 edits/day     |
-
-For each plan, copy the plan's `plan_…` ID and put it into the matching
-`RAZORPAY_PLAN_ID_PRO` / `RAZORPAY_PLAN_ID_MAX` env var.
-
-### Webhook
-
-1. Razorpay dashboard → Settings → Webhooks → **Add new webhook**.
-2. Webhook URL: `https://<your-domain>/api/razorpay/webhook`.
-3. Subscribe to: `subscription.authenticated`,
-   `subscription.activated`, `subscription.charged`,
-   `subscription.cancelled`, `subscription.completed`,
-   `subscription.halted`, `subscription.resumed`.
-4. Copy the webhook signing secret into `RAZORPAY_WEBHOOK_SECRET`.
-
-### Mode consistency
-
-When you flip Razorpay from test to live (or vice versa), swap all three
-env vars in lockstep: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`,
-`RAZORPAY_WEBHOOK_SECRET`. A test-mode key with a live-mode plan ID
-returns an error.
-
-### Local dev
-
-Set `NEXT_PUBLIC_DEV_REGION=IN` in your `.env` to simulate an Indian
-visitor in local dev (where Vercel geo headers aren't available). Use
-`EEA` to simulate a European visitor (EUR default). Omit or set to
-`OTHER` to test the USD path.
-
----
-
-## Stripe setup (USD + EUR)
-
-You need four products in the Stripe dashboard (two per currency):
-
-| Product            | Currency | Monthly price | What it's for                   |
-| ------------------ | -------- | ------------- | ------------------------------- |
-| Pro (`price_…`)    | USD      | $5            | 25 jobs/day, 150 edits/day      |
-| Max (`price_…`)    | USD      | $12           | 250 jobs/day, 500 edits/day     |
-| Pro (`price_…`)    | EUR      | €4.50         | 25 jobs/day, 150 edits/day      |
-| Max (`price_…`)    | EUR      | €11           | 250 jobs/day, 500 edits/day     |
-
-For each product, copy the recurring price's `price_…` ID and put it
-into the matching env var (`STRIPE_PRICE_ID_PRO`, `STRIPE_PRICE_ID_MAX`,
-`STRIPE_PRICE_ID_PRO_EUR`, `STRIPE_PRICE_ID_MAX_EUR`).
-
-### Webhook
-
-1. Stripe dashboard → Developers → Webhooks → **Add endpoint**.
-2. Endpoint URL: `https://<your-domain>/api/stripe/webhook`.
-3. Listen for: `checkout.session.completed`,
-   `customer.subscription.created`, `customer.subscription.updated`,
-   `customer.subscription.deleted`, `invoice.payment_failed`.
-4. Copy the signing secret into `STRIPE_WEBHOOK_SECRET`.
-
----
-
-## Browser extension
-
-The extension lives in `extension/` and is built into a `.zip` the
-dashboard serves at `/extension-install`.
-
-```bash
+# Build the distributable zip package:
 npm run build:extension
-# → public/extensions/build/jobfoocus-extension.zip  (always latest)
-# → public/extensions/build/jobfoocus-extension-v1.2.0.zip  (versioned, immutable)
-```
-
-The unversioned zip is committed to the repo (it's tiny and the
-install page links to it directly). Versioned zips are gitignored to
-avoid accumulating stale builds.
-
-To change the deep-link target URL (e.g., point at `localhost:3000`
-during extension dev), edit `DASHBOARD_URL` at the top of
-`extension/background.js` and reload the extension at
-`chrome://extensions`. See `extension/README.md` for the full
-installation and usage walkthrough.
-
----
-
-## Deployment (Vercel)
-
-This is a standard Next.js 14 App Router deploy:
-
-1. Push to `main` (or import the repo into Vercel).
-2. Vercel detects Next.js, runs `npm run build` (which includes
-   `copy-pdf-worker`).
-3. Set every env var from [Environment variables](#environment-variables)
-   in **Project → Settings → Environment Variables**, for each
-   environment (Production / Preview / Development).
-4. After the first deploy, configure the Stripe webhook endpoint
-   (see [Stripe setup](#stripe-setup)) and point it at
-   `https://<your-domain>/api/stripe/webhook`.
-
-### Domain
-
-The default `DASHBOARD_URL` in the extension points to
-`https://job-foocus.vercel.app/application`. To ship the extension
-against a custom domain, update `DASHBOARD_URL` in
-`extension/background.js` and rebuild with `npm run build:extension`.
-
-### What the deploy ships
-
-- The Next.js bundle (including `public/pdf-worker/`, copied at build
-  time by `copy-pdf-worker`).
-- `public/extensions/build/jobfoocus-extension.zip` — the install
-  button on `/extension-install` downloads this file. **It must be
-  present in the deployed output for the install page to work**, which
-  is why the file is committed.
-
----
-
-## Security notes
-
-- **Stripe secret + webhook secret are server-only.** Never prefix
-  with `NEXT_PUBLIC_`. The Stripe Node SDK is imported only from
-  `src/lib/stripe.ts` (server code).
-- **Supabase service-role key bypasses RLS.** It's used by the Stripe
-  webhook and by the `try_increment_usage` RPC. Treat it as a master
-  key — it must never reach the client bundle.
-- **PII is masked** before the LLM call (`src/lib/pii-utils.ts`) and
-  restored on the way out, so the model never sees the user's real
-  phone/email.
-- **Security headers** are set globally in `next.config.mjs`:
-  `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`,
-  `Referrer-Policy: strict-origin-when-cross-origin`, and a
-  `Content-Security-Policy` that whitelists the Supabase origins.
-- **API routes are exempt from the auth redirect** in `src/middleware.ts`.
-  They return their own 401 JSON, so unauthenticated API calls don't
-  get bounced to `/login`.
-- **The Stripe webhook authenticates by signature**, not session
-  cookies — the `matcher` in `src/middleware.ts` lets it through.
-
----
-
-## Project layout
-
-```
-.
-├── extension/                  # Manifest V3 browser extension
-│   ├── manifest.json
-│   ├── background.js           # service worker: scrape + message router
-│   ├── content.js              # runs in the page, extracts job fields
-│   ├── popup.html / popup.js   # popdown UI
-│   ├── icons/
-│   └── README.md
-├── public/
-│   ├── extensions/build/       # packaged extension zip (committed)
-│   ├── pdf-worker/             # pdfjs worker (copied at build time)
-│   ├── icon.webp
-│   ├── icon_wide.webp
-│   └── homepageSS.webp
-├── scripts/
-│   ├── build-extension.mjs     # packages extension/ into a .zip
-│   └── copy-pdf-worker.mjs     # copies pdfjs worker to public/
-├── src/
-│   ├── middleware.ts           # auth gate, exempts /api/* and /auth/*
-│   ├── app/
-│   │   ├── layout.tsx
-│   │   ├── (auth)/             # login, signup
-│   │   ├── (doc)/document/     # document viewer + AI edit panel
-│   │   ├── (main)/             # dashboard, pricing, account, jobs, …
-│   │   ├── auth/callback/      # OAuth callback
-│   │   └── api/
-│   │       ├── ai/             # edit-document AI + bare /ai proxy
-│   │       ├── db/             # applications, documents, categories, …
-│   │       ├── stripe/         # checkout, portal, webhook
-│   │       ├── razorpay/       # create-subscription, cancel, reactivate, webhook
-│   │       └── usage/          # check, increment
-│   ├── components/             # AddJobModal, UpgradePromptModal, NavBar, …
-│   └── lib/
-│       ├── ai-generation.ts    # LLM calls + PII masking
-│       ├── cloud-sync.ts
-│       ├── db/bootstrap.ts
-│       ├── design-system.ts
-│       ├── formatting-guides.json
-│       ├── limits.ts           # single source of truth: tier → limits
-│       ├── pii-utils.ts        # mask/demask
-│       ├── razorpay.ts         # server-side Razorpay SDK singleton
-│       ├── region.ts           # geo-based region detection (IN / OTHER)
-│       ├── resume-parser.ts
-│       ├── storage-adapter.ts  # all client→server data flow
-│       ├── stripe.ts           # server-side Stripe SDK singleton
-│       ├── subscription.ts     # read subscription + resolve tier
-│       ├── supabase/           # client + middleware + server
-│       ├── supabase-utils/     # server + service-role helpers
-│       └── usage.ts            # counter CRUD + atomic RPC
-├── supabase/migrations/        # 001…005, applied in order
-├── next.config.mjs             # security headers, image config
-├── package.json
-├── tailwind.config.ts
-├── tsconfig.json
-├── README.md                   # you are here
-├── AGENTS.md                   # developer / AI-agent guide
-└── CLAUDE.md                   # symlink-style pointer to AGENTS.md
+# → public/extensions/build/jobfoocus-extension.zip
 ```
 
 ---
 
-## Useful npm scripts
+## 📜 License
 
-| Command                  | What it does                                                                 |
-| ------------------------ | ---------------------------------------------------------------------------- |
-| `npm run dev`            | Copies the pdfjs worker, then starts Next.js dev on `http://localhost:3000`. |
-| `npm run build`          | Copies the pdfjs worker, then `next build`.                                  |
-| `npm run start`          | Runs the production build (after `npm run build`).                           |
-| `npm run lint`           | `next lint`.                                                                 |
-| `npm run build:extension`| Packages `extension/` into `public/extensions/build/*.zip`.                  |
-| `npm run copy-pdf-worker`| Copies the pdfjs worker into `public/pdf-worker/` (runs automatically on dev/build). |
+This project is open-source under the [MIT License](LICENSE).
