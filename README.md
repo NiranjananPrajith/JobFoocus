@@ -4,18 +4,21 @@
 
 # JobFoocus — Enterprise SaaS Platform
 
-> **A full-stack, production-grade SaaS platform built with Next.js 14 App Router, Supabase Postgres (RLS), multi-currency Stripe + Razorpay subscriptions, zero-PII AI pipeline, published Manifest V3 extensions (Chrome & Firefox), and Meta Conversions API (CAPI).**
-
-
+[![Live Website](https://img.shields.io/badge/🌐_Live_Website-jobfoocus.com-FF5722?style=for-the-badge&logo=vercel&logoColor=white)](https://jobfoocus.com)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-Published-4285F4?style=for-the-badge&logo=googlechrome)](https://chromewebstore.google.com/detail/dddmilicbgjmfidicpahglaflfjfcnjl)
+[![Firefox Add-ons](https://img.shields.io/badge/Firefox_Add--ons-Published-FF7139?style=for-the-badge&logo=firefoxbrowser)](https://addons.mozilla.org/en-CA/firefox/addon/jobfoocus/)
 [![Next.js](https://img.shields.io/badge/Next.js-14.2-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-Postgres_RLS-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
-[![Chrome Web Store](https://img.shields.io/badge/Chrome_Web_Store-Published-4285F4?style=for-the-badge&logo=googlechrome)](https://chromewebstore.google.com/detail/dddmilicbgjmfidicpahglaflfjfcnjl)
-[![Firefox Add-ons](https://img.shields.io/badge/Firefox_Add--ons-Published-FF7139?style=for-the-badge&logo=firefoxbrowser)](https://addons.mozilla.org/en-CA/firefox/addon/jobfoocus/)
 [![Stripe](https://img.shields.io/badge/Stripe-USD%20%2F%20EUR-635BFF?style=for-the-badge&logo=stripe)](https://stripe.com/)
 [![Razorpay](https://img.shields.io/badge/Razorpay-INR-0C2340?style=for-the-badge&logo=razorpay)](https://razorpay.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
+
+> 🚀 **Live Production Application**: **[https://jobfoocus.com](https://jobfoocus.com)**
+> 
+> **A full-stack, production-grade SaaS platform built with Next.js 14 App Router, Supabase Postgres (RLS), multi-currency Stripe + Razorpay subscriptions, zero-PII AI pipeline, published Manifest V3 extensions (Chrome & Firefox), and Meta Conversions API (CAPI).**
+
 
 ---
 
