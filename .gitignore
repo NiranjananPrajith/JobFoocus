@@ -68,7 +68,7 @@ tsconfig.tsbuildinfo
 # AI Agent logs & config
 .claude/
 
-# Ignored directories (reference docs, dev scripts, and Supabase migrations)
+# Ignored directories (reference docs and Supabase migrations)
 /ref/
-/scripts/
 /supabase/
+
