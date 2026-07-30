@@ -1,12 +1,13 @@
 # Dependencies
 node_modules/
+.pnpm-store/
 
 # Next.js build output
 .next/
 out/
 
 # Build artifacts
-# Note: public/extensions/build/*.zip is intentionally NOT ignored —
+# Note: public/extensions/build/jobfoocus-extension.zip is intentionally NOT ignored —
 # the /extension-install page links directly to the packaged zip at
 # /extensions/build/jobfoocus-extension.zip, so it must be deployed
 # to Vercel for the install flow to work. The versioned filename
@@ -16,34 +17,58 @@ public/pdf-worker/
 extension/build/
 public/extensions/build/jobfoocus-extension-v*.zip
 
-# Generated job application documents stored locally (not Next.js API routes)
-# Ignores generated application data at project root level only
+# Generated job application documents stored locally
 /applications/
+
+# Environment files — contain secrets, never commit
+.env
+.env*.local
+.env.production
+.env.staging
+
+# Package manager logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
 
 # OS files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
 # TypeScript build cache
 *.tsbuildinfo
 tsconfig.tsbuildinfo
 
-# Environment — all .env files contain secrets, never commit
-.env
-.env.local
+# Vercel & Turbo CLI cache
+.vercel/
+.turbo/
 
 # HyperFrames video compositions
 /video/
 
 # Media assets (promo videos, rendered MP4s, project sources)
-# Each video lives in its own subfolder, e.g. /media/ad002_privacy-promo/
 /media/
 
-# Claude
-.claude
+# AI Agent logs & config
+.claude/
 
 # Ignored directories (reference docs, dev scripts, and Supabase migrations)
 /ref/
 /scripts/
 /supabase/
-
