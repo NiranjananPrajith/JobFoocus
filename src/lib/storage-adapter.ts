@@ -920,10 +920,7 @@ export async function saveDocumentHTML(category: string, folder: string, docType
     const userCats = await getUserCategories();
     const catMap = new Map(userCats.map(c => [c.name.toLowerCase(), c]));
     const catInfo = catMap.get(String(category).toLowerCase());
-    const categoryId = catInfo?.id;
-    if (!categoryId) {
-      throw new Error(`Category ID not found for category: ${category}`);
-    }
+    const categoryId = catInfo?.id || null;
     await apiFetch('/api/db/documents', {
       method: 'POST',
       body: JSON.stringify({ category, categoryId, folder, docType, html }),
@@ -942,7 +939,7 @@ export async function getDocumentHTML(category: string, folder: string, docType:
     const catMap = new Map(userCats.map(c => [c.name.toLowerCase(), c]));
     const catInfo = catMap.get(String(category).toLowerCase());
     const categoryId = catInfo?.id || '';
-    return await apiFetch(`/api/db/documents?categoryId=${encodeURIComponent(categoryId)}&folder=${encodeURIComponent(folder)}&docType=${encodeURIComponent(docType)}`);
+    return await apiFetch(`/api/db/documents?categoryId=${encodeURIComponent(categoryId)}&category=${encodeURIComponent(category)}&folder=${encodeURIComponent(folder)}&docType=${encodeURIComponent(docType)}`);
   } catch (err) {
     console.error('[storage-adapter] getDocumentHTML failed, falling back to localStorage:', err);
     return getLocalData(`doc_${category}/${folder}/${docType}`);

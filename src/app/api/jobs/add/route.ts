@@ -224,6 +224,13 @@ export async function POST(request: Request) {
             .update({ category: assignedCategory, category_id: newCatId, data: enrichedData })
             .eq('user_id', user.id)
             .eq('folder', folder);
+
+          // Update any existing documents (like job_description) to the newly assigned category
+          await supabase
+            .from('documents')
+            .update({ category: assignedCategory, category_id: newCatId })
+            .eq('user_id', user.id)
+            .eq('folder', folder);
         }
       }
     }

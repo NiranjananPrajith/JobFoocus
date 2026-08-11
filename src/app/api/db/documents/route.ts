@@ -8,18 +8,35 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url)
   const categoryId = searchParams.get('categoryId')
+  const category = searchParams.get('category')
   const folder = searchParams.get('folder')
   const docType = searchParams.get('docType')
 
-  if (!categoryId || !folder || !docType) {
+  if (!folder || !docType) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
   }
 
+  // 1. Try by category_id if provided
+  if (categoryId) {
+    const { data } = await supabase
+      .from('documents').select('html')
+      .eq('user_id', user.id).eq('category_id', categoryId).eq('folder', folder).eq('doc_type', docType).maybeSingle()
+    if (data?.html) return NextResponse.json(data.html)
+  }
+
+  // 2. Try by category string if provided
+  if (category) {
+    const { data } = await supabase
+      .from('documents').select('html')
+      .eq('user_id', user.id).eq('category', category).eq('folder', folder).eq('doc_type', docType).maybeSingle()
+    if (data?.html) return NextResponse.json(data.html)
+  }
+
+  // 3. Fallback: query by folder and doc_type for this user (folder is unique per job application)
   const { data, error } = await supabase
     .from('documents').select('html')
-    .eq('user_id', user.id).eq('category_id', categoryId).eq('folder', folder).eq('doc_type', docType).single()
+    .eq('user_id', user.id).eq('folder', folder).eq('doc_type', docType).maybeSingle()
 
-  if (error?.code === 'PGRST116') return NextResponse.json(null)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data?.html ?? null)
 }

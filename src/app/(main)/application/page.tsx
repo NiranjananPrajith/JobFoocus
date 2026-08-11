@@ -1770,8 +1770,11 @@ function ApplicationContent() {
                   setIsGeneratingResume(true);
                   try {
                     const jdHtml = await getDocumentHTML(application.category, application.folder, 'job_description');
-                    const jdText = jdHtml ? jdHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
-                    if (!jdText) throw new Error('No job description found');
+                    let jdText = jdHtml ? jdHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+                    if (!jdText && application.data) {
+                      jdText = `${application.data.job_title} at ${application.data.company} - ${application.data.summary || ''}`;
+                    }
+                    if (!jdText) throw new Error('No job description found. Please paste the job description text.');
                     await generateMaskedDocumentsForExistingJob(application.category, application.folder, jdText);
                     const { getAllApplications: ga } = await import('@/lib/storage-adapter');
                     const apps = await ga();
@@ -1779,7 +1782,7 @@ function ApplicationContent() {
                     if (updated) setApplication((prev) => prev ? { ...prev, has_resume: true } : prev);
                   } catch (err) {
                     console.error('Failed to generate resume:', err);
-                    alert('Failed to generate resume. Please try again.');
+                    alert(err instanceof Error ? err.message : 'Failed to generate resume. Please try again.');
                   } finally {
                     setIsGeneratingResume(false);
                   }
@@ -1837,8 +1840,11 @@ function ApplicationContent() {
                   setIsGeneratingCoverLetter(true);
                   try {
                     const jdHtml = await getDocumentHTML(application.category, application.folder, 'job_description');
-                    const jdText = jdHtml ? jdHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
-                    if (!jdText) throw new Error('No job description found');
+                    let jdText = jdHtml ? jdHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+                    if (!jdText && application.data) {
+                      jdText = `${application.data.job_title} at ${application.data.company} - ${application.data.summary || ''}`;
+                    }
+                    if (!jdText) throw new Error('No job description found. Please paste the job description text.');
                     await generateMaskedDocumentsForExistingJob(application.category, application.folder, jdText);
                     const { getAllApplications: ga } = await import('@/lib/storage-adapter');
                     const apps = await ga();
@@ -1846,7 +1852,7 @@ function ApplicationContent() {
                     if (updated) setApplication((prev) => prev ? { ...prev, has_cover_letter: true } : prev);
                   } catch (err) {
                     console.error('Failed to generate cover letter:', err);
-                    alert('Failed to generate cover letter. Please try again.');
+                    alert(err instanceof Error ? err.message : 'Failed to generate cover letter. Please try again.');
                   } finally {
                     setIsGeneratingCoverLetter(false);
                   }
