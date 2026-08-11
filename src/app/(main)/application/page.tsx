@@ -224,6 +224,16 @@ function ApplicationContent() {
   const [isGeneratingCoverLetter, setIsGeneratingCoverLetter] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
+  // Effect 0: Clean heavy query parameters (e.g. `jd=...`) from browser address bar immediately on mount
+  // to prevent sending bloated 4096+ byte Referrer headers on all subsequent network requests.
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('jd=')) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('jd');
+      window.history.replaceState(null, '', url.pathname + (url.search ? url.search : ''));
+    }
+  }, []);
+
   // Effect 1: Handle Job Description loading
   useEffect(() => {
     async function fetchJobDescription() {

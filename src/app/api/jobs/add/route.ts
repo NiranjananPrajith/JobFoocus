@@ -94,9 +94,15 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     const masterResume = resumeRow?.data;
-    if (!masterResume) {
+    const isBlankMaster = !masterResume || (
+      !masterResume.name?.trim() &&
+      (!Array.isArray(masterResume.workExperience) || masterResume.workExperience.length === 0) &&
+      (!Array.isArray(masterResume.education) || masterResume.education.length === 0)
+    );
+
+    if (isBlankMaster) {
       return NextResponse.json(
-        { error: 'Master resume not found. Please fill in your Master Resume first.' },
+        { error: 'Master resume not found or incomplete. Please fill in your Master Resume before adding jobs.' },
         { status: 400 }
       );
     }
@@ -151,6 +157,7 @@ export async function POST(request: Request) {
       files: [],
     };
 
+    let saveAppErr: any = null;
     if (categoryId) {
       const { error } = await supabase
         .from('applications')
@@ -158,33 +165,35 @@ export async function POST(request: Request) {
           { user_id: user.id, category, category_id: categoryId, folder, data: enrichedData },
           { onConflict: 'user_id,category_id,folder' }
         );
-      if (error) {
-        console.error('[jobs-add] save application failed:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
-      }
-    } else {
+      saveAppErr = error;
+    }
+    if (!categoryId || saveAppErr) {
       const { error } = await supabase
         .from('applications')
         .upsert(
-          { user_id: user.id, category: category || 'Uncategorized', folder, data: enrichedData },
+          { user_id: user.id, category: category || 'Uncategorized', category_id: categoryId || null, folder, data: enrichedData },
           { onConflict: 'user_id,category,folder' }
         );
-      if (error) {
-        console.error('[jobs-add] save application failed:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
-      }
+      saveAppErr = error;
+    }
+    if (saveAppErr) {
+      console.error('[jobs-add] save application failed:', saveAppErr);
+      return NextResponse.json({ error: saveAppErr.message }, { status: 500 });
     }
 
     // ---- 7. Save JD document ----
     const jdHTML = buildJobDescriptionHTML(formatted, jdText || '');
+    let saveJdErr: any = null;
     if (categoryId) {
-      await supabase.from('documents').upsert(
+      const { error } = await supabase.from('documents').upsert(
         { user_id: user.id, category, category_id: categoryId, folder, doc_type: 'job_description', html: jdHTML },
         { onConflict: 'user_id,category_id,folder,doc_type' }
       );
-    } else {
+      saveJdErr = error;
+    }
+    if (!categoryId || saveJdErr) {
       await supabase.from('documents').upsert(
-        { user_id: user.id, category: category || 'Uncategorized', folder, doc_type: 'job_description', html: jdHTML },
+        { user_id: user.id, category: category || 'Uncategorized', category_id: categoryId || null, folder, doc_type: 'job_description', html: jdHTML },
         { onConflict: 'user_id,category,folder,doc_type' }
       );
     }
