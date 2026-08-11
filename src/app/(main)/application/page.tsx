@@ -1771,8 +1771,8 @@ function ApplicationContent() {
                   try {
                     const jdHtml = await getDocumentHTML(application.category, application.folder, 'job_description');
                     let jdText = jdHtml ? jdHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
-                    if (!jdText && application.data) {
-                      jdText = `${application.data.job_title} at ${application.data.company} - ${application.data.summary || ''}`;
+                    if (!jdText && application.job_title) {
+                      jdText = `${application.job_title} at ${application.company}`;
                     }
                     if (!jdText) throw new Error('No job description found. Please paste the job description text.');
                     await generateMaskedDocumentsForExistingJob(application.category, application.folder, jdText);
@@ -1841,8 +1841,8 @@ function ApplicationContent() {
                   try {
                     const jdHtml = await getDocumentHTML(application.category, application.folder, 'job_description');
                     let jdText = jdHtml ? jdHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
-                    if (!jdText && application.data) {
-                      jdText = `${application.data.job_title} at ${application.data.company} - ${application.data.summary || ''}`;
+                    if (!jdText && application.job_title) {
+                      jdText = `${application.job_title} at ${application.company}`;
                     }
                     if (!jdText) throw new Error('No job description found. Please paste the job description text.');
                     await generateMaskedDocumentsForExistingJob(application.category, application.folder, jdText);
