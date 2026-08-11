@@ -7,13 +7,13 @@ import formattingGuides from './formatting-guides.json';
 // guide string out of the client bundle.
 
 // ---------------------------------------------------------------------------
-// JobFoocus AI (internal model)
+// OpenRouter AI API Gateway
 // ---------------------------------------------------------------------------
 
-const API_KEY = process.env.OPENCODE_ZEN_API_KEY || '';
-const MODEL = 'deepseek-v4-flash-free';
-// Server-side: call JobFoocus AI directly. Client-side: call our Next.js API route to avoid CORS.
-const AI_API_URL = typeof window !== 'undefined' ? '/api/ai' : 'https://opencode.ai/zen/v1/chat/completions';
+const API_KEY = process.env.OPENROUTER_API_KEY || '';
+const MODEL = process.env.LLM_MODEL || 'google/gemini-3.5-flash-lite';
+// Server-side: call OpenRouter directly. Client-side: call our Next.js API route to avoid CORS.
+const AI_API_URL = typeof window !== 'undefined' ? '/api/ai' : 'https://openrouter.ai/api/v1/chat/completions';
 
 type AIFunction = 'analyzing' | 'resume' | 'cover_letter' | 'done';
 type ProgressCallback = (step: AIFunction) => void;
@@ -21,16 +21,16 @@ type ProgressCallback = (step: AIFunction) => void;
 // Server-side LLM call. Exported so the server-only edit module
 // (src/lib/ai-edit.ts) can reuse it without duplicating the key/URL
 // logic. Safe to import from server contexts only — it reads
-// OPENCODE_ZEN_API_KEY.
+// OPENROUTER_API_KEY.
 export async function zenChat(prompt: string, system: string): Promise<string> {
   const isServer = typeof window === 'undefined';
 
   if (isServer && !API_KEY) {
-    console.error('[AI] AI API key is not configured.');
-    throw new Error('[AI] AI API key is not configured.');
+    console.error('[AI] OpenRouter API key is not configured.');
+    throw new Error('[AI] OpenRouter API key is not configured.');
   }
 
-  console.log('[AI] Sending request to JobFoocus AI...', { model: MODEL, promptLength: prompt.length });
+  console.log('[AI] Sending request to OpenRouter AI...', { model: MODEL, promptLength: prompt.length });
 
   const fetchOptions = isServer
     ? {
@@ -38,6 +38,8 @@ export async function zenChat(prompt: string, system: string): Promise<string> {
         headers: {
           'Authorization': `Bearer ${API_KEY}`,
           'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://jobfoocus.com',
+          'X-Title': 'JobFoocus',
         },
         body: JSON.stringify({
           model: MODEL,
@@ -57,20 +59,20 @@ export async function zenChat(prompt: string, system: string): Promise<string> {
 
   const res = await fetch(AI_API_URL, fetchOptions as RequestInit);
 
-  console.log('[AI] JobFoocus AI response status:', res.status, res.statusText);
+  console.log('[AI] OpenRouter AI response status:', res.status, res.statusText);
 
   if (!res.ok) {
     const errText = await res.text();
-    console.error('[AI] AI API error:', res.status, errText);
-    throw new Error(`AI API error ${res.status}: ${errText}`);
+    console.error('[AI] OpenRouter API error:', res.status, errText);
+    throw new Error(`OpenRouter API error ${res.status}: ${errText}`);
   }
 
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content || data.content || '';
 
   if (!content) {
-    console.error('[AI] Empty response from JobFoocus AI. Full data:', JSON.stringify(data));
-    throw new Error('JobFoocus AI returned empty response.');
+    console.error('[AI] Empty response from OpenRouter AI. Full data:', JSON.stringify(data));
+    throw new Error('OpenRouter AI returned empty response.');
   }
 
   console.log('[AI] Extracted content length:', content.length);

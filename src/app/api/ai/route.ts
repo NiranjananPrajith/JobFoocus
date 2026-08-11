@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-utils/server';
 
-const API_KEY = process.env.OPENCODE_ZEN_API_KEY || '';
-const MODEL = 'deepseek-v4-flash-free';
-const BASE_URL = 'https://opencode.ai/zen/v1/chat/completions';
+const API_KEY = process.env.OPENROUTER_API_KEY || '';
+const MODEL = process.env.LLM_MODEL || 'google/gemini-3.5-flash-lite';
+const BASE_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 export async function POST(req: NextRequest) {
   // Auth gate — must be logged in to send AI prompts.
@@ -44,6 +44,8 @@ export async function POST(req: NextRequest) {
     headers: {
       'Authorization': `Bearer ${API_KEY}`,
       'Content-Type': 'application/json',
+      'HTTP-Referer': 'https://jobfoocus.com',
+      'X-Title': 'JobFoocus',
     },
     body: JSON.stringify({
       model: MODEL,

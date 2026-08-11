@@ -59,8 +59,8 @@ This repository serves as a **portfolio implementation** showcasing key producti
                   │                       │                     │
                   ▼                       ▼                     ▼
    ┌──────────────────────────┐ ┌──────────────────┐ ┌──────────────────────┐
-   │ Supabase Postgres (RLS)  │ │ OpenCode ZEN API │ │ Stripe & Razorpay    │
-   │ • Atomic RPC Counter     │ │ (DeepSeek LLM)   │ │ Webhooks & Portals   │
+   │ Supabase Postgres (RLS)  │ │ OpenRouter API   │ │ Stripe & Razorpay    │
+   │ • Atomic RPC Counter     │ │ (Gemini 3.5 LLM) │ │ Webhooks & Portals   │
    └──────────────────────────┘ └──────────────────┘ └──────────────────────┘
 ```
 
@@ -94,7 +94,7 @@ JobFoocus includes a production-grade browser extension engineered from a single
 JobFoocus implements a zero-trust PII masking pipeline (`src/lib/pii-utils.ts`):
 1. **Extraction**: Client extracts PII fields (name, phone, email, socials, portfolio) into a secure profile.
 2. **Masking**: Replaces PII in prompts with XML-style tags (`<PII_NAME>`, `<PII_EMAIL>`).
-3. **LLM Execution**: The OpenCode ZEN API (DeepSeek V4 Flash Free model) processes only masked text.
+3. **LLM Execution**: The OpenRouter API (`google/gemini-3.5-flash-lite` model) processes only masked text.
 4. **Demasking**: Returned document HTML is restored with the user's PII locally before saving to Postgres.
 
 ### 3. 🛡️ Database & Race-Condition-Free Usage Limits
@@ -113,6 +113,49 @@ JobFoocus implements a zero-trust PII masking pipeline (`src/lib/pii-utils.ts`):
 - **Client Pixel**: `beforeInteractive` script stub for browser-side event tracking.
 - **Server CAPI Integration**: Server-side purchase event dispatching (`sendMetaCAPIEvent` in `src/lib/meta-capi.ts`) hashed via SHA-256 (`userData.em`).
 - **Deduplication**: Shares matching `event_id` strings (`purchase_${sessionId}`) between browser and server events to ensure 100% accurate ad attribution.
+- **Microsoft Clarity**: Integrated session tracking (`NEXT_PUBLIC_MICROSOFT_CLARITY_ID`) for UX heatmap analysis.
+
+---
+
+## 🛠️ Stack & Technologies
+
+| Layer | Technologies Used |
+|---|---|
+| **Frontend Framework** | Next.js 14.2 (App Router), React 18, TypeScript (Strict Mode) |
+| **Styling & Icons** | Tailwind CSS, Custom Theme Design System, SVG Brand Icons |
+| **Database & Auth** | Supabase Postgres, Row-Level Security (RLS), Supabase Auth (Email + Google OAuth) |
+| **Payment Gateways** | Stripe SDK (USD/EUR Checkout & Customer Portal), Razorpay SDK (INR Subscriptions) |
+| **AI Integration** | OpenRouter API (`google/gemini-3.5-flash-lite`), Custom PII Masking Pipeline |
+| **Analytics & Telemetry** | Meta Pixel + Server Conversions API (CAPI), Microsoft Clarity, Vercel Speed Insights |
+| **Browser Extension** | Published Manifest V3 Extensions (Chrome Web Store, Firefox Add-ons), Service Worker |
+| **PDF Processing** | `pdfjs-dist` static worker setup for resume parsing |
+
+---
+
+## ⚡ Quick Start (Local Setup)
+
+### 1. Clone & Install
+```bash
+git clone https://github.com/NiranjananPrajith/JobFoocus.git
+cd JobFoocus
+npm install
+```
+
+### 2. Environment Configuration
+Copy `.env.example` to `.env` and fill in your keys:
+```bash
+cp .env.example .env
+```
+
+```env
+# Core Database & Auth
+NEXT_PUBLIC_SUPABASE_URL=https://your-supabase-project.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
+SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+
+# AI Gateway (OpenRouter)
+OPENROUTER_API_KEY=OPENROUTER_API_KEY_PLACEHOLDER
+LLM_MODEL=google/gemini-3.5-flash-liteween browser and server events to ensure 100% accurate ad attribution.
 - **Microsoft Clarity**: Integrated session tracking (`NEXT_PUBLIC_MICROSOFT_CLARITY_ID`) for UX heatmap analysis.
 
 ---
