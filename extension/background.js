@@ -58,14 +58,14 @@ function focusOrCreateDashboardTab(targetUrl) {
 // Empty fields are dropped so the URL stays short.
 function buildDashboardUrl(jobData, pageUrl) {
   const params = new URLSearchParams();
-  if (jobData.title) params.set("title", jobData.title);
-  if (jobData.company) params.set("company", jobData.company);
-  if (jobData.description) params.set("jd", jobData.description);
-  if (pageUrl) params.set("url", pageUrl);
-  if (jobData.location) params.set("location", jobData.location);
-  if (jobData.salary) params.set("salary", jobData.salary);
-  if (jobData.postedDate) params.set("posted", jobData.postedDate);
-  if (jobData.workType) params.set("workType", jobData.workType);
+  if (jobData.title) params.set("title", jobData.title.slice(0, 200));
+  if (jobData.company) params.set("company", jobData.company.slice(0, 200));
+  if (jobData.description) params.set("jd", jobData.description.slice(0, 3000));
+  if (pageUrl) params.set("url", pageUrl.slice(0, 500));
+  if (jobData.location) params.set("location", jobData.location.slice(0, 100));
+  if (jobData.salary) params.set("salary", jobData.salary.slice(0, 100));
+  if (jobData.postedDate) params.set("posted", jobData.postedDate.slice(0, 50));
+  if (jobData.workType) params.set("workType", jobData.workType.slice(0, 50));
   if (jobData.looksLikeJob === false) params.set("heuristic", "miss");
   return `${DASHBOARD_URL}?${params.toString()}`;
 }

@@ -386,7 +386,7 @@ function ApplicationContent() {
   // Returns a discriminated outcome so the caller can dispatch to the
   // right UI state.
   type PipelineOutcome =
-    | { kind: 'success'; folder: string }
+    | { kind: 'success'; folder: string; category: string }
     | { kind: 'parse-fail'; message: string }
     | { kind: 'clarify'; question: string; partialJD: FormattedJD | null; jdText: string }
     | { kind: 'manual-fill'; folder: string; formattedJD: ManualFillPayload['formattedJD']; missingCompany: boolean; missingTitle: boolean }
@@ -551,7 +551,8 @@ function ApplicationContent() {
 
       if (cancelled.current) return { kind: 'other-fail', message: 'Cancelled' };
 
-      return { kind: 'success', folder };
+      const resData = await res.json().catch(() => ({}));
+      return { kind: 'success', folder, category: resData.category || 'Uncategorized' };
     } catch (err) {
       return { kind: 'other-fail', message: err instanceof Error ? err.message : 'Could not save the application.' };
     }
@@ -652,7 +653,7 @@ function ApplicationContent() {
           // Brief pause so the user sees the "done" state before the
           // view swaps. Without this, the transition can feel like
           // the stepper flickered and was gone.
-          const destination = `/application?app=Uncategorized/${encodeURIComponent(outcome.folder)}`;
+          const destination = `/application?app=${encodeURIComponent(outcome.category)}/${encodeURIComponent(outcome.folder)}`;
           setPipelineDestination(destination);
           await new Promise((r) => setTimeout(r, 700));
           if (cancelled) return;
