@@ -1,6 +1,6 @@
 # JobFoocus design system
 
-The approved direction is soft, expressive SaaS: rounded typography, warm surfaces, orange/gold accents from the logo, and clear task-oriented information. The homepage and dashboard prototypes establish the visual direction; the production layouts now apply it across all routes.
+The approved direction is soft, expressive SaaS: rounded typography, warm surfaces, almost-black reddish-brown dark backgrounds, orange/gold accents from the logo, and clear task-oriented information. The homepage and dashboard prototypes establish the visual direction; the production layouts now apply it across all routes.
 
 ## Shared foundations
 
@@ -10,15 +10,15 @@ Nunito Sans is loaded once through Next Font in `src/app/layout.tsx`. Both Tailw
 
 | Token | Light | Dark | Role |
 | --- | --- | --- | --- |
-| `--canvas` | #f7f5f2 | #161b22 | Workspace background |
-| `--surface` | #ffffff | #1e232b | Cards and inputs |
-| `--card` | #fffdfb | #1e232b | Warm panels |
+| `--canvas` | #f7f5f2 | #160f0e | Workspace background |
+| `--surface` | #ffffff | #211715 | Cards and inputs |
+| `--card` | #fffdfb | #211715 | Warm panels |
 | `--ink` | #28242b | #f6f1ea | Main text |
 | `--steel` | #68616b | #b8afa8 | Supporting text |
 | `--primary` | #c54924 | #f5a07b | Main action |
 | `--on-primary` | #ffffff | #24170f | Action text |
-| `--cream` | #fff0e5 | #392b25 | Accent panel |
-| `--hairline` | #ece7e1 | #3c3937 | Panel border |
+| `--cream` | #fff0e5 | #39241e | Accent panel |
+| `--hairline` | #ece7e1 | #49312b | Panel border |
 
 Use 20–28px radii for cards, 26–38px for page frames, 14px for fields, and pill-shaped primary buttons. Smaller icon buttons may use 9–15px radii. Favor thin borders and restrained shadows. Strong contrast, readable labels, and useful hierarchy take priority over decoration.
 

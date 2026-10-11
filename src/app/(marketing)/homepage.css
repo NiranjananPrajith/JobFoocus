@@ -144,7 +144,7 @@
 .jf-site *, .jf-site *::before, .jf-site *::after { transition: none !important; }
 .jf-site .hero-art img { transform: none; } }
 
-.dark .jf-site { color-scheme: dark; --paper:#1e232b; --canvas:#161b22; --ink:#f6f1ea; --muted:#c0b7b0; --orange:#f5a07b; --peach:#392b25; --peach-soft:#292420; --footer-wash:#252321; --line:#3c3937; --section-wash:#232322; --accent-text:#ffc7a5; --on-primary:#24170f; }
+.dark .jf-site { color-scheme: dark; --paper:#211715; --canvas:#160f0e; --ink:#f6f1ea; --muted:#c0b7b0; --orange:#f5a07b; --peach:#39241e; --peach-soft:#2b1b17; --footer-wash:#271b17; --line:#49312b; --section-wash:#251a17; --accent-text:#ffc7a5; --on-primary:#24170f; }
 .jf-site .theme-control { border:1px solid var(--line); background:var(--canvas); border-radius:999px; padding:8px 12px; font-size:12px; }
 @media(max-width:1000px) {
   .jf-site .header { flex-wrap:wrap; gap:12px; }
