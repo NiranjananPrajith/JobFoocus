@@ -1,5 +1,7 @@
-import NavBar from '@/components/NavBar';
-import Footer from '@/components/Footer';
+import MarketingHeader from './components/MarketingHeader';
+import MarketingFooter from './components/MarketingFooter';
+import './homepage.css';
+
 
 export default function MarketingLayout({
   children,
@@ -7,10 +9,13 @@ export default function MarketingLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-canvas selection:bg-primary selection:text-white">
-      <NavBar />
-      {children}
-      <Footer />
+    <div className="jf-site">
+      <a className="skip" href="#main">Skip to content</a>
+      <div className="page">
+        <MarketingHeader />
+        {children}
+        <MarketingFooter />
+      </div>
     </div>
   )
 }

@@ -51,7 +51,7 @@ export default function FeatureBentoGrid() {
           <h2
             className="text-[32px] md:text-[36px] font-medium leading-tight mb-4"
             style={{
-              fontFamily: 'PP Editorial Old, Times New Roman, serif',
+              fontFamily: 'var(--font-rounded), ui-rounded, sans-serif',
               letterSpacing: '-0.5px',
               color: 'var(--ink)',
             }}

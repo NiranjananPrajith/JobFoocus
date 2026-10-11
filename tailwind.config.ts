@@ -74,12 +74,15 @@ const config: Config = {
         "danger-text": "var(--danger-text)",
       },
       borderRadius: {
-        xs: "4px",
-        sm: "6px",
-        md: "8px",
-        lg: "12px",
-        xl: "16px",
-        xxl: "20px",
+        DEFAULT: "12px",
+        xs: "8px",
+        sm: "10px",
+        md: "14px",
+        lg: "20px",
+        xl: "24px",
+        xxl: "28px",
+        "2xl": "28px",
+        "3xl": "36px",
         full: "9999px",
       },
       spacing: {
@@ -97,18 +100,12 @@ const config: Config = {
         hero: "120px",
       },
       fontFamily: {
-        sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
-        display: ["PP Editorial Old", "Georgia", "Times New Roman", "serif"],
+        sans: ["var(--font-rounded)", "ui-rounded", "system-ui", "sans-serif"],
+        display: ["var(--font-rounded)", "ui-rounded", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "ui-monospace", "monospace"],
       },
       backdropBlur: {
-        xs: "2px",
-        sm: "4px",
-        md: "8px",
-        lg: "12px",
-        xl: "16px",
-        "2xl": "24px",
-        "3xl": "32px",
+        xs: "2px", sm: "4px", md: "8px", lg: "12px", xl: "16px", "2xl": "24px", "3xl": "32px",
       },
       keyframes: {
         "jf-breathe": {

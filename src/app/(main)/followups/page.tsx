@@ -104,7 +104,7 @@ export default function FollowupsPage() {
             Jobs that need follow-up
           </p>
         </div>
-        <span className="bg-primary text-white px-3 py-1.5 rounded-full text-[14px] font-semibold self-start">
+        <span className="bg-primary text-on-primary px-3 py-1.5 rounded-full text-[14px] font-semibold self-start">
           {followupApplications.length}
         </span>
       </div>

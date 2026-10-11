@@ -66,7 +66,7 @@ export default function SupportPage() {
           </p>
           <h1
             className="text-[40px] md:text-[52px] font-normal text-ink leading-[1.12] mb-5"
-            style={{ fontFamily: 'PP Editorial Old, Times New Roman, serif', letterSpacing: '-0.5px' }}
+            style={{ fontFamily: 'var(--font-rounded), ui-rounded, sans-serif', letterSpacing: '-0.5px' }}
           >
             How can we help?
           </h1>
@@ -351,7 +351,7 @@ export default function SupportPage() {
                   We are looking for a Senior Frontend Engineer to join our team and help build the next generation of our product...
                 </p>
                 <button
-                  className="w-full py-2 rounded-md text-[12px] font-medium text-white"
+                  className="w-full py-2 rounded-md text-[12px] font-medium text-on-primary"
                   style={{ backgroundColor: 'var(--primary)' }}
                 >
                   Add Job
@@ -410,7 +410,7 @@ export default function SupportPage() {
                 >
                   {tier.featured && (
                     <span
-                      className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[11px] font-semibold text-white"
+                      className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[11px] font-semibold text-on-primary"
                       style={{ backgroundColor: 'var(--primary)' }}
                     >
                       Most Popular
@@ -485,7 +485,7 @@ export default function SupportPage() {
             <div className="relative z-10">
               <h2
                 className="text-[32px] md:text-[36px] font-normal text-ink leading-tight mb-3"
-                style={{ fontFamily: 'PP Editorial Old, Times New Roman, serif', letterSpacing: '-0.5px' }}
+                style={{ fontFamily: 'var(--font-rounded), ui-rounded, sans-serif', letterSpacing: '-0.5px' }}
               >
                 Still need help?
               </h2>
@@ -494,7 +494,7 @@ export default function SupportPage() {
               </p>
               <a
                 href="mailto:support@jobfoocus.com"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-[14px] font-medium text-white transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-lg text-[14px] font-medium text-on-primary transition-colors"
                 style={{ backgroundColor: 'var(--primary)' }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

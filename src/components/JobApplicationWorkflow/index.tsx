@@ -139,7 +139,7 @@ function DocumentCard({
           <>
             <div className="flex items-center justify-between mb-2">
               <div>
-                <p className="text-[13px] font-bold" style={{ color: '#1f1f1f' }}>Priya Nair</p>
+                <p className="text-[13px] font-bold" style={{ color: 'var(--ink)' }}>Priya Nair</p>
                 <p className="text-[9px] text-steel">Customer Service Representative</p>
               </div>
               <div className="text-right">
@@ -170,7 +170,7 @@ function DocumentCard({
             </div>
             <div
               className="rounded px-2 py-1 mb-2 inline-block"
-              style={{ backgroundColor: '#fff8e0', border: '1px solid #e6d5a8' }}
+              style={{ backgroundColor: 'var(--cream)', border: '1px solid var(--beige-deep)' }}
             >
               <p className="text-[9px] font-semibold text-ink">RE: Customer Service Representative</p>
             </div>
@@ -239,7 +239,7 @@ function ProgressDots() {
           </div>
           <span
             className="text-[9px] font-medium whitespace-nowrap"
-            style={{ color: '#fa520f' }}
+            style={{ color: 'var(--primary)' }}
           >
             {step.label}
           </span>

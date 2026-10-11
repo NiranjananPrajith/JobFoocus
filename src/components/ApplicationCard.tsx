@@ -243,7 +243,7 @@ export default function ApplicationCard({
                 )}
 
                 {needs_followup && (
-                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold bg-primary text-white shrink-0">
+                  <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold bg-primary text-on-primary shrink-0">
                     <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                     Follow-up
                   </span>

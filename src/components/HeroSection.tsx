@@ -98,7 +98,7 @@ export default function HeroSection() {
             <h1
               className="text-[48px] md:text-[64px] xl:text-[76px] font-normal leading-[1.05] mb-6"
               style={{
-                fontFamily: 'PP Editorial Old, Times New Roman, serif',
+                fontFamily: 'var(--font-rounded), ui-rounded, sans-serif',
                 letterSpacing: '-1.5px',
                 color: 'var(--ink)',
               }}

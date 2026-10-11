@@ -37,7 +37,7 @@ const Card = ({
   };
 
   const classes = [
-    'rounded-lg p-6',
+    'rounded-3xl p-6',
     variantClasses[variant],
     className,
   ]

@@ -49,10 +49,10 @@ export default function KanbanColumn({
   return (
     <div
       ref={columnRef}
-      className={`flex flex-col min-w-[260px] flex-1 transition-all duration-300 ${
+      className={`kanban-column flex flex-col flex-1 transition-all duration-300 ${
         isHighlighted ? 'p-2 rounded-xl bg-[color:var(--col-tint)]' : ''
       }`}
-      style={isHighlighted ? { '--col-tint': `${color}14` } as React.CSSProperties : undefined}
+      style={isHighlighted ? { '--col-tint': `color-mix(in srgb, ${color} 8%, transparent)` } as React.CSSProperties : undefined}
     >
       {/* Column header */}
       <div className="flex items-center gap-2 px-2 pb-3 mb-0">
@@ -60,7 +60,7 @@ export default function KanbanColumn({
           className="w-2.5 h-2.5 rounded-full shrink-0"
           style={{ backgroundColor: color }}
         />
-        <h3 className="text-[12px] font-semibold uppercase tracking-wide text-steel">
+        <h3 className="text-[12px] font-bold text-ink">
           {label}
         </h3>
         <span className="text-[11px] text-muted font-medium ml-auto">

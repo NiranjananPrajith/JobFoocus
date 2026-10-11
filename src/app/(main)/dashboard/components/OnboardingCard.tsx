@@ -88,7 +88,7 @@ export default function OnboardingCard({ hasMasterResume, onAddJob }: Onboarding
                   step.action.type === 'link' ? (
                     <Link
                       href={step.action.href}
-                      className="shrink-0 px-3 py-1.5 text-[12px] font-medium rounded-md text-white transition-colors duration-150"
+                      className="shrink-0 px-3 py-1.5 text-[12px] font-medium rounded-md text-on-primary transition-colors duration-150"
                       style={{ backgroundColor: 'var(--primary)' }}
                       onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary-deep)')}
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary)')}
@@ -98,7 +98,7 @@ export default function OnboardingCard({ hasMasterResume, onAddJob }: Onboarding
                   ) : (
                     <button
                       onClick={step.action.onClick}
-                      className="shrink-0 px-3 py-1.5 text-[12px] font-medium rounded-md text-white transition-colors duration-150"
+                      className="shrink-0 px-3 py-1.5 text-[12px] font-medium rounded-md text-on-primary transition-colors duration-150"
                       style={{ backgroundColor: 'var(--primary)' }}
                       onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary-deep)')}
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary)')}

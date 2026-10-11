@@ -10,18 +10,12 @@ import { useRouter } from 'next/navigation';
 import Card from '@/components/design/Card';
 import CurrencyToggle, { setCurrencyCookie } from './CurrencyToggle';
 import PricingCTAButtons from './PricingCTAButtons';
-import { formatTierPriceCurrency, type Tier } from '@/lib/limits';
+import { formatTierPriceCurrency, TIER_LIMITS, type Tier } from '@/lib/limits';
 import type { Currency } from '@/lib/region';
 import { fbqTrack } from '@/lib/meta-capi-client';
 
-// Plan limits (mirrors src/lib/limits.ts). Declared here so the
-// client component can render feature lists without importing a
-// server-only module.
-const PLAN_LIMITS = {
-  free: { jobs: 5,   edits: 25 },
-  pro:  { jobs: 25,  edits: 100 },
-  max:  { jobs: 250, edits: 1000 },
-};
+// Use the same limits as server enforcement and the account page.
+const PLAN_LIMITS = TIER_LIMITS;
 
 interface PlanDef {
   name: string;
@@ -149,7 +143,7 @@ export default function PricingClient({ defaultCurrency }: PricingClientProps) {
               {plan.highlight && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span
-                    className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-semibold text-white"
+                    className="inline-flex items-center px-3 py-1 rounded-full text-[12px] font-semibold text-on-primary"
                     style={{ backgroundColor: 'var(--primary)' }}
                   >
                     Most Popular

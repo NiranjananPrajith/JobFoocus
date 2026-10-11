@@ -187,7 +187,7 @@ export default function ResumeSkeletonCard() {
 
       {phase === 'skeleton' ? (
         /* ---- Skeleton ---- */
-        <div className="bg-white rounded-xl border border-hairline-soft shadow-[rgba(0,0,0,0.06)_0px_8px_24px] p-8 overflow-hidden relative">
+        <div className="bg-surface rounded-xl border border-hairline-soft shadow-[rgba(0,0,0,0.06)_0px_8px_24px] p-8 overflow-hidden relative">
           <div className="absolute top-4 right-4 flex flex-col gap-1">
             <AISparkle delay={0} />
             <AISparkle delay={0.4} />
@@ -199,13 +199,13 @@ export default function ResumeSkeletonCard() {
           </div>
 
           <div className="flex items-center gap-2 mb-6">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#ededed' }} />
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#ededed' }} />
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#ededed' }} />
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'var(--surface-elevated)' }} />
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'var(--surface-elevated)' }} />
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: 'var(--surface-elevated)' }} />
           </div>
 
           <div className="flex items-center gap-2 mb-6">
-            <div className="w-4 h-4 rounded-full animate-pulse" style={{ backgroundColor: '#fa520f' }} />
+            <div className="w-4 h-4 rounded-full animate-pulse" style={{ backgroundColor: 'var(--primary)' }} />
             <div className="h-3 flex-1 rounded-full shimmer max-w-[120px]" />
           </div>
 
@@ -247,7 +247,7 @@ export default function ResumeSkeletonCard() {
         </div>
       ) : (
         /* ---- Typewriter reveal ---- */
-        <div className="bg-white rounded-xl border border-hairline-soft shadow-[rgba(0,0,0,0.06)_0px_8px_24px] p-8">
+        <div className="bg-surface rounded-xl border border-hairline-soft shadow-[rgba(0,0,0,0.06)_0px_8px_24px] p-8">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-3 h-3 rounded-full bg-red-400" />
             <div className="w-3 h-3 rounded-full bg-yellow-400" />
@@ -311,7 +311,7 @@ export default function ResumeSkeletonCard() {
                   <p
                     key={i}
                     className="text-[22px] font-bold text-ink mb-1 text-center"
-                    style={{ fontFamily: 'PP Editorial Old, serif', letterSpacing: '0.5px' }}
+                    style={{ fontFamily: 'var(--font-rounded), ui-rounded, sans-serif', letterSpacing: '0.5px' }}
                   >
                     {lineText}
                   </p>

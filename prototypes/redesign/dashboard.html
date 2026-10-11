@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>JobFoocus — Dashboard concept</title><link rel="stylesheet" href="dashboard.css"><script src="dashboard.js" defer></script></head>
+<body>
+<a class="skip" href="#workspace">Skip to workspace</a>
+<div class="app-shell">
+  <aside class="sidebar" aria-label="Workspace navigation">
+    <a href="index.html" class="logo"><img src="assets/logo.webp" alt="JobFoocus" width="150" height="43"></a>
+    <span class="workspace-label">YOUR WORKSPACE</span>
+    <nav><a href="#workspace" class="active" aria-current="page"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16m6-16v16M6 8v4m6-4v7m6-7v3"/></svg> Applications</a><a href="#attention"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Follow-ups <span class="nav-count">2</span></a><a href="#resume"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14 3H7a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V9z"/><path d="M14 3v6h6M8 13h8m-8 4h6"/></svg> Master resume</a>
+      <a href="http://localhost:3000/jobs/"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="7" width="18" height="14" rx="3"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12a21 21 0 0 0 18 0m-9 0v3"/></svg><span>All Jobs</span></a>
+      <a href="http://localhost:3000/categories/"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 13l-7 7a2 2 0 0 1-3 0l-7-7V4a1 1 0 0 1 1-1h9l7 7a2 2 0 0 1 0 3z"/><circle cx="8" cy="8" r="1"/></svg><span>Manage categories</span></a>
+      <a href="http://localhost:3000/extension-install/"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3v12m-4-4 4 4 4-4M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg><span>Install extension</span></a>
+      <a href="http://localhost:3000/trash/"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 6h18m-13 0V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M5 6l1 13a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-13M10 10v7m4-7v7"/></svg><span>Trash</span></a>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="account-section">
+        <div class="account-heading"><span class="profile-avatar" aria-hidden="true">N</span><div><strong>Your account</strong><span>Sample profile · design concept</span></div></div>
+        <nav class="account-links" aria-label="Account links">
+            <a href="http://localhost:3000/account/"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M7 15h3"/></svg><span>Account &amp; billing</span></a>
+
+
+
+
+          </nav>
+        <div class="profile-footer"><button type="button" disabled title="Sign-out will use the existing authentication flow when implemented"><svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3m6-13 5 5-5 5m-5-5h10"/></svg><span>Sign out</span></button><span>Available when implemented</span></div>
+      </div>
+      <span class="sample-note">Dashboard concept · sample data</span>
+    </div>
+  </aside>
+  <main id="workspace">
+    <header class="topbar"><span>Workspace <span aria-hidden="true">/</span> <strong>Applications</strong></span>
+
+    </header>
+    <div class="content">
+      <div class="page-heading"><div><span class="overline">ONE STEP CLOSER</span><h1>Your job hunt, in focus.</h1><p>Keep every opportunity and its documents together.</p></div><button class="primary" disabled title="The existing add-job flow will be connected after design approval">＋ Add job</button></div>
+      <section class="overview" aria-label="Application overview">
+        <div class="summary"><span>Saved opportunities</span><strong>8</strong><p>Across your job hunt</p></div><div class="summary"><span>Applications sent</span><strong>5</strong><p>Applied, interview, or offer</p></div><div class="summary warm"><span>In conversation</span><strong>2</strong><p>At the interview stage</p></div>
+        <div class="attention" id="attention"><span class="attention-label">◷ FOLLOW-UPS</span><h2>Two roles need a check-in.</h2><p>Notion and Linear · last updated over a week ago.</p><button id="followup-filter">Show these applications <span aria-hidden="true">→</span></button></div>
+      </section>
+      <section class="pipeline" aria-labelledby="pipeline-heading">
+        <div class="pipeline-heading"><div><h2 id="pipeline-heading">Your applications <span id="result-count">8</span></h2><p>See where every role stands.</p></div><span class="saved-note">Sample workspace</span></div>
+        <div class="toolbar"><label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Search company or job title" aria-label="Search company or job title"></label><label class="category">Category <select id="category"><option value="all">All categories</option><option>Product design</option><option>Engineering</option><option>Uncategorized</option></select></label><button id="reset" class="reset" hidden>Clear filters</button></div>
+        <p class="filter-note" id="filter-note" role="status" aria-live="polite"></p>
+        <div class="board" id="board"></div>
+        <div id="empty" class="empty" hidden><img src="assets/capture.png" width="160" height="160" alt=""><h3>No matching applications</h3><p>Try another company, title, or category.</p><button id="empty-reset">Clear filters</button></div>
+      </section>
+      <section class="resume-note" id="resume"><span class="resume-icon" aria-hidden="true">▤</span><div><h2>Your master resume is ready.</h2><p>Use your experience to tailor a resume and cover letter for each new role.</p></div><span class="ready">✓ Ready to use</span></section>
+      <p class="concept-note">Design concept only. Search, categories, and the follow-up filter work with sample applications. Job actions will use the existing application flows.</p>
+    </div>
+  </main>
+</div>
+</body></html>

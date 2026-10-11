@@ -224,6 +224,19 @@ npm run dev
 # → http://localhost:3000
 ```
 
+If port 3000 is occupied, run `npm run dev -- -p 3001` and open
+`http://localhost:3001`. In Supabase **Authentication → URL Configuration**,
+add `http://localhost:3001/**` to the additional **Redirect URLs**. Keep the
+production Site URL. The app requests an `/auth/callback` URL on the current
+origin; Supabase must allow that origin for both email links and Google login.
+Request a fresh login link after changing the setting. If a custom email
+template hardcodes the production destination, update it to respect the
+requested redirect URL; see [Supabase redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls).
+
+Do not run `next dev` and `next build` against the same `.next` directory at
+once. Stop the dev server before building, then run `npm run start -- -p 3001`
+to verify the production build locally.
+
 ---
 
 ## 🗄️ Database Setup (Supabase)

@@ -1,35 +1,12 @@
-import MarketingLandingPage from './MarketingLandingPage'
+import type { Metadata } from 'next';
+import MarketingLandingPage from './MarketingLandingPage';
 
-export const metadata = {
-  title: 'Job Foocus — Your Career Frontier. In your hands.',
-  description:
-    'A local-first browser extension that clips job descriptions, writes ATS-optimized cover letters, and tracks your pipeline — without sending your data to the cloud.',
-  openGraph: {
-    title: 'Job Foocus — Your Career Frontier',
-    description:
-      'Local-first job search extension with AI-powered document generation and pipeline tracking.',
-    url: 'https://jobfoocus.com',
-    siteName: 'Job Foocus',
-    locale: 'en_US',
-    type: 'website',
-    images: [
-      {
-        url: 'https://jobfoocus.com/homepageSS.webp',
-        width: 1200,
-        height: 630,
-        alt: 'Job Foocus — Career Dashboard Preview',
-      },
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Job Foocus — Your Career Frontier',
-    description:
-      'Local-first job search extension with AI-powered document generation and pipeline tracking.',
-    images: ['https://jobfoocus.com/homepageSS.webp'],
-  },
-}
-
-export default function Page() {
-  return <MarketingLandingPage />
-}
+const title = 'JobFoocus — A simpler job hunt';
+const description = 'Tailor your resume and cover letter to each job, then track every application in one place.';
+export const metadata: Metadata = {
+  title,
+  description,
+  openGraph: { title, description, url: 'https://jobfoocus.com', siteName: 'JobFoocus', locale: 'en_US', type: 'website', images: [{ url: 'https://jobfoocus.com/images/redesign/hero.webp', width: 1536, height: 1024, alt: 'Resume and cover letter in an organized JobFoocus workspace' }] },
+  twitter: { card: 'summary_large_image', title, description, images: ['https://jobfoocus.com/images/redesign/hero.webp'] },
+};
+export default function Page() { return <MarketingLandingPage />; }

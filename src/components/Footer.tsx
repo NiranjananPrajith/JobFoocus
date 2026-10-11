@@ -34,7 +34,7 @@ export default function Footer() {
             <div>
               <h4
                 className="text-[12px] font-semibold uppercase tracking-[0.05em] text-ink mb-4"
-                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+                style={{ fontFamily: 'var(--font-rounded), ui-rounded, sans-serif' }}
               >
                 Product
               </h4>
@@ -44,7 +44,7 @@ export default function Footer() {
                     <a
                       href={link === 'Pricing' ? '/pricing' : link === 'Features' ? '/features' : link === 'Extension' ? '/extension-install' : '#'}
                       className="text-[14px] text-primary hover:underline"
-                      style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+                      style={{ fontFamily: 'var(--font-rounded), ui-rounded, sans-serif' }}
                     >
                       {link}
                     </a>
@@ -57,7 +57,7 @@ export default function Footer() {
             <div>
               <h4
                 className="text-[12px] font-semibold uppercase tracking-[0.05em] text-ink mb-4"
-                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+                style={{ fontFamily: 'var(--font-rounded), ui-rounded, sans-serif' }}
               >
                 Legal
               </h4>
@@ -67,7 +67,7 @@ export default function Footer() {
                     <a
                       href={link === 'Privacy Policy' ? '/privacy-policy' : '/terms-of-service'}
                       className="text-[14px] text-primary hover:underline"
-                      style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+                      style={{ fontFamily: 'var(--font-rounded), ui-rounded, sans-serif' }}
                     >
                       {link}
                     </a>
@@ -80,7 +80,7 @@ export default function Footer() {
             <div>
               <h4
                 className="text-[12px] font-semibold uppercase tracking-[0.05em] text-ink mb-4"
-                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+                style={{ fontFamily: 'var(--font-rounded), ui-rounded, sans-serif' }}
               >
                 Connect
               </h4>
@@ -91,7 +91,7 @@ export default function Footer() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[14px] text-primary hover:underline"
-                    style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+                    style={{ fontFamily: 'var(--font-rounded), ui-rounded, sans-serif' }}
                   >
                     Instagram
                   </a>
@@ -102,7 +102,7 @@ export default function Footer() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[14px] text-primary hover:underline"
-                    style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+                    style={{ fontFamily: 'var(--font-rounded), ui-rounded, sans-serif' }}
                   >
                     X
                   </a>
@@ -113,7 +113,7 @@ export default function Footer() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[14px] text-primary hover:underline"
-                    style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+                    style={{ fontFamily: 'var(--font-rounded), ui-rounded, sans-serif' }}
                   >
                     GitHub
                   </a>
@@ -129,14 +129,14 @@ export default function Footer() {
           >
             <span
               className="text-[12px] text-steel"
-              style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+              style={{ fontFamily: 'var(--font-rounded), ui-rounded, sans-serif' }}
             >
               &copy; 2026 Job Foocus. All rights reserved.
             </span>
             <div className="flex items-center gap-4">
               <span
                 className="text-[12px] text-steel"
-                style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+                style={{ fontFamily: 'var(--font-rounded), ui-rounded, sans-serif' }}
               >
                 v1.0.0
               </span>

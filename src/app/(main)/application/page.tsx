@@ -1448,7 +1448,7 @@ function ApplicationContent() {
           <div className="flex flex-wrap items-center gap-3 text-[13px] text-steel">
             {status && <Badge status={status as StatusType} />}
             {application.needs_followup && (
-              <span className="bg-primary text-white px-2.5 py-1 rounded-full text-[12px] font-semibold">
+              <span className="bg-primary text-on-primary px-2.5 py-1 rounded-full text-[12px] font-semibold">
                 Needs Follow-up
               </span>
             )}

@@ -1,15 +1,18 @@
-import { Inter } from 'next/font/google';
+import { Nunito_Sans } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { ThemeProvider } from '@/lib/theme-context';
 import MetaPixel from '@/components/MetaPixel';
 import ClarityTracker from '@/components/Clarity';
 import '../styles/globals.css';
+import '../styles/redesign.css';
+import './(marketing)/homepage.css';
 
-const inter = Inter({
+const rounded = Nunito_Sans({
   subsets: ['latin'],
-  variable: '--font-inter',
+  variable: '--font-rounded',
   display: 'swap',
+  adjustFontFallback: false,
 });
 
 const FOUC_SCRIPT = `
@@ -27,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${rounded.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: FOUC_SCRIPT }} />
         <noscript>

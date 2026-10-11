@@ -114,13 +114,13 @@ export default function NavBar() {
               <>
                 {/* Desktop nav links */}
                 <div className="hidden md:flex items-center gap-1">
-                  <a href="/" className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                  <a href="/" className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors" style={{ fontFamily: 'var(--font-rounded), ui-rounded, sans-serif' }}>
                     Features
                   </a>
-                  <a href="/pricing" className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                  <a href="/pricing" className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors" style={{ fontFamily: 'var(--font-rounded), ui-rounded, sans-serif' }}>
                     Pricing
                   </a>
-                  <a href="/extension-install" className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                  <a href="/extension-install" className="px-3 py-2 text-[14px] font-medium text-steel hover:text-ink transition-colors" style={{ fontFamily: 'var(--font-rounded), ui-rounded, sans-serif' }}>
                     Extension
                   </a>
                 </div>
@@ -130,7 +130,7 @@ export default function NavBar() {
                   className="px-4 py-2 text-[14px] rounded-md font-medium text-white transition-colors duration-150"
                   style={{
                     backgroundColor: 'var(--primary)',
-                    fontFamily: 'Inter, system-ui, sans-serif',
+                    fontFamily: 'var(--font-rounded), ui-rounded, sans-serif',
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary-deep)')}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary)')}
@@ -179,7 +179,7 @@ export default function NavBar() {
                         </a>
                         <div className="border-t border-hairline-soft my-1" />
                         <div className="flex items-center justify-between px-4 py-2.5">
-                          <span className="text-[13px] text-ink" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                          <span className="text-[13px] text-ink" style={{ fontFamily: 'var(--font-rounded), ui-rounded, sans-serif' }}>
                             Theme
                           </span>
                           <ThemeToggle />
@@ -198,7 +198,7 @@ export default function NavBar() {
                   className="md:px-5 md:py-2.5 md:text-[14px] px-3.5 py-2 text-[13px] rounded-md font-medium text-white transition-colors duration-150"
                   style={{
                     backgroundColor: 'var(--primary)',
-                    fontFamily: 'Inter, system-ui, sans-serif',
+                    fontFamily: 'var(--font-rounded), ui-rounded, sans-serif',
                   }}
                   onClick={() => setAddJobOpen(true)}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--primary-deep)')}

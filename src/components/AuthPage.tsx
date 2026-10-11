@@ -96,13 +96,13 @@ function AuthContent({ defaultTab }: { defaultTab: Tab }) {
   const isLogin = tab === 'login'
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 bg-surface">
-      <div className="w-full max-w-[400px]">
+    <div className="auth-page flex items-center justify-center">
+      <div className="auth-card w-full max-w-[440px]">
         <div className="text-center mb-8">
           <a href="/">
             <img src="/icon.webp" alt="Job Foocus" className="w-12 h-12 rounded-xl mx-auto mb-4" />
           </a>
-          <h1 className="text-[24px] font-semibold text-ink" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+          <h1 className="text-[24px] font-semibold text-ink">
             {isLogin ? 'Welcome back' : 'Create your account'}
           </h1>
           <p className="text-[14px] text-steel mt-1">
@@ -190,8 +190,9 @@ function AuthContent({ defaultTab }: { defaultTab: Tab }) {
             ) : (
               <>
                 <div>
-                  <label className="block text-[13px] font-medium text-ink mb-1.5">Email address</label>
+                  <label htmlFor="auth-email" className="block text-[13px] font-medium text-ink mb-1.5">Email address</label>
                   <input
+                    id="auth-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -209,7 +210,7 @@ function AuthContent({ defaultTab }: { defaultTab: Tab }) {
           </form>
 
           <p className="text-center text-[11px] text-steel mt-4 leading-relaxed">
-            We use your account email exclusively to manage your quota and subscription. Your resume, contact details, and career materials are never processed or saved on our servers.
+            Sign in securely with an email link. Your resume and applications are saved to your account so you can return to your workspace.
           </p>
         </div>
 

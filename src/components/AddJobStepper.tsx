@@ -62,7 +62,7 @@ export default function AddJobStepper({
                   isDone
                     ? 'bg-green-500 text-white'
                     : isActive
-                    ? 'bg-primary text-white'
+                    ? 'bg-primary text-on-primary'
                     : 'bg-surface-elevated text-steel'
                 }`}
                 aria-hidden
