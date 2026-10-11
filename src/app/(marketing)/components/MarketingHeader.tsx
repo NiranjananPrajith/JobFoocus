@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useTheme } from '@/lib/theme-context';
+import NavigationIcon from '@/components/design/NavigationIcon';
 
 /** The marketing navigation stays independent of the application shell. */
 export default function MarketingHeader() {
@@ -20,12 +21,14 @@ export default function MarketingHeader() {
         <a href="/#features" onClick={() => setOpen(false)}>Features</a>
         <Link href="/pricing" onClick={() => setOpen(false)}>Pricing</Link>
         <a href="/#questions" onClick={() => setOpen(false)}>Questions</a>
-        <button className="theme-control" type="button" onClick={toggleTheme} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}>
-          {theme === 'dark' ? 'Light mode' : 'Dark mode'}
-        </button>
       </nav>
       <button className="menu" type="button" aria-controls="marketing-navigation" aria-expanded={open} onClick={() => setOpen(!open)}>Menu</button>
-      <Link className="button" href="/signup">Start for free</Link>
+      <div className="header-actions">
+        <button className="theme-control" type="button" onClick={toggleTheme} aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
+          <NavigationIcon name={theme === 'dark' ? 'sun' : 'moon'} />
+        </button>
+        <Link className="button" href="/signup">Start for free</Link>
+      </div>
     </header>
   );
 }

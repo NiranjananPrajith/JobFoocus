@@ -110,7 +110,7 @@
 .jf-site .container { padding-inline: 24px; }
 .jf-site .header { padding-block: 23px; flex-wrap: wrap; gap: 12px; }
 .jf-site .brand img { width: 116px; }
-.jf-site .header > .button { padding: 11px 15px; font-size: 12px; }
+.jf-site .header-actions .button { padding: 11px 15px; font-size: 12px; }
 .jf-site .menu { display: block; margin-left: auto; background: var(--canvas); border: 0; padding: 10px 13px; border-radius: 999px; font-size: 12px; }
 .jf-site .nav { display: none; order: 4; width: 100%; padding-top: 8px; flex-wrap: wrap; font-size: 13px; gap: 20px; }
 .jf-site .nav[data-open="true"] { display: flex; }
@@ -145,11 +145,21 @@
 .jf-site .hero-art img { transform: none; } }
 
 .dark .jf-site { color-scheme: dark; --paper:#211715; --canvas:#160f0e; --ink:#f6f1ea; --muted:#c0b7b0; --orange:#f5a07b; --peach:#39241e; --peach-soft:#2b1b17; --footer-wash:#271b17; --line:#49312b; --section-wash:#251a17; --accent-text:#ffc7a5; --on-primary:#24170f; }
-.jf-site .theme-control { border:1px solid var(--line); background:var(--canvas); border-radius:999px; padding:8px 12px; font-size:12px; }
+.jf-site .header-actions { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+.jf-site .theme-control { display:grid; place-items:center; width:44px; height:44px; border:1px solid var(--line); background:var(--canvas); color:var(--ink); border-radius:50%; padding:0; flex-shrink:0; }
+.jf-site .theme-control:hover { color:var(--orange); border-color:var(--orange); }
 @media(max-width:1000px) {
   .jf-site .header { flex-wrap:wrap; gap:12px; }
   .jf-site .menu { display:block; margin-left:auto; background:var(--canvas); border:0; padding:10px 13px; border-radius:999px; font-size:12px; }
   .jf-site .nav { display:none; order:4; width:100%; padding-top:8px; flex-wrap:wrap; font-size:13px; gap:20px; }
   .jf-site .nav[data-open="true"] { display:flex; }
 }
-@media(max-width:700px) { .jf-site .theme-control { font-size:11px; padding:7px 9px; } .jf-site .header { gap:8px; } }
+@media(max-width:700px) { .jf-site .header-actions { gap:8px; } .jf-site .header { gap:8px; } }
+@media(max-width:500px) {
+  .jf-site .header { display:grid; grid-template-columns:minmax(0,1fr) auto; }
+  .jf-site .brand img { width:92px; }
+  .jf-site .header-actions { gap:6px; }
+  .jf-site .header-actions .button { padding:11px 12px; font-size:11px; }
+  .jf-site .menu { grid-column:1 / -1; justify-self:start; margin-left:0; order:3; min-height:44px; }
+  .jf-site .nav { grid-column:1 / -1; }
+}
