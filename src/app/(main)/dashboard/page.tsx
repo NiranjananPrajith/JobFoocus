@@ -7,7 +7,7 @@ import NavigationIcon from '@/components/design/NavigationIcon';
 import DashboardHeader from './components/DashboardHeader';
 import KanbanBoard from './components/KanbanBoard';
 import OnboardingCard from './components/OnboardingCard';
-import LoadingScreen from '@/components/LoadingScreen';
+import DashboardSkeleton from './components/DashboardSkeleton';
 import {
   getAllApplications,
   deleteApplication,
@@ -98,7 +98,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <LoadingScreen messages={['Fetching your saved jobs...', 'Arranging your kanban board...', 'Sorting follow-ups...', 'Almost there...']} />
+      <DashboardSkeleton />
     );
   }
 
